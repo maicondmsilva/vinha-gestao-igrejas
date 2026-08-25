@@ -15,6 +15,13 @@
       "when": 1787626356802,
       "tag": "0001_bizarre_rocket_racer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787701653927,
+      "tag": "0002_aromatic_nick_fury",
+      "breakpoints": true
     }
   ]
 }

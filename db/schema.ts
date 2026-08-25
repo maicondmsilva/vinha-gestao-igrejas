@@ -19,6 +19,14 @@ export const families = sqliteTable('families', {
   name: text('name').notNull(), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+export const familyMembers = sqliteTable('family_members', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  familyId: text('family_id').notNull().references(() => families.id), personId: text('person_id').notNull(),
+  relationship: text('relationship').notNull(), isGuardian: integer('is_guardian', { mode: 'boolean' }).notNull().default(false),
+  canPickupMinor: integer('can_pickup_minor', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_family_member_unique').on(table.churchId, table.familyId, table.personId)]);
+
 export const people = sqliteTable('people', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
   familyId: text('family_id').references(() => families.id), fullName: text('full_name').notNull(),
@@ -58,6 +66,13 @@ export const personConsents = sqliteTable('person_consents', {
   granted: integer('granted', { mode: 'boolean' }).notNull(), source: text('source').notNull().default('admin'),
   grantedAt: integer('granted_at', { mode: 'timestamp' }), revokedAt: integer('revoked_at', { mode: 'timestamp' }),
 }, table => [uniqueIndex('idx_person_consent_type').on(table.churchId, table.personId, table.consentType)]);
+
+export const consentTerms = sqliteTable('consent_terms', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  consentType: text('consent_type').notNull(), title: text('title').notNull(), version: text('version').notNull(),
+  content: text('content').notNull(), effectiveAt: integer('effective_at', { mode: 'timestamp' }).notNull(),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_consent_term_version').on(table.churchId, table.consentType, table.version)]);
 
 export const pastoralNotes = sqliteTable('pastoral_notes', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
