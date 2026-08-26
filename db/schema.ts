@@ -96,6 +96,31 @@ export const childGuardians = sqliteTable('child_guardians', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_child_guardian_unique').on(table.churchId, table.childId, table.guardianPersonId)]);
 
+export const kidsRooms = sqliteTable('kids_rooms', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  name: text('name').notNull(), minAgeMonths: integer('min_age_months').notNull().default(0),
+  maxAgeMonths: integer('max_age_months').notNull().default(144), capacity: integer('capacity').notNull().default(20),
+  location: text('location'), color: text('color').notNull().default('#4d8066'), status: text('status').notNull().default('active'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const kidsSessions = sqliteTable('kids_sessions', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  roomId: text('room_id').notNull().references(() => kidsRooms.id), eventName: text('event_name').notNull(),
+  startsAt: integer('starts_at', { mode: 'timestamp' }).notNull(), endsAt: integer('ends_at', { mode: 'timestamp' }),
+  status: text('status').notNull().default('open'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const kidsCheckins = sqliteTable('kids_checkins', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  sessionId: text('session_id').notNull().references(() => kidsSessions.id), childId: text('child_id').notNull().references(() => children.id),
+  checkinGuardianId: text('checkin_guardian_id').notNull().references(() => people.id), checkoutGuardianId: text('checkout_guardian_id').references(() => people.id),
+  checkinByUserId: text('checkin_by_user_id').notNull(), checkoutByUserId: text('checkout_by_user_id'),
+  securityCode: text('security_code').notNull(), checkedInAt: integer('checked_in_at', { mode: 'timestamp' }).notNull(),
+  checkedOutAt: integer('checked_out_at', { mode: 'timestamp' }), status: text('status').notNull().default('checked_in'),
+  notes: text('notes'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_kids_checkin_session_child').on(table.churchId, table.sessionId, table.childId)]);
+
 export const pastoralNotes = sqliteTable('pastoral_notes', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
   personId: text('person_id').notNull().references(() => people.id), authorUserId: text('author_user_id').notNull(),
