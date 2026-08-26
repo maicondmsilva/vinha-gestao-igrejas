@@ -1,10 +1,11 @@
-import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const churches = sqliteTable('churches', {
   id: text('id').primaryKey(), name: text('name').notNull(), appName: text('app_name').notNull(),
   slug: text('slug').notNull(), primaryColor: text('primary_color').notNull().default('#285c45'),
   accentColor: text('accent_color').notNull().default('#d8b769'), logoKey: text('logo_key'),
-  openingVideoKey: text('opening_video_key'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  openingVideoKey: text('opening_video_key'), seniorPastorName: text('senior_pastor_name').notNull().default('Pastor titular'),
+  seniorPastorCpf: text('senior_pastor_cpf'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_churches_slug').on(table.slug)]);
 
 export const churchUsers = sqliteTable('church_users', {
@@ -64,8 +65,11 @@ export const personConsents = sqliteTable('person_consents', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
   personId: text('person_id').notNull().references(() => people.id), consentType: text('consent_type').notNull(),
   granted: integer('granted', { mode: 'boolean' }).notNull(), source: text('source').notNull().default('admin'),
+  termId: text('term_id'), acceptedByPersonId: text('accepted_by_person_id'), subjectPersonId: text('subject_person_id'),
+  acceptanceSnapshot: text('acceptance_snapshot', { mode: 'json' }).$type<Record<string, unknown>>(),
+  ipAddress: text('ip_address'), userAgent: text('user_agent'),
   grantedAt: integer('granted_at', { mode: 'timestamp' }), revokedAt: integer('revoked_at', { mode: 'timestamp' }),
-}, table => [uniqueIndex('idx_person_consent_type').on(table.churchId, table.personId, table.consentType)]);
+}, table => [index('idx_person_consent_type').on(table.churchId, table.personId, table.consentType)]);
 
 export const consentTerms = sqliteTable('consent_terms', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
@@ -73,6 +77,24 @@ export const consentTerms = sqliteTable('consent_terms', {
   content: text('content').notNull(), effectiveAt: integer('effective_at', { mode: 'timestamp' }).notNull(),
   active: integer('active', { mode: 'boolean' }).notNull().default(true), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_consent_term_version').on(table.churchId, table.consentType, table.version)]);
+
+export const children = sqliteTable('children', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  personId: text('person_id').references(() => people.id), fullName: text('full_name').notNull(), birthDate: text('birth_date').notNull(),
+  gender: text('gender'), photoKey: text('photo_key'), allergies: text('allergies'), medicalNotes: text('medical_notes'),
+  specialNeeds: text('special_needs'), createdByPersonId: text('created_by_person_id'),
+  createdVia: text('created_via').notNull().default('admin'), status: text('status').notNull().default('active'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const childGuardians = sqliteTable('child_guardians', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  childId: text('child_id').notNull().references(() => children.id), guardianPersonId: text('guardian_person_id').notNull().references(() => people.id),
+  relationship: text('relationship').notNull(), isPrimary: integer('is_primary', { mode: 'boolean' }).notNull().default(false),
+  canManage: integer('can_manage', { mode: 'boolean' }).notNull().default(true), canPickup: integer('can_pickup', { mode: 'boolean' }).notNull().default(true),
+  linkedByPersonId: text('linked_by_person_id'), verifiedAt: integer('verified_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_child_guardian_unique').on(table.churchId, table.childId, table.guardianPersonId)]);
 
 export const pastoralNotes = sqliteTable('pastoral_notes', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
