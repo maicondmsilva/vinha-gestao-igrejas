@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 export const CHURCH_ID='vinha-demo';
 export type ChurchSession={id:string;externalUserId:string;email:string;name:string;role:string;personId:string|null};
 const rolePermissions:Record<string,string[]>={
- admin:['*'],pastor:['people.read','people.write','terms.read','terms.write','kids.read','kids.manage','users.read','audit.read'],
- secretary:['people.read','people.write','terms.read','kids.read','kids.checkin'],kids_leader:['kids.read','kids.manage','people.read'],
+ admin:['*'],pastor:['people.read','people.write','terms.read','terms.write','kids.read','kids.manage','users.read','audit.read','units.read','units.manage'],
+ secretary:['people.read','people.write','terms.read','kids.read','kids.checkin','units.read'],kids_leader:['kids.read','kids.manage','people.read','units.read'],
  kids_volunteer:['kids.read','kids.checkin'],member:['self.read','children.manage','consents.manage'],responsible:['self.read','children.manage','consents.manage'],
 };
 async function ensureChurch(){await env.DB.prepare(`INSERT OR IGNORE INTO churches (id,name,app_name,slug,primary_color,accent_color,senior_pastor_name,created_at) VALUES (?,?,?,?,?,?,?,?)`).bind(CHURCH_ID,'Igreja Central','Central Conecta','igreja-central','#285c45','#d8b769','Pastor titular',Date.now()).run()}

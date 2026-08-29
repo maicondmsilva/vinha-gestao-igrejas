@@ -16,6 +16,25 @@ export const churchUsers = sqliteTable('church_users', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_church_users_tenant_external').on(table.churchId, table.externalUserId)]);
 
+export const churchUnits = sqliteTable('church_units', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  parentUnitId: text('parent_unit_id'), name: text('name').notNull(), type: text('type').notNull().default('campus'),
+  slug: text('slug').notNull(), legalName: text('legal_name'), taxId: text('tax_id'), pastorName: text('pastor_name'),
+  email: text('email'), phone: text('phone'), postalCode: text('postal_code'), street: text('street'), number: text('number'),
+  complement: text('complement'), district: text('district'), city: text('city'), state: text('state'),
+  financialAutonomy: integer('financial_autonomy', { mode: 'boolean' }).notNull().default(false),
+  communicationAutonomy: integer('communication_autonomy', { mode: 'boolean' }).notNull().default(true),
+  brandingAutonomy: integer('branding_autonomy', { mode: 'boolean' }).notNull().default(false),
+  status: text('status').notNull().default('active'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_church_units_slug').on(table.churchId, table.slug), index('idx_church_units_parent').on(table.churchId, table.parentUnitId)]);
+
+export const userUnitAccess = sqliteTable('user_unit_access', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  userId: text('user_id').notNull().references(() => churchUsers.id), unitId: text('unit_id').notNull().references(() => churchUnits.id),
+  role: text('role').notNull().default('viewer'), includeChildren: integer('include_children', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_user_unit_access_unique').on(table.churchId, table.userId, table.unitId), index('idx_user_unit_access_user').on(table.churchId, table.userId)]);
+
 export const auditLogs = sqliteTable('audit_logs', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
   actorUserId: text('actor_user_id').notNull(), action: text('action').notNull(), entityType: text('entity_type').notNull(),

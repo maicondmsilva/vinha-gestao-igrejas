@@ -64,6 +64,13 @@
       "when": 1788030251257,
       "tag": "0008_parched_jackpot",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788035400000,
+      "tag": "0009_multigestao_units",
+      "breakpoints": true
     }
   ]
 }
