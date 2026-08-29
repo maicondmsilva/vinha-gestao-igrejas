@@ -15,7 +15,11 @@ export async function GET(request:Request){
  const isGlobal=['admin','pastor'].includes(auth.session!.role);
  const query=isGlobal
   ? env.DB.prepare(`SELECT u.*,'manager' access_role,1 include_children FROM church_units u WHERE u.church_id=? AND u.status!='archived' ORDER BY CASE u.type WHEN 'headquarters' THEN 0 WHEN 'regional' THEN 1 ELSE 2 END,u.name`).bind(CHURCH_ID)
-  : env.DB.prepare(`SELECT DISTINCT u.*,a.role access_role,a.include_children FROM church_units u JOIN user_unit_access a ON a.unit_id=u.id AND a.church_id=u.church_id WHERE u.church_id=? AND a.user_id=? AND u.status!='archived' ORDER BY u.name`).bind(CHURCH_ID,auth.session!.id);
+  : env.DB.prepare(`WITH RECURSIVE permitted(id,access_role,include_children) AS (
+      SELECT unit_id,role,include_children FROM user_unit_access WHERE church_id=? AND user_id=?
+      UNION ALL
+      SELECT child.id,permitted.access_role,permitted.include_children FROM church_units child JOIN permitted ON child.parent_unit_id=permitted.id WHERE permitted.include_children=1 AND child.church_id=?
+    ) SELECT DISTINCT u.*,permitted.access_role,permitted.include_children FROM church_units u JOIN permitted ON permitted.id=u.id WHERE u.church_id=? AND u.status!='archived' ORDER BY CASE u.type WHEN 'headquarters' THEN 0 WHEN 'regional' THEN 1 ELSE 2 END,u.name`).bind(CHURCH_ID,auth.session!.id,CHURCH_ID,CHURCH_ID);
  const rows=await query.all();return NextResponse.json({units:rows.results,currentUser:auth.session,canManage:['admin','pastor'].includes(auth.session!.role)});
 }
 
