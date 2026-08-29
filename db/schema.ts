@@ -10,10 +10,18 @@ export const churches = sqliteTable('churches', {
 
 export const churchUsers = sqliteTable('church_users', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  personId: text('person_id'),
   externalUserId: text('external_user_id').notNull(), email: text('email').notNull(), name: text('name').notNull(),
   role: text('role').notNull().default('member'), status: text('status').notNull().default('active'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_church_users_tenant_external').on(table.churchId, table.externalUserId)]);
+
+export const auditLogs = sqliteTable('audit_logs', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  actorUserId: text('actor_user_id').notNull(), action: text('action').notNull(), entityType: text('entity_type').notNull(),
+  entityId: text('entity_id'), metadata: text('metadata', { mode: 'json' }).$type<Record<string, unknown>>(),
+  ipAddress: text('ip_address'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
 
 export const families = sqliteTable('families', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),

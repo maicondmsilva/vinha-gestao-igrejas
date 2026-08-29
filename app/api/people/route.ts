@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { NextResponse } from 'next/server';
+import { audit, authorize } from '../_auth';
 
 const CHURCH_ID = 'vinha-demo';
 
@@ -24,7 +25,8 @@ function displayDate(value: number | null) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(value));
 }
 
-export async function GET() {
+export async function GET(request:Request) {
+  const auth=await authorize(request,'people.read'); if(auth.response)return auth.response;
   await ensureChurch();
   const result = await env.DB.prepare(`SELECT p.*, a.postal_code, a.street, a.number, a.complement,
     a.district, a.city, a.state, e.name emergency_name, e.phone emergency_phone,
@@ -50,6 +52,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth=await authorize(request,'people.write'); if(auth.response)return auth.response;
   await ensureChurch();
   const data = await request.json<PersonInput>();
   if (!data.name?.trim()) return NextResponse.json({ error: 'Nome é obrigatório.' }, { status: 400 });
@@ -84,10 +87,12 @@ export async function POST(request: Request) {
       .bind(crypto.randomUUID(), CHURCH_ID, id, type, granted ? 1 : 0, granted ? now : null));
   }
   await env.DB.batch(statements);
+  await audit(request,auth.session!,'person.created','person',id,{name:data.name});
   return NextResponse.json({ id }, { status: 201 });
 }
 
 export async function PATCH(request: Request) {
+  const auth=await authorize(request,'people.write'); if(auth.response)return auth.response;
   const data = await request.json<PersonInput>();
   if (!data.id || !data.name?.trim()) return NextResponse.json({ error: 'Cadastro inválido.' }, { status: 400 });
   const tags = (data.tags ?? '').split(',').map(tag => tag.trim()).filter(Boolean);
@@ -101,5 +106,6 @@ export async function PATCH(request: Request) {
       WHERE person_id=? AND church_id=?`).bind(data.zip || null, data.address || null, data.number || null, data.extra || null,
         data.district || null, data.city || null, data.state || null, data.id, CHURCH_ID),
   ]);
+  await audit(request,auth.session!,'person.updated','person',data.id,{name:data.name});
   return NextResponse.json({ ok: true });
 }

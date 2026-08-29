@@ -57,6 +57,13 @@
       "when": 1788027778556,
       "tag": "0007_funny_joseph",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1788030251257,
+      "tag": "0008_parched_jackpot",
+      "breakpoints": true
     }
   ]
 }

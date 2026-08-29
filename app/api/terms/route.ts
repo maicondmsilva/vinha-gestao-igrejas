@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { NextResponse } from 'next/server';
+import { audit, authorize } from '../_auth';
 
 const CHURCH_ID = 'vinha-demo';
 const defaults = [
@@ -18,7 +19,8 @@ async function ensureDefaults() {
     .bind(`${CHURCH_ID}-${type}-1`,CHURCH_ID,type,title,content,now,now).run();
 }
 
-export async function GET() {
+export async function GET(request:Request) {
+  const auth=await authorize(request,'terms.read'); if(auth.response)return auth.response;
   await ensureDefaults();
   const church = await env.DB.prepare('SELECT name, senior_pastor_name, senior_pastor_cpf FROM churches WHERE id=?').bind(CHURCH_ID).first();
   const terms = await env.DB.prepare('SELECT id, consent_type, title, version, content, effective_at FROM consent_terms WHERE church_id=? AND active=1 ORDER BY consent_type').bind(CHURCH_ID).all();
@@ -26,6 +28,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const auth=await authorize(request,'terms.write'); if(auth.response)return auth.response;
   await ensureDefaults(); const data = await request.json<{pastorName?:string;pastorCpf?:string;type?:string;title?:string;content?:string}>();
   if (data.pastorName) await env.DB.prepare('UPDATE churches SET senior_pastor_name=?, senior_pastor_cpf=? WHERE id=?').bind(data.pastorName,data.pastorCpf||null,CHURCH_ID).run();
   if (data.type && data.title && data.content) {
@@ -37,5 +40,6 @@ export async function PATCH(request: Request) {
         VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`).bind(crypto.randomUUID(),CHURCH_ID,data.type,data.title,nextVersion,data.content,now,now),
     ]);
   }
+  await audit(request,auth.session!,'terms.updated','consent_term',data.type,{pastorUpdated:Boolean(data.pastorName)});
   return NextResponse.json({ok:true});
 }
