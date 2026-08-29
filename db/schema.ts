@@ -121,6 +121,30 @@ export const kidsCheckins = sqliteTable('kids_checkins', {
   notes: text('notes'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_kids_checkin_session_child').on(table.churchId, table.sessionId, table.childId)]);
 
+export const kidsRoomVolunteers = sqliteTable('kids_room_volunteers', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  sessionId: text('session_id').notNull().references(() => kidsSessions.id), personId: text('person_id').notNull().references(() => people.id),
+  role: text('role').notNull().default('Voluntário'), checkedInAt: integer('checked_in_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_kids_volunteer_session').on(table.churchId, table.sessionId, table.personId)]);
+
+export const kidsIncidents = sqliteTable('kids_incidents', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  sessionId: text('session_id').notNull().references(() => kidsSessions.id), childId: text('child_id').notNull().references(() => children.id),
+  category: text('category').notNull(), description: text('description').notNull(), severity: text('severity').notNull().default('low'),
+  guardianNotified: integer('guardian_notified', { mode: 'boolean' }).notNull().default(false),
+  recordedByUserId: text('recorded_by_user_id').notNull(), occurredAt: integer('occurred_at', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const guardianCalls = sqliteTable('guardian_calls', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  checkinId: text('checkin_id').notNull().references(() => kidsCheckins.id), guardianPersonId: text('guardian_person_id').notNull().references(() => people.id),
+  reason: text('reason').notNull(), status: text('status').notNull().default('sent'), channel: text('channel').notNull().default('app'),
+  sentAt: integer('sent_at', { mode: 'timestamp' }).notNull(), acknowledgedAt: integer('acknowledged_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
 export const pastoralNotes = sqliteTable('pastoral_notes', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
   personId: text('person_id').notNull().references(() => people.id), authorUserId: text('author_user_id').notNull(),
