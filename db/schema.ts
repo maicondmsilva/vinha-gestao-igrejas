@@ -116,7 +116,7 @@ export const kidsCheckins = sqliteTable('kids_checkins', {
   sessionId: text('session_id').notNull().references(() => kidsSessions.id), childId: text('child_id').notNull().references(() => children.id),
   checkinGuardianId: text('checkin_guardian_id').notNull().references(() => people.id), checkoutGuardianId: text('checkout_guardian_id').references(() => people.id),
   checkinByUserId: text('checkin_by_user_id').notNull(), checkoutByUserId: text('checkout_by_user_id'),
-  securityCode: text('security_code').notNull(), checkedInAt: integer('checked_in_at', { mode: 'timestamp' }).notNull(),
+  securityCode: text('security_code').notNull(), labelToken: text('label_token').notNull().default(''), checkedInAt: integer('checked_in_at', { mode: 'timestamp' }).notNull(),
   checkedOutAt: integer('checked_out_at', { mode: 'timestamp' }), status: text('status').notNull().default('checked_in'),
   notes: text('notes'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_kids_checkin_session_child').on(table.churchId, table.sessionId, table.childId)]);
