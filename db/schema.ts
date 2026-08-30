@@ -192,3 +192,31 @@ export const personCustomFieldValues = sqliteTable('person_custom_field_values',
   fieldId: text('field_id').notNull().references(() => customFieldDefinitions.id), value: text('value'),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_person_custom_field').on(table.churchId, table.personId, table.fieldId)]);
+
+export const events = sqliteTable('events', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  unitId: text('unit_id').references(() => churchUnits.id), createdByUserId: text('created_by_user_id').notNull().references(() => churchUsers.id),
+  title: text('title').notNull(), publicSlug: text('public_slug').notNull(), description: text('description').notNull(), category: text('category').notNull().default('Geral'),
+  format: text('format').notNull().default('presential'), locationName: text('location_name'), address: text('address'), onlineUrl: text('online_url'),
+  startsAt: integer('starts_at', { mode: 'timestamp' }).notNull(), endsAt: integer('ends_at', { mode: 'timestamp' }).notNull(),
+  scope: text('scope').notNull().default('unit'), registrationMode: text('registration_mode').notNull().default('public'),
+  capacity: integer('capacity'), status: text('status').notNull().default('draft'), publishedAt: integer('published_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(), updatedAt: integer('updated_at', { mode: 'timestamp' }),
+}, table => [uniqueIndex('idx_events_public_slug').on(table.publicSlug), index('idx_events_church_unit_start').on(table.churchId, table.unitId, table.startsAt)]);
+
+export const eventTickets = sqliteTable('event_tickets', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), eventId: text('event_id').notNull().references(() => events.id),
+  name: text('name').notNull(), priceCents: integer('price_cents').notNull().default(0), quantity: integer('quantity'),
+  salesStartAt: integer('sales_start_at', { mode: 'timestamp' }), salesEndAt: integer('sales_end_at', { mode: 'timestamp' }),
+  status: text('status').notNull().default('active'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [index('idx_event_tickets_event').on(table.churchId, table.eventId)]);
+
+export const eventRegistrations = sqliteTable('event_registrations', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), eventId: text('event_id').notNull().references(() => events.id),
+  ticketId: text('ticket_id').notNull().references(() => eventTickets.id), personId: text('person_id').references(() => people.id),
+  fullName: text('full_name').notNull(), email: text('email').notNull(), phone: text('phone'), document: text('document'),
+  quantity: integer('quantity').notNull().default(1), amountCents: integer('amount_cents').notNull().default(0),
+  paymentStatus: text('payment_status').notNull().default('not_required'), registrationStatus: text('registration_status').notNull().default('confirmed'),
+  checkinToken: text('checkin_token').notNull(), checkedInAt: integer('checked_in_at', { mode: 'timestamp' }),
+  consentSnapshot: text('consent_snapshot', { mode: 'json' }).$type<Record<string,unknown>>(), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_event_registration_token').on(table.checkinToken), index('idx_event_registration_event').on(table.churchId, table.eventId)]);
