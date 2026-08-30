@@ -227,3 +227,11 @@ export const eventCoupons = sqliteTable('event_coupons', {
   maxUses: integer('max_uses'), usedCount: integer('used_count').notNull().default(0), startsAt: integer('starts_at', { mode: 'timestamp' }),
   endsAt: integer('ends_at', { mode: 'timestamp' }), status: text('status').notNull().default('active'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_event_coupon_code').on(table.churchId, table.eventId, table.code), index('idx_event_coupons_event').on(table.churchId, table.eventId)]);
+
+export const paymentProviderSettings = sqliteTable('payment_provider_settings', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), provider: text('provider').notNull(),
+  displayName: text('display_name').notNull(), accountReference: text('account_reference'), environment: text('environment').notNull().default('sandbox'),
+  methods: text('methods', { mode: 'json' }).$type<string[]>().notNull().default([]), status: text('status').notNull().default('not_configured'),
+  isPrimary: integer('is_primary', { mode: 'boolean' }).notNull().default(false), updatedByUserId: text('updated_by_user_id').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(), updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_payment_provider_church').on(table.churchId, table.provider), index('idx_payment_provider_primary').on(table.churchId, table.isPrimary)]);
