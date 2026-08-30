@@ -220,3 +220,10 @@ export const eventRegistrations = sqliteTable('event_registrations', {
   checkinToken: text('checkin_token').notNull(), checkedInAt: integer('checked_in_at', { mode: 'timestamp' }),
   consentSnapshot: text('consent_snapshot', { mode: 'json' }).$type<Record<string,unknown>>(), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_event_registration_token').on(table.checkinToken), index('idx_event_registration_event').on(table.churchId, table.eventId)]);
+
+export const eventCoupons = sqliteTable('event_coupons', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), eventId: text('event_id').notNull().references(() => events.id),
+  code: text('code').notNull(), discountType: text('discount_type').notNull().default('percent'), discountValue: integer('discount_value').notNull(),
+  maxUses: integer('max_uses'), usedCount: integer('used_count').notNull().default(0), startsAt: integer('starts_at', { mode: 'timestamp' }),
+  endsAt: integer('ends_at', { mode: 'timestamp' }), status: text('status').notNull().default('active'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_event_coupon_code').on(table.churchId, table.eventId, table.code), index('idx_event_coupons_event').on(table.churchId, table.eventId)]);

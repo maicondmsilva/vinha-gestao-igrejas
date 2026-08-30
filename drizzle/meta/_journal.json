@@ -78,6 +78,13 @@
       "when": 1788120000000,
       "tag": "0010_events_and_registrations",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1788123600000,
+      "tag": "0011_event_operations",
+      "breakpoints": true
     }
   ]
 }
