@@ -211,6 +211,14 @@ export const eventTickets = sqliteTable('event_tickets', {
   status: text('status').notNull().default('active'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [index('idx_event_tickets_event').on(table.churchId, table.eventId)]);
 
+export const eventMedia = sqliteTable('event_media', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  eventId: text('event_id').notNull().references(() => events.id), objectKey: text('object_key').notNull(),
+  mediaType: text('media_type').notNull().default('gallery'), altText: text('alt_text'), sortOrder: integer('sort_order').notNull().default(0),
+  contentType: text('content_type').notNull(), sizeBytes: integer('size_bytes').notNull(), createdByUserId: text('created_by_user_id').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_event_media_object_key').on(table.objectKey), index('idx_event_media_event').on(table.churchId, table.eventId, table.mediaType, table.sortOrder)]);
+
 export const eventRegistrations = sqliteTable('event_registrations', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), eventId: text('event_id').notNull().references(() => events.id),
   ticketId: text('ticket_id').notNull().references(() => eventTickets.id), personId: text('person_id').references(() => people.id),
