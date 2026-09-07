@@ -219,6 +219,23 @@ export const eventMedia = sqliteTable('event_media', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_event_media_object_key').on(table.objectKey), index('idx_event_media_event').on(table.churchId, table.eventId, table.mediaType, table.sortOrder)]);
 
+export const eventScheduleItems = sqliteTable('event_schedule_items', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), eventId: text('event_id').notNull().references(() => events.id),
+  title: text('title').notNull(), description: text('description'), location: text('location'), startsAt: integer('starts_at', { mode: 'timestamp' }).notNull(), endsAt: integer('ends_at', { mode: 'timestamp' }),
+  sortOrder: integer('sort_order').notNull().default(0), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [index('idx_event_schedule_event').on(table.churchId, table.eventId, table.startsAt)]);
+
+export const eventGuests = sqliteTable('event_guests', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), eventId: text('event_id').notNull().references(() => events.id),
+  name: text('name').notNull(), role: text('role'), biography: text('biography'), profileUrl: text('profile_url'), sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [index('idx_event_guests_event').on(table.churchId, table.eventId, table.sortOrder)]);
+
+export const eventOrganizers = sqliteTable('event_organizers', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), eventId: text('event_id').notNull().references(() => events.id),
+  name: text('name').notNull(), role: text('role'), email: text('email'), phone: text('phone'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [index('idx_event_organizers_event').on(table.churchId, table.eventId)]);
+
 export const eventRegistrations = sqliteTable('event_registrations', {
   id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), eventId: text('event_id').notNull().references(() => events.id),
   ticketId: text('ticket_id').notNull().references(() => eventTickets.id), personId: text('person_id').references(() => people.id),
