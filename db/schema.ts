@@ -270,6 +270,8 @@ export const eventPaymentOrders = sqliteTable('event_payment_orders', {
   provider: text('provider').notNull(), paymentMethod: text('payment_method').notNull().default('all'), amountCents: integer('amount_cents').notNull(),
   currency: text('currency').notNull().default('BRL'), providerPaymentId: text('provider_payment_id'), checkoutUrl: text('checkout_url'),
   status: text('status').notNull().default('created'), expiresAt: integer('expires_at', { mode: 'timestamp' }),
+  feeCents: integer('fee_cents').notNull().default(0), netAmountCents: integer('net_amount_cents'),
+  settledAt: integer('settled_at', { mode: 'timestamp' }), reconciliationStatus: text('reconciliation_status').notNull().default('pending'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(), updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_event_payment_registration').on(table.registrationId), uniqueIndex('idx_event_payment_provider_id').on(table.provider, table.providerPaymentId), index('idx_event_payment_church_status').on(table.churchId, table.status)]);
 
