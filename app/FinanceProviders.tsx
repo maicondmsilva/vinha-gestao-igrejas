@@ -1,10 +1,11 @@
 'use client';
 import './finance-providers.css';
 import {useEffect,useState} from 'react';
+import FinancialLedger from './FinancialLedger';
 import ReconciliationPanel from './ReconciliationPanel';
 type Provider={provider:string;displayName:string;account_reference?:string;environment:string;methods:string[];status:string;is_primary:number;credential_hint?:string};
 const info:Record<string,{mark:string;description:string}>={mercado_pago:{mark:'MP',description:'Pix, cartão e Checkout Mercado Pago.'},asaas:{mark:'A',description:'Pix e cartão com conciliação automática.'},safe2pay:{mark:'S2',description:'Pix, boleto e cartão em produção.'}};
-export default function FinanceProviders(){
+function LegacyProviderSettings(){
  const [providers,setProviders]=useState<Provider[]>([]),[canManage,setCanManage]=useState(false),[editing,setEditing]=useState<Provider|null>(null),[message,setMessage]=useState('');
  const load=()=>fetch('/api/finance/providers').then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);setProviders((d.providers||[]).map((p:any)=>({...p,methods:Array.isArray(p.methods)?p.methods:JSON.parse(p.methods||'[]')})));setCanManage(d.canManage)}).catch(e=>setMessage(e.message));useEffect(()=>{load()},[]);
  async function save(form:HTMLFormElement){const d=new FormData(form),methods=['pix','card','boleto'].filter(x=>d.get(x)==='on'),r=await fetch('/api/finance/providers',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:editing?.provider,accountReference:d.get('accountReference'),environment:d.get('environment'),credential:d.get('credential'),methods,isPrimary:d.get('isPrimary')==='on'})}),result=await r.json();setMessage(r.ok?result.message:result.error);if(r.ok){setEditing(null);load()}}
@@ -17,3 +18,5 @@ export default function FinanceProviders(){
   {editing&&<div className="overlay"><form className="modal provider-modal" onSubmit={e=>{e.preventDefault();save(e.currentTarget)}}><div className="modal-head"><div><p className="section-over">CONECTAR PROVEDOR</p><h2>{editing.displayName}</h2></div><button type="button" onClick={()=>setEditing(null)}>×</button></div><label>Identificação da conta<input name="accountReference" defaultValue={editing.account_reference||''}/></label><div className="form-row"><label>Ambiente<select name="environment" defaultValue={editing.environment}><option value="sandbox">Testes (sandbox)</option><option value="production">Produção</option></select></label><label>Chave de API<input name="credential" type="password" autoComplete="new-password" placeholder={editing.credential_hint?`Manter ${editing.credential_hint}`:'Cole a chave do provedor'}/></label></div><fieldset><legend>Formas de recebimento</legend>{[['pix','Pix'],['card','Cartão'],['boleto','Boleto']].map(([key,label])=><label key={key}><input type="checkbox" name={key} defaultChecked={editing.methods.includes(key)}/>{label}</label>)}</fieldset><label className="primary-check"><input type="checkbox" name="isPrimary" defaultChecked={Boolean(editing.is_primary)}/> Usar como provedor principal</label><div className="credential-note"><b>Conexão protegida</b><span>A chave será testada e criptografada antes de ser armazenada.</span></div><div className="modal-actions"><button type="button" onClick={()=>setEditing(null)}>Cancelar</button><button className="create">Testar e conectar</button></div></form></div>}
  </div>
 }
+
+export default function FinanceProviders(){return <div className="content finance-page"><FinancialLedger/><ReconciliationPanel/></div>}
