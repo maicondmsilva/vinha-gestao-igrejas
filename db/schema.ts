@@ -280,3 +280,13 @@ export const paymentWebhookEvents = sqliteTable('payment_webhook_events', {
   eventType: text('event_type'), status: text('status').notNull().default('received'), payload: text('payload', { mode: 'json' }).$type<Record<string,unknown>>(),
   receivedAt: integer('received_at', { mode: 'timestamp' }).notNull(), processedAt: integer('processed_at', { mode: 'timestamp' }),
 }, table => [uniqueIndex('idx_payment_webhook_provider_event').on(table.provider, table.externalEventId)]);
+
+export const appRegistrationRequests = sqliteTable('app_registration_requests', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  unitId: text('unit_id').notNull().references(() => churchUnits.id), externalUserId: text('external_user_id').notNull(),
+  matchedPersonId: text('matched_person_id').references(() => people.id), fullName: text('full_name').notNull(),
+  cpf: text('cpf'), email: text('email').notNull(), phone: text('phone').notNull(), birthDate: text('birth_date'),
+  themePreference: text('theme_preference').notNull().default('system'), status: text('status').notNull().default('new_pending'),
+  matchScore: integer('match_score').notNull().default(0), matchReason: text('match_reason'), requestedAt: integer('requested_at', { mode: 'timestamp' }).notNull(),
+  reviewedByUserId: text('reviewed_by_user_id'), reviewedAt: integer('reviewed_at', { mode: 'timestamp' }), decisionNote: text('decision_note'),
+}, table => [uniqueIndex('idx_app_registration_external').on(table.churchId, table.externalUserId), index('idx_app_registration_queue').on(table.churchId, table.unitId, table.status, table.requestedAt)]);
