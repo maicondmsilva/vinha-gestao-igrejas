@@ -290,3 +290,21 @@ export const appRegistrationRequests = sqliteTable('app_registration_requests', 
   matchScore: integer('match_score').notNull().default(0), matchReason: text('match_reason'), requestedAt: integer('requested_at', { mode: 'timestamp' }).notNull(),
   reviewedByUserId: text('reviewed_by_user_id'), reviewedAt: integer('reviewed_at', { mode: 'timestamp' }), decisionNote: text('decision_note'),
 }, table => [uniqueIndex('idx_app_registration_external').on(table.churchId, table.externalUserId), index('idx_app_registration_queue').on(table.churchId, table.unitId, table.status, table.requestedAt)]);
+
+export const saasPlans = sqliteTable('saas_plans', {
+  id: text('id').primaryKey(), code: text('code').notNull(), name: text('name').notNull(), description: text('description'),
+  basePriceCents: integer('base_price_cents').notNull().default(0), billingCycle: text('billing_cycle').notNull().default('monthly'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_saas_plans_code').on(table.code)]);
+
+export const saasSubscriptions = sqliteTable('saas_subscriptions', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), planId: text('plan_id').notNull().references(() => saasPlans.id),
+  status: text('status').notNull().default('trialing'), appAddon: integer('app_addon', { mode: 'boolean' }).notNull().default(false),
+  trialEndsAt: integer('trial_ends_at', { mode: 'timestamp' }), currentPeriodEnd: integer('current_period_end', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(), updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_saas_subscription_church').on(table.churchId)]);
+
+export const saasSubscriptionModules = sqliteTable('saas_subscription_modules', {
+  id: text('id').primaryKey(), subscriptionId: text('subscription_id').notNull().references(() => saasSubscriptions.id), moduleCode: text('module_code').notNull(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true), limitValue: integer('limit_value'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_saas_subscription_module').on(table.subscriptionId, table.moduleCode)]);
