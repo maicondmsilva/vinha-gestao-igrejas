@@ -47,7 +47,12 @@ export async function GET(request:Request){
     result.kids={summary,rooms:rooms.results};
     if(grants.kids.level==='read'&&grants.kids.personalData){const children=await env.DB.prepare('SELECT id,full_name,birth_date,allergies,special_needs,status FROM children WHERE church_id=? ORDER BY full_name LIMIT 60').bind(childId).all();result.kids.children=children.results}
   }
-  result.placeholders=['cells','scales','reports'].filter(code=>grants[code].allowed).map(code=>({code,name:moduleNames[code],level:grants[code].level,message:'Permissão ativa. Os indicadores deste módulo serão conectados quando sua base operacional estiver disponível.'}));
+  if(grants.cells.allowed){
+    const summary=await env.DB.prepare(`SELECT COUNT(*) total,SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) active,(SELECT COUNT(*) FROM cell_members cm WHERE cm.church_id=? AND cm.status='active') members,(SELECT COUNT(*) FROM cell_meetings mt WHERE mt.church_id=?) meetings FROM cells WHERE church_id=?`).bind(childId,childId,childId).first<Record<string,number>>();
+    result.cells={summary};
+    if(grants.cells.level==='read'){const rows=await env.DB.prepare(`SELECT c.id,c.name,c.meeting_day,c.meeting_time,c.status,COUNT(cm.id) members,l.full_name leader_name FROM cells c LEFT JOIN cell_members cm ON cm.cell_id=c.id AND cm.status='active' LEFT JOIN people l ON l.id=c.leader_person_id WHERE c.church_id=? GROUP BY c.id ORDER BY c.name`).bind(childId).all<Record<string,any>>();result.cells.items=rows.results.map(x=>({...x,leader_name:grants.cells.personalData?x.leader_name:'Liderança protegida'}))}
+  }
+  result.placeholders=['scales','reports'].filter(code=>grants[code].allowed).map(code=>({code,name:moduleNames[code],level:grants[code].level,message:'Permissão ativa. Os indicadores deste módulo serão conectados quando sua base operacional estiver disponível.'}));
   await audit(request,session,'hierarchy.overview.view','church',childId,{modules:codes.filter(code=>grants[code].allowed)});
   return NextResponse.json(result);
 }
