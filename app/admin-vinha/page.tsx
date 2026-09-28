@@ -3,7 +3,7 @@ import {useEffect,useMemo,useState} from 'react';
 import Link from 'next/link';
 import './platform.css';
 
-type Org={id:string;name:string;app_name:string;slug:string;primary_color:string;subscription_status:string;app_addon:number;trial_ends_at:number;plan_id:string;plan_name:string;base_price_cents:number;units_count:number;people_count:number;users_count:number;owner_email?:string};
+type Org={id:string;name:string;app_name:string;slug:string;primary_color:string;subscription_status:string;app_addon:number;trial_ends_at:number;plan_id:string;plan_name:string;base_price_cents:number;units_count:number;people_count:number;users_count:number;owner_email?:string;billing_profile_complete:number};
 type Plan={id:string;name:string;base_price_cents:number};
 const money=(n:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format((n||0)/100);
 export default function PlatformAdministration(){const[organizations,setOrganizations]=useState<Org[]>([]),[plans,setPlans]=useState<Plan[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[show,setShow]=useState(false),[saving,setSaving]=useState(false),[search,setSearch]=useState(''),[form,setForm]=useState({name:'',ownerName:'',ownerEmail:'',planId:'plan-essential',appAddon:true});
