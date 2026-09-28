@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { env } from 'cloudflare:workers';
+import { sessionFrom } from '../../_auth';
 
 const terms: Record<string, { title: string; paragraphs: string[] }> = {
   privacy: { title: 'Termo de Consentimento para Tratamento de Dados', paragraphs: [
@@ -43,12 +44,13 @@ function makePdf(title: string, paragraphs: string[], church: string, person: st
 }
 
 export async function GET(request: Request) {
+  const session=await sessionFrom(request);if(!session)return NextResponse.json({error:'Autenticação necessária.'},{status:401});const churchId=session.churchId;
   const url = new URL(request.url); const type = url.searchParams.get('type') || 'privacy'; const fallback = terms[type] || terms.privacy;
-  const churchRow=await env.DB.prepare('SELECT name,senior_pastor_name FROM churches WHERE id=?').bind('vinha-demo').first<{name:string;senior_pastor_name:string}>();
-  const termRow=await env.DB.prepare('SELECT title,content,version FROM consent_terms WHERE church_id=? AND consent_type=? AND active=1 ORDER BY effective_at DESC LIMIT 1').bind('vinha-demo',type).first<{title:string;content:string;version:string}>();
+  const churchRow=await env.DB.prepare('SELECT name,senior_pastor_name FROM churches WHERE id=?').bind(churchId).first<{name:string;senior_pastor_name:string}>();
+  const termRow=await env.DB.prepare('SELECT title,content,version FROM consent_terms WHERE church_id=? AND consent_type=? AND active=1 ORDER BY effective_at DESC LIMIT 1').bind(churchId,type).first<{title:string;content:string;version:string}>();
   const personId=url.searchParams.get('personId'); const childId=url.searchParams.get('childId'); let person=url.searchParams.get('person')||''; const details:string[]=[];
-  if(personId){const row=await env.DB.prepare('SELECT full_name,cpf,birth_date,email,phone FROM people WHERE id=? AND church_id=?').bind(personId,'vinha-demo').first<Record<string,string>>();if(row){person=row.full_name;details.push(`CPF: ${row.cpf||'nao informado'} | Nascimento: ${row.birth_date||'nao informado'}`,`E-mail: ${row.email||'nao informado'} | Telefone: ${row.phone||'nao informado'}`)}}
-  if(childId){const child=await env.DB.prepare('SELECT full_name,birth_date,allergies,medical_notes FROM children WHERE id=? AND church_id=?').bind(childId,'vinha-demo').first<Record<string,string>>();const guardians=await env.DB.prepare(`SELECT p.full_name,g.relationship,g.is_primary FROM child_guardians g JOIN people p ON p.id=g.guardian_person_id WHERE g.child_id=? AND g.church_id=? ORDER BY g.is_primary DESC`).bind(childId,'vinha-demo').all<Record<string,string|number>>();if(child){details.push(`Crianca: ${child.full_name} | Nascimento: ${child.birth_date}`,`Alergias: ${child.allergies||'nao informadas'}`,`Responsaveis vinculados: ${guardians.results.map(g=>`${g.full_name} (${g.relationship})`).join(', ')}`)}}
+  if(personId){const row=await env.DB.prepare('SELECT full_name,cpf,birth_date,email,phone FROM people WHERE id=? AND church_id=?').bind(personId,churchId).first<Record<string,string>>();if(row){person=row.full_name;details.push(`CPF: ${row.cpf||'nao informado'} | Nascimento: ${row.birth_date||'nao informado'}`,`E-mail: ${row.email||'nao informado'} | Telefone: ${row.phone||'nao informado'}`)}}
+  if(childId){const child=await env.DB.prepare('SELECT full_name,birth_date,allergies,medical_notes FROM children WHERE id=? AND church_id=?').bind(childId,churchId).first<Record<string,string>>();const guardians=await env.DB.prepare(`SELECT p.full_name,g.relationship,g.is_primary FROM child_guardians g JOIN people p ON p.id=g.guardian_person_id WHERE g.child_id=? AND g.church_id=? ORDER BY g.is_primary DESC`).bind(childId,churchId).all<Record<string,string|number>>();if(child){details.push(`Crianca: ${child.full_name} | Nascimento: ${child.birth_date}`,`Alergias: ${child.allergies||'nao informadas'}`,`Responsaveis vinculados: ${guardians.results.map(g=>`${g.full_name} (${g.relationship})`).join(', ')}`)}}
   const church=churchRow?.name||url.searchParams.get('church')||'Igreja Central'; const paragraphs=[termRow?.content||fallback.paragraphs[0],...fallback.paragraphs.slice(1)];
   const id = `${type.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`; const pdf = makePdf(termRow?.title||fallback.title,paragraphs,church,person,id,churchRow?.senior_pastor_name||'Pastor titular',details);
   return new NextResponse(pdf, { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${type}-${clean(person||'modelo').toLowerCase().replace(/\s+/g,'-')}.pdf"`, 'Cache-Control': 'no-store' } });
