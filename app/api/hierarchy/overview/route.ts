@@ -52,7 +52,12 @@ export async function GET(request:Request){
     result.cells={summary};
     if(grants.cells.level==='read'){const rows=await env.DB.prepare(`SELECT c.id,c.name,c.meeting_day,c.meeting_time,c.status,COUNT(cm.id) members,l.full_name leader_name FROM cells c LEFT JOIN cell_members cm ON cm.cell_id=c.id AND cm.status='active' LEFT JOIN people l ON l.id=c.leader_person_id WHERE c.church_id=? GROUP BY c.id ORDER BY c.name`).bind(childId).all<Record<string,any>>();result.cells.items=rows.results.map(x=>({...x,leader_name:grants.cells.personalData?x.leader_name:'Liderança protegida'}))}
   }
-  result.placeholders=['scales','reports'].filter(code=>grants[code].allowed).map(code=>({code,name:moduleNames[code],level:grants[code].level,message:'Permissão ativa. Os indicadores deste módulo serão conectados quando sua base operacional estiver disponível.'}));
+  if(grants.scales.allowed){
+    const summary=await env.DB.prepare(`SELECT COUNT(*) total,SUM(CASE WHEN status='published' THEN 1 ELSE 0 END) published,(SELECT COUNT(*) FROM schedule_positions p WHERE p.church_id=?) positions,(SELECT COUNT(*) FROM schedule_positions p WHERE p.church_id=? AND p.response_status='confirmed') confirmed,(SELECT COUNT(*) FROM schedule_positions p WHERE p.church_id=? AND p.response_status='conflict') conflicts FROM schedules WHERE church_id=?`).bind(childId,childId,childId,childId).first<Record<string,number>>();
+    result.scales={summary};
+    if(grants.scales.level==='read'){const rows=await env.DB.prepare(`SELECT s.id,s.title,s.starts_at,s.status,COUNT(p.id) positions,SUM(CASE WHEN p.response_status='confirmed' THEN 1 ELSE 0 END) confirmed FROM schedules s LEFT JOIN schedule_positions p ON p.schedule_id=s.id WHERE s.church_id=? GROUP BY s.id ORDER BY s.starts_at DESC LIMIT 20`).bind(childId).all();result.scales.items=rows.results}
+  }
+  result.placeholders=['reports'].filter(code=>grants[code].allowed).map(code=>({code,name:moduleNames[code],level:grants[code].level,message:'Permissão ativa. Os indicadores deste módulo serão conectados quando sua base operacional estiver disponível.'}));
   await audit(request,session,'hierarchy.overview.view','church',childId,{modules:codes.filter(code=>grants[code].allowed)});
   return NextResponse.json(result);
 }
