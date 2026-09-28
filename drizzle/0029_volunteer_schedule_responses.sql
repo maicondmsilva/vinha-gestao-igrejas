@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS schedule_substitution_requests (id TEXT PRIMARY KEY,church_id TEXT NOT NULL,position_id TEXT NOT NULL,requested_by_person_id TEXT NOT NULL,suggested_person_id TEXT,reason TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',reviewed_by_user_id TEXT,reviewed_at INTEGER,created_at INTEGER NOT NULL,FOREIGN KEY (church_id) REFERENCES churches(id),FOREIGN KEY (position_id) REFERENCES schedule_positions(id) ON DELETE CASCADE,FOREIGN KEY (requested_by_person_id) REFERENCES people(id),FOREIGN KEY (suggested_person_id) REFERENCES people(id),FOREIGN KEY (reviewed_by_user_id) REFERENCES church_users(id));
+CREATE INDEX IF NOT EXISTS idx_substitution_position_status ON schedule_substitution_requests(position_id,status);
+PRAGMA optimize;
