@@ -1,7 +1,7 @@
 import {env} from 'cloudflare:workers';
 import {NextResponse} from 'next/server';
-import {sessionFrom} from '../../../_auth';
-async function admin(request:Request){const s=await sessionFrom(request);return s?.role==='admin'&&s.churchId==='vinha-demo'}
+import {platformSessionFrom} from '../../../_auth';
+const admin=platformSessionFrom;
 const digits=(v:unknown)=>String(v||'').replace(/\D/g,'');
 function validTaxId(value:string){if(![11,14].includes(value.length)||/^(\d)\1+$/.test(value))return false;const check=(base:string,weights:number[])=>{const sum=base.split('').reduce((a,n,i)=>a+Number(n)*weights[i],0),r=sum%11;return r<2?0:11-r};if(value.length===11){const d1=check(value.slice(0,9),[10,9,8,7,6,5,4,3,2]),d2=check(value.slice(0,9)+d1,[11,10,9,8,7,6,5,4,3,2]);return value.endsWith(`${d1}${d2}`)}const d1=check(value.slice(0,12),[5,4,3,2,9,8,7,6,5,4,3,2]),d2=check(value.slice(0,12)+d1,[6,5,4,3,2,9,8,7,6,5,4,3,2]);return value.endsWith(`${d1}${d2}`)}
 export async function GET(request:Request){if(!await admin(request))return NextResponse.json({error:'Acesso exclusivo da administração Vinha.'},{status:403});const id=new URL(request.url).searchParams.get('id')||'';const row=await env.DB.prepare(`SELECT c.id church_id,c.name church_name,c.slug,bp.*,(SELECT owner_email FROM saas_organization_invites i WHERE i.church_id=c.id ORDER BY i.created_at DESC LIMIT 1) owner_email FROM churches c LEFT JOIN saas_billing_profiles bp ON bp.church_id=c.id WHERE c.id=?`).bind(id).first<Record<string,any>>();if(!row)return NextResponse.json({error:'Organização não encontrada.'},{status:404});return NextResponse.json({profile:row})}

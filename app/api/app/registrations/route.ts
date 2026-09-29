@@ -16,12 +16,17 @@ export async function GET(request:Request){
 }
 
 export async function POST(request:Request){
- const d=await request.json<Record<string,unknown>>(),fullName=clean(d.fullName),email=clean(d.email).toLowerCase(),phone=digits(d.phone),cpf=digits(d.cpf),birthDate=clean(d.birthDate),unitId=clean(d.unitId),externalUserId=clean(d.externalUserId)||crypto.randomUUID();
+ const externalUserId=request.headers.get('oai-authenticated-user-id'),authenticatedEmail=clean(request.headers.get('oai-authenticated-user-email')).toLowerCase();
+ if(!externalUserId||!authenticatedEmail)return NextResponse.json({error:'Entre com sua conta antes de solicitar o cadastro.'},{status:401});
+ const d=await request.json<Record<string,unknown>>(),fullName=clean(d.fullName),email=clean(d.email).toLowerCase(),phone=digits(d.phone),cpf=digits(d.cpf),birthDate=clean(d.birthDate),unitId=clean(d.unitId);
  if(!fullName||!email||!phone||!unitId)return NextResponse.json({error:'Nome, e-mail, celular e unidade são obrigatórios.'},{status:400});
+ if(email!==authenticatedEmail)return NextResponse.json({error:'Use o mesmo e-mail da conta com a qual você entrou.'},{status:403});
  const unit=await env.DB.prepare(`SELECT id,church_id FROM church_units WHERE id=? AND status='active'`).bind(unitId).first<{id:string;church_id:string}>();
  if(!unit)return NextResponse.json({error:'A unidade selecionada não está disponível.'},{status:400});
  const churchId=unit.church_id,match=await env.DB.prepare(`SELECT id,full_name,cpf,email,phone,birth_date FROM people WHERE church_id=? AND ((? != '' AND REPLACE(REPLACE(REPLACE(cpf,'.',''),'-',''),'/','')=?) OR lower(email)=? OR REPLACE(REPLACE(REPLACE(REPLACE(phone,'(',''),')',''),'-',''),' ','')=?) LIMIT 1`).bind(churchId,cpf,cpf,email,phone).first<Record<string,string>>();
  let score=0,reason='';if(match){const reasons=[];if(cpf&&digits(match.cpf)===cpf){score+=65;reasons.push('CPF')}if(email&&match.email?.toLowerCase()===email){score+=20;reasons.push('e-mail')}if(phone&&digits(match.phone)===phone){score+=10;reasons.push('celular')}if(birthDate&&match.birth_date===birthDate){score+=5;reasons.push('nascimento')}reason=reasons.join(', ')}
+ const duplicate=await env.DB.prepare("SELECT id FROM app_registration_requests WHERE church_id=? AND external_user_id=? AND status IN ('matched_pending','new_pending') LIMIT 1").bind(churchId,externalUserId).first();
+ if(duplicate)return NextResponse.json({error:'Você já possui uma solicitação aguardando análise nesta igreja.'},{status:409});
  const now=Date.now(),id=crypto.randomUUID(),personId=match?.id||crypto.randomUUID(),status=match?'matched_pending':'new_pending';
  const statements=[];
  if(!match)statements.push(env.DB.prepare(`INSERT INTO people (id,church_id,full_name,birth_date,cpf,email,phone,journey_status,campus,group_name,joined_at,baptized,tags,app_role,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,'Sem grupo',?,0,'[]','member','pending_approval',?)`).bind(personId,churchId,fullName,birthDate||null,cpf||null,email,phone,'Em integração',unitId,now,now));

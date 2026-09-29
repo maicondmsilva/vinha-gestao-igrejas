@@ -1,9 +1,9 @@
 import { env } from 'cloudflare:workers';
 import { NextResponse } from 'next/server';
-import { sessionFrom } from '../../_auth';
+import { platformSessionFrom } from '../../_auth';
 
 const modules=['people','finance','cells','kids','events','scales','worship','communication','broadcasts','reports','terms'];
-async function platformSession(request:Request){const session=await sessionFrom(request);if(!session||session.role!=='admin'||session.churchId!=='vinha-demo')return null;return session}
+const platformSession=platformSessionFrom;
 const slugify=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
 
 export async function GET(request:Request){if(!await platformSession(request))return NextResponse.json({error:'Acesso exclusivo da administração Vinha.'},{status:403});const [organizations,plans]=await Promise.all([

@@ -1,0 +1,5 @@
+'use client';
+import Link from 'next/link';
+import {ReactNode,useEffect,useState} from 'react';
+import './admin-gate.css';
+export default function AdminVinhaGate({children}:{children:ReactNode}){const[state,setState]=useState<'loading'|'allowed'|'denied'>('loading');useEffect(()=>{fetch('/api/platform/session').then(response=>setState(response.ok?'allowed':'denied')).catch(()=>setState('denied'))},[]);if(state==='allowed')return children;return <main className="admin-vinha-gate"><section><span>V</span>{state==='loading'?<><small>CENTRAL VINHA</small><h1>Validando operador</h1><p>Confirmando as credenciais administrativas da plataforma.</p><i/></>:<><small>ÁREA INTERNA</small><h1>Acesso não autorizado</h1><p>Esta área é exclusiva dos operadores da Vinha. Administradores, pastores e equipes das igrejas continuam no painel da própria organização.</p><div><Link href="/painel">Ir para o painel da igreja</Link><a href="mailto:suporte@vinha.app">Contatar a Vinha</a></div></>}</section></main>}
