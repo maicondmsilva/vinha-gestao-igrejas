@@ -308,3 +308,11 @@ export const saasSubscriptionModules = sqliteTable('saas_subscription_modules', 
   id: text('id').primaryKey(), subscriptionId: text('subscription_id').notNull().references(() => saasSubscriptions.id), moduleCode: text('module_code').notNull(),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true), limitValue: integer('limit_value'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_saas_subscription_module').on(table.subscriptionId, table.moduleCode)]);
+
+export const saasOnboardingProgress = sqliteTable('saas_onboarding_progress', {
+  churchId: text('church_id').primaryKey().references(() => churches.id),
+  status: text('status').notNull().default('in_progress'), currentStep: text('current_step').notNull().default('identity'),
+  completedSteps: text('completed_steps', { mode: 'json' }).$type<string[]>().notNull().default([]),
+  startedAt: integer('started_at', { mode: 'timestamp' }).notNull(), updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  completedAt: integer('completed_at', { mode: 'timestamp' }), updatedByUserId: text('updated_by_user_id').references(() => churchUsers.id),
+}, table => [index('idx_saas_onboarding_status').on(table.status, table.updatedAt)]);
