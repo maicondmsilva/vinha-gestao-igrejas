@@ -316,3 +316,18 @@ export const saasOnboardingProgress = sqliteTable('saas_onboarding_progress', {
   startedAt: integer('started_at', { mode: 'timestamp' }).notNull(), updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   completedAt: integer('completed_at', { mode: 'timestamp' }), updatedByUserId: text('updated_by_user_id').references(() => churchUsers.id),
 }, table => [index('idx_saas_onboarding_status').on(table.status, table.updatedAt)]);
+
+export const churchUserInvites = sqliteTable('church_user_invites', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id),
+  name: text('name').notNull(), email: text('email').notNull(), role: text('role').notNull(), unitId: text('unit_id').references(() => churchUnits.id),
+  inviteToken: text('invite_token').notNull(), status: text('status').notNull().default('pending'), expiresAt: integer('expires_at', {mode:'timestamp'}).notNull(),
+  invitedByUserId: text('invited_by_user_id').notNull().references(() => churchUsers.id), createdAt: integer('created_at', {mode:'timestamp'}).notNull(),
+  sentAt: integer('sent_at', {mode:'timestamp'}), acceptedAt: integer('accepted_at', {mode:'timestamp'}),
+}, table => [uniqueIndex('idx_church_user_invites_token').on(table.inviteToken), index('idx_church_user_invites_queue').on(table.churchId,table.status,table.createdAt), index('idx_church_user_invites_email').on(table.churchId,table.email,table.status)]);
+
+export const memberImportJobs = sqliteTable('member_import_jobs', {
+  id: text('id').primaryKey(), churchId: text('church_id').notNull().references(() => churches.id), fileName: text('file_name').notNull(),
+  totalRows: integer('total_rows').notNull().default(0), importedRows: integer('imported_rows').notNull().default(0), skippedRows: integer('skipped_rows').notNull().default(0), errorRows: integer('error_rows').notNull().default(0),
+  status: text('status').notNull().default('processing'), summary: text('summary', {mode:'json'}).$type<Record<string,unknown>>(),
+  createdByUserId: text('created_by_user_id').notNull().references(() => churchUsers.id), createdAt: integer('created_at', {mode:'timestamp'}).notNull(), completedAt: integer('completed_at', {mode:'timestamp'}),
+}, table => [index('idx_member_import_jobs_church').on(table.churchId,table.createdAt)]);
