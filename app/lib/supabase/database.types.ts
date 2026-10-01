@@ -221,12 +221,68 @@ export type Database = {
         }
         Relationships: []
       }
+      user_access_preferences: {
+        Row: {
+          selected_organization_id: string | null
+          selected_unit_id: string | null
+          theme: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          selected_organization_id?: string | null
+          selected_unit_id?: string | null
+          theme?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          selected_organization_id?: string | null
+          selected_unit_id?: string | null
+          theme?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_access_preferences_selected_organization_id_fkey"
+            columns: ["selected_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_access_preferences_selected_unit_id_fkey"
+            columns: ["selected_unit_id"]
+            isOneToOne: false
+            referencedRelation: "organization_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      access_context: { Args: never; Returns: Json }
+      bootstrap_organization: {
+        Args: {
+          p_full_name?: string
+          p_headquarters_name: string
+          p_organization_name: string
+          p_organization_slug: string
+        }
+        Returns: string
+      }
+      set_access_context: {
+        Args: {
+          organization_id: string
+          selected_theme?: string
+          unit_id?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       membership_role:

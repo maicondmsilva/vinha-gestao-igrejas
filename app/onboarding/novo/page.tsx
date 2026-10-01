@@ -1,0 +1,16 @@
+'use client';
+import Link from 'next/link';
+import {FormEvent,useEffect,useState} from 'react';
+import '../../access-flow.css';
+import {createSupabaseBrowserClient,supabaseConfigured} from '../../lib/supabase/client';
+import {organizationSlug,parseAccessContext} from '../../lib/supabase/access';
+
+export default function NewOrganization(){
+ const[name,setName]=useState(''),[headquarters,setHeadquarters]=useState(''),[fullName,setFullName]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false);
+ async function verify(){if(!supabaseConfigured){location.replace('/login');return}const supabase=createSupabaseBrowserClient(),{data:userData}=await supabase.auth.getUser();if(!userData.user){location.replace('/login');return}const{data}=await supabase.rpc('access_context');if(parseAccessContext(data).memberships.length){location.replace('/acesso');return}setFullName(String(userData.user.user_metadata?.full_name||userData.user.user_metadata?.name||''));setReady(true)}
+ useEffect(()=>{const task=window.setTimeout(()=>void verify(),0);return()=>window.clearTimeout(task)},[]);
+ async function submit(event:FormEvent){event.preventDefault();setBusy(true);setNotice('');const slug=organizationSlug(name);if(!slug){setNotice('Informe um nome válido para o ministério.');setBusy(false);return}const{error}=await createSupabaseBrowserClient().rpc('bootstrap_organization',{p_organization_name:name,p_organization_slug:slug,p_headquarters_name:headquarters,p_full_name:fullName||undefined});if(error){setNotice(error.code==='23505'?'Este nome já está em uso ou sua conta já possui um ministério.':`Não foi possível criar o ministério: ${error.message}`);setBusy(false);return}location.href='/acesso'}
+ if(!ready)return <main className="access-flow"><section className="access-flow-card"><span className="login-symbol">V</span><h1>Preparando sua conta…</h1><p>Estamos validando o primeiro acesso com segurança.</p></section></main>;
+ return <main className="access-flow"><section className="access-flow-card onboarding-bootstrap"><Link className="access-flow-brand" href="/"><i>V</i><span><b>Vinha</b><small>Configuração inicial</small></span></Link><div className="access-step">PRIMEIRO ACESSO</div><h1>Crie o ambiente do seu ministério</h1><p>A sede e seu acesso de proprietário serão configurados automaticamente.</p>{notice&&<div className="access-flow-notice">{notice}</div>}<form onSubmit={submit}><label>Seu nome completo<input value={fullName} onChange={event=>setFullName(event.target.value)} required minLength={2}/></label><label>Nome do ministério<input value={name} onChange={event=>{setName(event.target.value);if(!headquarters)setHeadquarters(`Sede ${event.target.value}`)}} required minLength={2} maxLength={120}/></label><label>Nome da igreja sede<input value={headquarters} onChange={event=>setHeadquarters(event.target.value)} required minLength={2} maxLength={120}/></label><div className="bootstrap-preview"><span>Endereço digital</span><b>{organizationSlug(name)||'nome-do-ministerio'}</b></div><button className="access-primary" disabled={busy}>{busy?'Criando ambiente seguro…':'Criar ministério e sede'}</button></form><footer><span>Você será o proprietário inicial.</span><Link href="/login">Sair desta conta</Link></footer></section></main>
+}
+
