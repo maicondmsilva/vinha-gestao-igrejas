@@ -191,6 +191,33 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_operators: {
+        Row: {
+          active: boolean
+          created_at: string
+          full_name: string
+          role: Database["public"]["Enums"]["platform_operator_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          full_name: string
+          role?: Database["public"]["Enums"]["platform_operator_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          full_name?: string
+          role?: Database["public"]["Enums"]["platform_operator_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -275,6 +302,24 @@ export type Database = {
         }
         Returns: string
       }
+      bootstrap_platform_owner: {
+        Args: { p_full_name: string }
+        Returns: {
+          active: boolean
+          full_name: string
+          role: Database["public"]["Enums"]["platform_operator_role"]
+          user_id: string
+        }[]
+      }
+      platform_operator_context: {
+        Args: never
+        Returns: {
+          active: boolean
+          full_name: string
+          role: Database["public"]["Enums"]["platform_operator_role"]
+          user_id: string
+        }[]
+      }
       set_access_context: {
         Args: {
           organization_id: string
@@ -296,6 +341,7 @@ export type Database = {
         | "viewer"
       membership_status: "pending" | "active" | "suspended" | "revoked"
       organization_status: "active" | "trial" | "suspended" | "cancelled"
+      platform_operator_role: "owner" | "admin" | "support" | "read_only"
       unit_access_level: "read" | "manage" | "admin"
       unit_type:
         | "headquarters"
@@ -442,6 +488,7 @@ export const Constants = {
       ],
       membership_status: ["pending", "active", "suspended", "revoked"],
       organization_status: ["active", "trial", "suspended", "cancelled"],
+      platform_operator_role: ["owner", "admin", "support", "read_only"],
       unit_access_level: ["read", "manage", "admin"],
       unit_type: [
         "headquarters",
