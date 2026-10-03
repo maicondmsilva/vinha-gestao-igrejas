@@ -191,10 +191,93 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_operator_events: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: number
+          invitation_id: string | null
+          metadata: Json
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: never
+          invitation_id?: string | null
+          metadata?: Json
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: never
+          invitation_id?: string | null
+          metadata?: Json
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_operator_events_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "platform_operator_invites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_operator_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          revoked_at: string | null
+          role: Database["public"]["Enums"]["platform_operator_role"]
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          revoked_at?: string | null
+          role: Database["public"]["Enums"]["platform_operator_role"]
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          revoked_at?: string | null
+          role?: Database["public"]["Enums"]["platform_operator_role"]
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_operator_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "platform_operators"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       platform_operators: {
         Row: {
           active: boolean
           created_at: string
+          email: string
           full_name: string
           role: Database["public"]["Enums"]["platform_operator_role"]
           updated_at: string
@@ -203,6 +286,7 @@ export type Database = {
         Insert: {
           active?: boolean
           created_at?: string
+          email: string
           full_name: string
           role?: Database["public"]["Enums"]["platform_operator_role"]
           updated_at?: string
@@ -211,6 +295,7 @@ export type Database = {
         Update: {
           active?: boolean
           created_at?: string
+          email?: string
           full_name?: string
           role?: Database["public"]["Enums"]["platform_operator_role"]
           updated_at?: string
@@ -292,6 +377,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_platform_operator_invite: {
+        Args: { p_full_name: string; p_token: string }
+        Returns: {
+          active: boolean
+          full_name: string
+          role: Database["public"]["Enums"]["platform_operator_role"]
+          user_id: string
+        }[]
+      }
       access_context: { Args: never; Returns: Json }
       bootstrap_organization: {
         Args: {
