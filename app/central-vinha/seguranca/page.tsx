@@ -2,7 +2,6 @@
 import Image from 'next/image';
 import {FormEvent,useEffect,useState} from 'react';
 import {createSupabaseBrowserClient} from '../../lib/supabase/client';
-import '../../admin-vinha/admin-gate.css';
 
 type Mode='loading'|'enroll'|'challenge';
 export default function PlatformSecurity(){

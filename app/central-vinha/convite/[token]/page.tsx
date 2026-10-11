@@ -3,7 +3,6 @@ import Link from 'next/link';
 import {FormEvent,useState} from 'react';
 import {useParams} from 'next/navigation';
 import {createSupabaseBrowserClient} from '../../../lib/supabase/client';
-import '../../../admin-vinha/admin-gate.css';
 
 export default function PlatformInvite(){
  const params=useParams<{token:string}>(),token=String(params.token||''),[mode,setMode]=useState<'login'|'signup'>('signup'),[fullName,setFullName]=useState(''),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);

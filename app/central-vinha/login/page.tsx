@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import {FormEvent,useState} from 'react';
 import {createSupabaseBrowserClient} from '../../lib/supabase/client';
-import '../../admin-vinha/admin-gate.css';
 
 export default function PlatformLogin(){
  const[setup,setSetup]=useState(false),[fullName,setFullName]=useState(''),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
