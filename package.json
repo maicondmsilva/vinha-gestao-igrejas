@@ -15,7 +15,8 @@
     "db:stop": "supabase stop",
     "db:status": "supabase status",
     "db:reset": "supabase db reset --local",
-    "db:migrations": "supabase migration list --local"
+    "db:migrations": "supabase migration list --local",
+    "db:test": "supabase test db --local"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
