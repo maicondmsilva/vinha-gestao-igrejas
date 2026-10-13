@@ -1,5 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "pnpm run build:vercel"
+  "buildCommand": "pnpm run build:vercel",
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "app.vinhaigrejas.com.br" }],
+      "destination": "/login",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "central.vinhaigrejas.com.br" }],
+      "destination": "/central-vinha/login",
+      "permanent": false
+    }
+  ]
 }
