@@ -309,6 +309,30 @@ export const saasSubscriptionModules = sqliteTable('saas_subscription_modules', 
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true), limitValue: integer('limit_value'), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, table => [uniqueIndex('idx_saas_subscription_module').on(table.subscriptionId, table.moduleCode)]);
 
+export const saasModuleCatalog = sqliteTable('saas_module_catalog', {
+  code: text('code').primaryKey(), name: text('name').notNull(), description: text('description'),
+  monthlyPriceCents: integer('monthly_price_cents').notNull().default(0), active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(), updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const saasPlanModules = sqliteTable('saas_plan_modules', {
+  planId: text('plan_id').notNull().references(() => saasPlans.id), moduleCode: text('module_code').notNull().references(() => saasModuleCatalog.code),
+  included: integer('included', { mode: 'boolean' }).notNull().default(true), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_saas_plan_module').on(table.planId, table.moduleCode), index('idx_saas_plan_modules_code').on(table.moduleCode)]);
+
+export const saasPromotions = sqliteTable('saas_promotions', {
+  id: text('id').primaryKey(), code: text('code').notNull(), name: text('name').notNull(), discountType: text('discount_type').notNull(),
+  discountValue: integer('discount_value').notNull(), startsAt: integer('starts_at', { mode: 'timestamp' }), endsAt: integer('ends_at', { mode: 'timestamp' }),
+  maxRedemptions: integer('max_redemptions'), active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(), updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, table => [uniqueIndex('idx_saas_promotions_code').on(table.code), index('idx_saas_promotions_active_period').on(table.active, table.startsAt, table.endsAt)]);
+
+export const saasSubscriptionDiscounts = sqliteTable('saas_subscription_discounts', {
+  subscriptionId: text('subscription_id').primaryKey().references(() => saasSubscriptions.id), promotionId: text('promotion_id').references(() => saasPromotions.id),
+  customPercent: integer('custom_percent').notNull().default(0), customAmountCents: integer('custom_amount_cents').notNull().default(0),
+  validUntil: integer('valid_until', { mode: 'timestamp' }), createdAt: integer('created_at', { mode: 'timestamp' }).notNull(), updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, table => [index('idx_saas_subscription_discounts_promotion').on(table.promotionId)]);
+
 export const saasOnboardingProgress = sqliteTable('saas_onboarding_progress', {
   churchId: text('church_id').primaryKey().references(() => churches.id),
   status: text('status').notNull().default('in_progress'), currentStep: text('current_step').notNull().default('identity'),
