@@ -1,7 +1,27 @@
-import {env} from 'cloudflare:workers';
 import {NextResponse} from 'next/server';
+import {createClient} from '@supabase/supabase-js';
+import {createSupabaseRequestClient} from '../../../lib/supabase/request';
 
-async function invite(token:string){return env.DB.prepare(`SELECT i.id,i.church_id,i.owner_name,i.owner_email,i.status,c.name church_name,c.app_name,c.slug,c.primary_color,s.trial_ends_at,p.name plan_name FROM saas_organization_invites i JOIN churches c ON c.id=i.church_id LEFT JOIN saas_subscriptions s ON s.church_id=c.id LEFT JOIN saas_plans p ON p.id=s.plan_id WHERE i.invite_token=?`).bind(token).first<Record<string,any>>()}
-export async function GET(request:Request){const token=new URL(request.url).searchParams.get('token')||'',row=await invite(token);if(!row)return NextResponse.json({error:'Convite inválido ou expirado.'},{status:404});return NextResponse.json({organization:{name:row.church_name,appName:row.app_name,slug:row.slug,color:row.primary_color},ownerName:row.owner_name,ownerEmail:row.owner_email.replace(/^(.{2}).*(@.*)$/,'$1••••$2'),planName:row.plan_name,trialEndsAt:row.trial_ends_at,status:row.status});}
-export async function POST(request:Request){const externalUserId=request.headers.get('oai-authenticated-user-id'),email=(request.headers.get('oai-authenticated-user-email')||'').toLowerCase(),name=decodeURIComponent(request.headers.get('oai-authenticated-user-full-name')||'');if(!externalUserId||!email)return NextResponse.json({error:'Entre com a conta que recebeu o convite.'},{status:401});const {token}=await request.json<{token?:string}>(),row=await invite(String(token||''));if(!row)return NextResponse.json({error:'Convite inválido ou expirado.'},{status:404});if(row.status==='accepted')return NextResponse.json({ok:true,slug:row.slug,alreadyAccepted:true,redirectUrl:`/onboarding?tenant=${row.slug}`});if(email!==String(row.owner_email).toLowerCase())return NextResponse.json({error:`Este convite foi enviado para ${row.owner_email}. Entre com esse endereço.`},{status:403});const now=Date.now(),existing=await env.DB.prepare('SELECT id FROM church_users WHERE church_id=? AND external_user_id=?').bind(row.church_id,externalUserId).first<{id:string}>(),userId=existing?.id||crypto.randomUUID();const statements=[];if(existing)statements.push(env.DB.prepare("UPDATE church_users SET role='admin',status='active',email=?,name=? WHERE id=?").bind(email,name||row.owner_name,userId));else statements.push(env.DB.prepare("INSERT INTO church_users (id,church_id,external_user_id,email,name,role,status,created_at) VALUES (?,?,?,?,?,'admin','active',?)").bind(userId,row.church_id,externalUserId,email,name||row.owner_name,now));statements.push(env.DB.prepare("UPDATE saas_organization_invites SET status='accepted',accepted_at=? WHERE id=?").bind(now,row.id));statements.push(env.DB.prepare("INSERT OR IGNORE INTO saas_onboarding_progress (church_id,status,current_step,completed_steps,started_at,updated_at,updated_by_user_id) VALUES (?,'in_progress','identity','[]',?,?,?)").bind(row.church_id,now,now,userId));statements.push(env.DB.prepare("INSERT INTO audit_logs (id,church_id,actor_user_id,action,entity_type,entity_id,metadata,ip_address,created_at) VALUES (?,?,?,?,?,?,?,?,?)").bind(crypto.randomUUID(),row.church_id,userId,'organization.activated','church',row.church_id,JSON.stringify({ownerEmail:email}),request.headers.get('cf-connecting-ip'),now));await env.DB.batch(statements);return NextResponse.json({ok:true,slug:row.slug,redirectUrl:`/onboarding?tenant=${row.slug}`});}
+type UntypedClient=ReturnType<typeof createClient>;
+const client=(request:Request)=>createSupabaseRequestClient(request) as unknown as UntypedClient;
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const errorMessage=(message:string)=>message.includes('invite_email_mismatch')?'Entre com o mesmo e-mail que recebeu o convite.':message.includes('invite_expired')?'Este convite expirou. Solicite um novo link à equipe da Vinha.':message.includes('invite_already_used')?'Este convite já foi utilizado por outra conta.':message.includes('authentication_required')?'Entre ou crie sua conta para ativar a organização.':'Convite inválido ou indisponível.';
 
+export async function GET(request:Request){
+ const token=new URL(request.url).searchParams.get('token')||'';
+ if(!uuid.test(token))return NextResponse.json({error:'Convite inválido ou expirado.'},{status:404});
+ const result=await client(request).rpc('organization_invite_preview',{p_token:token});
+ if(result.error)return NextResponse.json({error:errorMessage(result.error.message)},{status:404});
+ return NextResponse.json(result.data);
+}
+
+export async function POST(request:Request){
+ const {token}=await request.json<{token?:string}>(),value=String(token||'');
+ if(!uuid.test(value))return NextResponse.json({error:'Convite inválido ou expirado.'},{status:404});
+ const supabase=client(request),{data:{user}}=await supabase.auth.getUser();
+ if(!user)return NextResponse.json({error:'Entre ou crie sua conta para ativar a organização.',loginRequired:true},{status:401});
+ const result=await supabase.rpc('accept_organization_invite',{p_token:value});
+ if(result.error)return NextResponse.json({error:errorMessage(result.error.message)},{status:result.error.message.includes('mismatch')?403:400});
+ const activated=result.data as {slug:string;alreadyAccepted:boolean};
+ return NextResponse.json({ok:true,slug:activated.slug,alreadyAccepted:activated.alreadyAccepted,redirectUrl:`/onboarding?tenant=${activated.slug}`});
+}
