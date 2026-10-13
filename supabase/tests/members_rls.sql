@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(4);
+select plan(6);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
@@ -50,6 +50,18 @@ select throws_ok(
   '42501',
   'new row violates row-level security policy for table "people"',
   'administrador não insere membro em outra organização'
+);
+
+select lives_ok(
+  $$insert into public.audit_logs (organization_id, actor_user_id, action, entity_type) values ('b0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000001', 'person.created', 'person')$$,
+  'usuário autenticado registra auditoria na própria organização'
+);
+
+select throws_ok(
+  $$insert into public.audit_logs (organization_id, actor_user_id, action, entity_type) values ('b0000000-0000-4000-8000-000000000002', 'a0000000-0000-4000-8000-000000000001', 'person.created', 'person')$$,
+  '42501',
+  'new row violates row-level security policy for table "audit_logs"',
+  'usuário não registra auditoria em outra organização'
 );
 
 select set_config('request.jwt.claims', '{"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated"}', true);

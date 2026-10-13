@@ -5,7 +5,27 @@ export type Database = {
 
   "public": {
           Tables: {
-            "emergency_contacts": {
+            "audit_logs": {
+                  Row: {
+                    "action": string,"actor_user_id": string,"created_at": string,"entity_id": string | null,"entity_type": string,"id": string,"ip_address": unknown | null,"metadata": Json,"organization_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": string,"actor_user_id": string,"created_at"?: string,"entity_id"?: string | null,"entity_type": string,"id"?: string,"ip_address"?: unknown | null,"metadata"?: Json,"organization_id": string
+                  }
+                  Update: {
+                    "action"?: string,"actor_user_id"?: string,"created_at"?: string,"entity_id"?: string | null,"entity_type"?: string,"id"?: string,"ip_address"?: unknown | null,"metadata"?: Json,"organization_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "audit_logs_organization_id_fkey"
+      columns: ["organization_id"]
+isOneToOne: false
+      referencedRelation: "organizations"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"emergency_contacts": {
                   Row: {
                     "created_at": string,"id": string,"name": string,"organization_id": string,"person_id": string,"phone": string,"relationship": string | null,"updated_at": string
                   }
