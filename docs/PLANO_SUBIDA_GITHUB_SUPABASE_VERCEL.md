@@ -31,11 +31,11 @@ Conclusão: a Vinha ainda não pode ser importada diretamente na Vercel como pro
 | Git | branches `feature/*` e `fix/*` | branch `develop` | branch `main` |
 | Vercel | execução local e previews de PR | projeto `vinha-staging` | projeto `vinha-production` |
 | URL | URL local ou preview temporário | `staging.vinhaigrejas.com.br` | `vinhaigrejas.com.br` e `app.vinhaigrejas.com.br` |
-| Supabase | stack local via CLI/Docker | projeto separado `Vinha Homologação` | projeto existente `Vinha Produção` |
+| Supabase | stack local via CLI/Docker | projeto hospedado atual, temporariamente | novo projeto de produção próximo ao lançamento |
 | Dados | dados sintéticos | dados sintéticos e cenários de teste | dados reais |
 | Pagamentos | sandbox | sandbox | credenciais de produção |
 
-Recomendação: usar dois projetos Vercel e dois projetos Supabase. Isso cria uma barreira física contra uso acidental de banco, chaves, webhooks ou pagamentos de produção durante os testes.
+Durante o desenvolvimento, usar Supabase local e somente um projeto hospedado de homologação para permanecer no plano gratuito. Quando houver dados reais, a recomendação volta a ser dois projetos Supabase, criando uma barreira física entre homologação e produção.
 
 ## 4. Fluxo de branches e publicação
 
@@ -108,9 +108,9 @@ Rollback de código será feito pela Vercel. Rollback de banco usará migração
 
 ## 6. Supabase por ambiente
 
-### Produção
+### Produção futura
 
-- Manter `aoxibaaydfgffrdqtkva` como `Vinha Produção`.
+- Criar um projeto limpo próximo ao lançamento ou promover, após limpeza, o projeto hospedado atual.
 - Restringir URLs de redirecionamento aos domínios oficiais.
 - Usar chaves publicáveis no navegador e chaves privilegiadas somente no servidor.
 - Revisar RLS, índices, backups, logs e alertas antes do lançamento.
@@ -118,7 +118,7 @@ Rollback de código será feito pela Vercel. Rollback de banco usará migração
 
 ### Homologação
 
-- Criar um projeto separado `Vinha Homologação`, também em São Paulo.
+- Usar temporariamente o projeto hospedado atual como `Vinha Homologação`, sem dados reais.
 - Aplicar a mesma cadeia de migrações da produção.
 - Configurar Auth com `staging.vinhaigrejas.com.br`.
 - Usar credenciais sandbox de Mercado Pago, Asaas e Safe2Pay.
@@ -286,7 +286,7 @@ Critério: smoke tests aprovados, monitoramento saudável e nenhuma regressão c
 
 1. Resolver o commit local pendente e sincronizar o GitHub.
 2. Criar `develop` e a estrutura de CI.
-3. Criar o Supabase de homologação, após confirmar o custo do novo projeto.
+3. Usar o projeto Supabase atual como homologação temporária e manter produção sem provisionamento até próximo do lançamento.
 4. Produzir a migração-base PostgreSQL a partir das tabelas D1.
 5. Criar seed seguro e testes de RLS.
 6. Migrar a aplicação por módulos para a nova camada de dados.
