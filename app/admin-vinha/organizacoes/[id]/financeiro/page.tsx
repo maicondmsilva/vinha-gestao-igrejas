@@ -37,6 +37,7 @@ export default function FinancialProfile() {
   const { id } = useParams<{ id: string }>();
   const [form, setForm] = useState<Form>(empty);
   const [church, setChurch] = useState('');
+  const [code,setCode]=useState<number|null>(null);
   const [notice, setNotice] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -52,6 +53,7 @@ export default function FinancialProfile() {
 
         const profile = data.profile || {};
         setChurch(profile.church_name || '');
+        setCode(profile.registration_code||null);
         setForm({
           legalName: profile.legal_name || '',
           taxId: profile.tax_id || '',
@@ -134,7 +136,7 @@ export default function FinancialProfile() {
       <section className="financial-editor">
         <header>
           <div>
-            <small>CADASTRO FINANCEIRO</small>
+            <small>CADASTRO FINANCEIRO{code?` · CÓDIGO ${code}`:''}</small>
             <h1>{church || 'Organização'}</h1>
             <p>Preencha os dados da entidade para emissão, cobrança e integração financeira.</p>
           </div>
