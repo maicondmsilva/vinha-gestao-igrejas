@@ -1,10 +1,210 @@
 'use client';
-import {useEffect,useState} from 'react';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {useParams} from 'next/navigation';
+import { useParams } from 'next/navigation';
 import '../../../faturamento/billing.css';
 import '../../../faturamento/providers.css';
 import '../../../faturamento/financial.css';
-type Form={legalName:string;taxId:string;email:string;phone:string;postalCode:string;address:string;addressNumber:string;district:string;city:string;state:string};
-const empty:Form={legalName:'',taxId:'',email:'',phone:'',postalCode:'',address:'',addressNumber:'',district:'',city:'',state:''};
-export default function FinancialProfile(){const{id}=useParams<{id:string}>(),[form,setForm]=useState<Form>(empty),[church,setChurch]=useState(''),[notice,setNotice]=useState(''),[saving,setSaving]=useState(false);useEffect(()=>{fetch(`/api/platform/billing/profiles?id=${encodeURIComponent(id)}`).then(r=>r.json()).then(d=>{if(d.profile){const p=d.profile;setChurch(p.church_name);setForm({legalName:p.legal_name||p.church_name||'',taxId:p.tax_id||'',email:p.email||p.owner_email||'',phone:p.phone||'',postalCode:p.postal_code||'',address:p.address||'',addressNumber:p.address_number||'',district:p.district||'',city:p.city||'',state:p.state||''})}else setNotice(d.error)})},[id]);const set=(k:keyof Form,v:string)=>setForm(f=>({...f,[k]:v}));const cep=async()=>{const value=form.postalCode.replace(/\D/g,'');if(value.length!==8)return;const r=await fetch(`https://viacep.com.br/ws/${value}/json/`),d=await r.json();if(!d.erro)setForm(f=>({...f,address:d.logradouro||f.address,district:d.bairro||f.district,city:d.localidade||f.city,state:d.uf||f.state}))};const save=async(e:React.FormEvent)=>{e.preventDefault();setSaving(true);const r=await fetch('/api/platform/billing/profiles',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({churchId:id,...form})}),d=await r.json();setNotice(r.ok?'Dados financeiros salvos. A organização já pode receber cobranças automáticas.':d.error);setSaving(false)};return <main className="billing-page"><aside><Link href="/admin-vinha" className="billing-brand"><i>V</i><span><b>Vinha</b><small>Administração SaaS</small></span></Link><nav><Link className="on" href="/admin-vinha">▦ Organizações</Link><Link href="/admin-vinha/faturamento">◫ Cobranças</Link></nav><Link className="billing-back" href="https://app.vinhaigrejas.com.br/painel">← Painel da igreja</Link></aside><section><header><div><small>CADASTRO FINANCEIRO</small><h1>{church||'Organização'}</h1><p>Dados usados na emissão das mensalidades e identificação junto ao provedor.</p></div><Link className="billing-button secondary" href="/admin-vinha">← Voltar</Link></header>{notice&&<div className="billing-notice">{notice}</div>}<form className="financial-form" onSubmit={save}><section><h2>Identificação de cobrança</h2><div className="form-grid"><label>Razão social ou nome completo<input required value={form.legalName} onChange={e=>set('legalName',e.target.value)}/></label><label>CPF ou CNPJ<input required inputMode="numeric" value={form.taxId} onChange={e=>set('taxId',e.target.value)}/></label><label>E-mail financeiro<input required type="email" value={form.email} onChange={e=>set('email',e.target.value)}/></label><label>Telefone<input inputMode="tel" value={form.phone} onChange={e=>set('phone',e.target.value)}/></label></div></section><section><h2>Endereço de faturamento</h2><div className="form-grid"><label>CEP<input inputMode="numeric" value={form.postalCode} onChange={e=>set('postalCode',e.target.value)} onBlur={cep}/></label><label className="wide">Endereço<input value={form.address} onChange={e=>set('address',e.target.value)}/></label><label>Número<input value={form.addressNumber} onChange={e=>set('addressNumber',e.target.value)}/></label><label>Bairro<input value={form.district} onChange={e=>set('district',e.target.value)}/></label><label>Cidade<input value={form.city} onChange={e=>set('city',e.target.value)}/></label><label>UF<input maxLength={2} value={form.state} onChange={e=>set('state',e.target.value.toUpperCase())}/></label></div></section><footer><span>Os dados serão compartilhados somente com o provedor escolhido para processar a cobrança.</span><button disabled={saving}>{saving?'Salvando…':'Salvar dados financeiros'}</button></footer></form></section></main>}
+
+type Form = {
+  legalName: string;
+  taxId: string;
+  email: string;
+  phone: string;
+  postalCode: string;
+  address: string;
+  addressNumber: string;
+  district: string;
+  city: string;
+  state: string;
+};
+
+const empty: Form = {
+  legalName: '',
+  taxId: '',
+  email: '',
+  phone: '',
+  postalCode: '',
+  address: '',
+  addressNumber: '',
+  district: '',
+  city: '',
+  state: '',
+};
+
+export default function FinancialProfile() {
+  const { id } = useParams<{ id: string }>();
+  const [form, setForm] = useState<Form>(empty);
+  const [church, setChurch] = useState('');
+  const [notice, setNotice] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/platform/billing/profiles?id=${encodeURIComponent(id)}`);
+        const data = await res.json();
+        if (!res.ok) {
+          setNotice(data.error || 'Não foi possível carregar o cadastro financeiro.');
+          return;
+        }
+
+        const profile = data.profile || {};
+        setChurch(profile.church_name || '');
+        setForm({
+          legalName: profile.legal_name || '',
+          taxId: profile.tax_id || '',
+          email: profile.email || '',
+          phone: profile.phone || '',
+          postalCode: profile.postal_code || '',
+          address: profile.address || '',
+          addressNumber: profile.address_number || '',
+          district: profile.district || '',
+          city: profile.city || '',
+          state: profile.state || '',
+        });
+      } catch (e) {
+        setNotice('Não foi possível carregar o cadastro financeiro.');
+      }
+    };
+
+    if (id) void load();
+  }, [id]);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setNotice('');
+
+    const payload = {
+      churchId: id,
+      legalName: form.legalName,
+      taxId: form.taxId,
+      email: form.email,
+      phone: form.phone,
+      postalCode: form.postalCode,
+      address: form.address,
+      addressNumber: form.addressNumber,
+      district: form.district,
+      city: form.city,
+      state: form.state,
+    } as Record<string,unknown>;
+
+    try {
+      const res = await fetch('/api/platform/billing/profiles', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setNotice(data.error || 'Não foi possível salvar o cadastro financeiro.');
+        setSaving(false);
+        return;
+      }
+
+      setNotice('Cadastro financeiro salvo com sucesso.');
+    } catch (e) {
+      setNotice('Erro ao salvar. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const update = (key: keyof Form, value: string) =>
+    setForm((current) => ({ ...current, [key]: value }));
+
+  return (
+    <main className="billing-page">
+      <aside>
+        <Link href="/admin-vinha" className="billing-brand">
+          <i>V</i>
+          <span><b>Vinha</b><small>Administração SaaS</small></span>
+        </Link>
+        <nav>
+          <Link href="/admin-vinha">▦ Organizações</Link>
+          <Link className="on" href="/admin-vinha/faturamento">◫ Cobranças</Link>
+        </nav>
+        <Link className="billing-back" href="https://app.vinhaigrejas.com.br/painel">← Painel da igreja</Link>
+      </aside>
+
+      <section className="financial-editor">
+        <header>
+          <div>
+            <small>CADASTRO FINANCEIRO</small>
+            <h1>{church || 'Organização'}</h1>
+            <p>Preencha os dados da entidade para emissão, cobrança e integração financeira.</p>
+          </div>
+          <Link className="billing-button secondary" href="/admin-vinha">
+            ← Voltar
+          </Link>
+        </header>
+
+        {notice && <div className="billing-success">{notice}</div>}
+
+        <form onSubmit={save}>
+          <div className="billing-grid">
+            <label>
+              Razão social
+              <input value={form.legalName} onChange={(e) => update('legalName', e.target.value)} />
+            </label>
+
+            <label>
+              CNPJ / CPF
+              <input value={form.taxId} onChange={(e) => update('taxId', e.target.value)} />
+            </label>
+
+            <label>
+              E-mail financeiro
+              <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
+            </label>
+
+            <label>
+              Telefone
+              <input value={form.phone} onChange={(e) => update('phone', e.target.value)} />
+            </label>
+
+            <label>
+              CEP
+              <input value={form.postalCode} onChange={(e) => update('postalCode', e.target.value)} />
+            </label>
+
+            <label>
+              Estado
+              <input value={form.state} onChange={(e) => update('state', e.target.value)} />
+            </label>
+
+            <label className="full">
+              Endereço
+              <input value={form.address} onChange={(e) => update('address', e.target.value)} />
+            </label>
+
+            <label>
+              Número
+              <input value={form.addressNumber} onChange={(e) => update('addressNumber', e.target.value)} />
+            </label>
+
+            <label>
+              Bairro
+              <input value={form.district} onChange={(e) => update('district', e.target.value)} />
+            </label>
+
+            <label>
+              Cidade
+              <input value={form.city} onChange={(e) => update('city', e.target.value)} />
+            </label>
+
+            <div className="full">
+              <button className="billing-button" type="submit" disabled={saving}>
+                {saving ? 'Salvando…' : 'Salvar cadastro'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+    </main>
+  );
+}
