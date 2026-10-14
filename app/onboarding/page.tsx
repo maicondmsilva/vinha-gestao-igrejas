@@ -1,6 +1,7 @@
 'use client';
-import {FormEvent,useEffect,useMemo,useState} from 'react';
+import {FormEvent,useCallback,useEffect,useMemo,useState} from 'react';
 import Link from 'next/link';
+import {createSupabaseBrowserClient} from '../lib/supabase/client';
 import './onboarding.css';
 import './onboarding-extra.css';
 
@@ -12,12 +13,13 @@ const flow=[
  {id:'completed',label:'Concluir',description:'Revisão final'},
 ];
 
-export default function Onboarding(){const[data,setData]=useState<any>(null),[step,setStep]=useState('identity'),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[notice,setNotice]=useState('');
+type OnboardingData={error?:string;church:Record<string,string>;headquarters:Record<string,string>|null;progress:{status:string;current_step:string;completed_steps:string[]};peopleCount:number;session:{name:string;role:string}};
+export default function Onboarding(){const[data,setData]=useState<OnboardingData|null>(null),[step,setStep]=useState('identity'),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[notice,setNotice]=useState('');
  const tenant=typeof window==='undefined'?'':new URLSearchParams(window.location.search).get('tenant')||'';
  const headers=useMemo(()=>tenant?{'x-vinha-tenant':tenant}:undefined,[tenant]);
- const load=()=>fetch('/api/onboarding',{headers}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error);setData(d);setStep(d.progress.status==='completed'?'completed':d.progress.current_step||'identity')}).catch(e=>setNotice(e.message)).finally(()=>setLoading(false));
- useEffect(()=>{load()},[]);
- async function save(event?:FormEvent<HTMLFormElement>,target=step){event?.preventDefault();setSaving(true);setNotice('');const body:any={step:target};if(event)Object.assign(body,Object.fromEntries(new FormData(event.currentTarget).entries()));const r=await fetch('/api/onboarding',{method:'PATCH',headers:{'content-type':'application/json',...(headers||{})},body:JSON.stringify(body)}),out=await r.json();if(!r.ok){setNotice(out.error);setSaving(false);return}if(target==='completed'){window.location.href=`/painel${tenant?`?tenant=${encodeURIComponent(tenant)}`:''}`;return}setStep(out.nextStep);setSaving(false);await load()}
+ const load=useCallback(async()=>{try{const{data:{user}}=await createSupabaseBrowserClient().auth.getUser();if(!user){location.replace('/login?next='+encodeURIComponent(location.pathname+location.search));return}const r=await fetch('/api/onboarding',{headers}),d=await r.json<OnboardingData>();if(!r.ok)throw new Error(d.error||'Não foi possível carregar a configuração.');setData(d);setStep(d.progress.status==='completed'?'completed':d.progress.current_step||'identity')}catch(e){setNotice(e instanceof Error?e.message:'Falha de conexão.')}finally{setLoading(false)}},[headers]);
+ useEffect(()=>{const timer=window.setTimeout(()=>void load(),0);return()=>window.clearTimeout(timer)},[load]);
+ async function save(event?:FormEvent<HTMLFormElement>,target=step){event?.preventDefault();setSaving(true);setNotice('');try{const body:Record<string,unknown>={step:target};if(event)Object.assign(body,Object.fromEntries(new FormData(event.currentTarget).entries()));const r=await fetch('/api/onboarding',{method:'PATCH',headers:{'content-type':'application/json',...(headers||{})},body:JSON.stringify(body)}),out=await r.json<{error?:string;nextStep:string}>();if(!r.ok)throw new Error(out.error||'Não foi possível salvar esta etapa.');if(target==='completed'){location.assign(`/painel${tenant?`?tenant=${encodeURIComponent(tenant)}`:''}`);return}setStep(out.nextStep);await load()}catch(e){setNotice(e instanceof Error?e.message:'Falha de conexão. Tente novamente.')}finally{setSaving(false)}}
  const done=new Set<string>(data?.progress?.completed_steps||[]),index=flow.findIndex(x=>x.id===step),percent=Math.round(Math.max(0,index)/(flow.length-1)*100);
  if(loading)return <main className="onboarding loading"><span>Preparando a configuração da sua igreja…</span></main>;
  if(!data)return <main className="onboarding loading"><div><h1>Não foi possível iniciar</h1><p>{notice}</p><Link href="/login">Voltar ao acesso</Link></div></main>;

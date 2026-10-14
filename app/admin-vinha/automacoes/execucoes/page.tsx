@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
-import Link from 'next/link';
+import Link from '@/app/admin-vinha/CentralLink';
 import {useCallback,useEffect,useState} from 'react';
 import '../notificacoes/notifications.css';
 type Run={id:string;trigger_type:string;status:string;tasks_created:number;alerts_created:number;alerts_delivered:number;alerts_pending:number;alerts_failed:number;error_message:string|null;started_at:number;finished_at:number|null};

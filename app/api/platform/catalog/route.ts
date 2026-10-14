@@ -1,8 +1,8 @@
 import {NextResponse} from 'next/server';
-import {createClient} from '@supabase/supabase-js';
+import type {OperationsClient} from '../../../lib/supabase/operations';
 import {platformSessionFrom} from '../../_auth';
 import {createSupabaseRequestClient} from '../../../lib/supabase/request';
-type UntypedClient=ReturnType<typeof createClient>;
+type UntypedClient=OperationsClient;
 const cleanCode=(value:unknown)=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-|-$/g,'').slice(0,50);
 const cents=(value:unknown)=>Math.max(0,Math.round(Number(value)||0));
 const dateValue=(value:unknown)=>value?new Date(Number(value)).toISOString():null;

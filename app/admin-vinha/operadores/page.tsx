@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/app/admin-vinha/CentralLink';
 import {FormEvent,useCallback,useEffect,useMemo,useState} from 'react';
 import {createSupabaseBrowserClient} from '../../lib/supabase/client';
 import './operators.css';

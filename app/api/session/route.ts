@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:workers';
-import { NextResponse } from 'next/server';
-import { sessionFrom } from '../_auth';
-export async function GET(request:Request){const session=await sessionFrom(request);if(!session)return NextResponse.json({authenticated:false},{status:401});const onboarding=await env.DB.prepare('SELECT status,current_step FROM saas_onboarding_progress WHERE church_id=?').bind(session.churchId).first<{status:string;current_step:string}>();return NextResponse.json({authenticated:true,user:session,onboarding:onboarding||null})}
+import {NextResponse} from 'next/server';
+import {sessionFrom} from '../_auth';
+import {db,one} from '../../lib/supabase/operations';
+export async function GET(request:Request){try{const session=await sessionFrom(request);if(!session)return NextResponse.json({authenticated:false},{status:401});const client=db(request),[onboarding,church]=await Promise.all([one(client,'saas_onboarding_progress','organization_id',session.churchId),one(client,'organizations','id',session.churchId)]);return NextResponse.json({authenticated:true,user:session,church,onboarding:onboarding||{status:'not_started',current_step:'identity'}})}catch{return NextResponse.json({error:'Não foi possível validar o acesso.'},{status:503})}}

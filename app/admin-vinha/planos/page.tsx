@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/app/admin-vinha/CentralLink';
 import {FormEvent,useCallback,useEffect,useState} from 'react';
 import '../platform.css';
 import './plans.css';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/app/admin-vinha/CentralLink';
 import { useParams } from 'next/navigation';
 import '../../../faturamento/billing.css';
 import '../../../faturamento/providers.css';
@@ -64,7 +64,7 @@ export default function FinancialProfile() {
           city: profile.city || '',
           state: profile.state || '',
         });
-      } catch (e) {
+      } catch {
         setNotice('Não foi possível carregar o cadastro financeiro.');
       }
     };
@@ -107,7 +107,7 @@ export default function FinancialProfile() {
       }
 
       setNotice('Cadastro financeiro salvo com sucesso.');
-    } catch (e) {
+    } catch {
       setNotice('Erro ao salvar. Tente novamente.');
     } finally {
       setSaving(false);

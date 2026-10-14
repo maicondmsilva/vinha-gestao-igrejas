@@ -1,4 +1,5 @@
 import {NextResponse} from 'next/server';
+import {tenantHint} from './tenant-hint';
 import {parseAccessContext,type AccessMembership} from './access';
 import type {Json} from './database.types';
 import {createSupabaseRequestClient,supabaseServerConfigured} from './request';
@@ -30,11 +31,10 @@ export async function authorizeSupabaseChurch(request:Request,permission:string)
  const {data,error}=await client.rpc('access_context');
  if(error)return{access:null,response:NextResponse.json({error:'Não foi possível validar seu acesso.'},{status:503})};
  const context=parseAccessContext(data);
- const url=new URL(request.url),hint=request.headers.get('x-vinha-tenant')||url.searchParams.get('tenant')||'';
+ const hint=tenantHint(request);
  const preferred=context.preference.selected_organization_id||'';
- const membership=context.memberships.find(item=>item.organization_slug===hint||item.organization_id===hint)
-  ||context.memberships.find(item=>item.organization_id===preferred)
-  ||context.memberships[0];
+ const membership=hint?context.memberships.find(item=>item.organization_slug===hint||item.organization_id===hint)
+  :context.memberships.find(item=>item.organization_id===preferred)||context.memberships[0];
  if(!membership)return{access:null,response:NextResponse.json({error:'Nenhuma organização ativa foi encontrada para este usuário.'},{status:403})};
  const grants=permissions[membership.role]||[];
  const can=(value:string)=>grants.includes('*')||grants.includes(value);

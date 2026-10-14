@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
-import Link from 'next/link';
+import Link from '@/app/admin-vinha/CentralLink';
 import './billing.css';
 import './providers.css';
 type Invoice={id:string;church_name:string;plan_name:string;reference_month:string;due_at:number;amount_cents:number;status:string;overdue:boolean;payment_url?:string};
