@@ -3,7 +3,7 @@
 begin;
 do $$
 declare operator_row record; owner_row record; created jsonb; organization_id uuid; token uuid; old_token uuid;
- invoice uuid; result jsonb; plan_id text; denied boolean; completed jsonb; child_created jsonb; child_id uuid; request_id uuid; ticket_id uuid;
+ invoice uuid; result jsonb; plan_id text; denied boolean; completed jsonb; child_created jsonb; child_id uuid; request_id uuid; ticket_id uuid; org_code bigint; daughter_code bigint;
 begin
  select user_id,email into operator_row from public.platform_operators where active and role in ('owner','admin') limit 1;
  select u.id,u.email into owner_row from auth.users u join public.organization_memberships m on m.user_id=u.id where m.role='owner' and m.status='active' limit 1;
@@ -12,7 +12,10 @@ begin
  execute 'set local role authenticated';
  select id into plan_id from public.saas_plans where active order by base_price_cents limit 1;
  created:=public.create_platform_organization('QA transacional '||extensions.gen_random_uuid()::text,'Responsável QA',owner_row.email,plan_id,false,'QA','#285c45','Pastor QA');
- organization_id:=(created->>'id')::uuid; old_token:=(created->>'invite_token')::uuid;
+ organization_id:=(created->>'id')::uuid;
+ select registration_code into org_code from public.organizations where id=organization_id;
+ if org_code<1000 then raise exception 'ministry_registration_code_failed'; end if;
+ old_token:=(created->>'invite_token')::uuid;
  token:=public.regenerate_platform_organization_invite(organization_id);
  if public.organization_invite_preview(old_token)->>'status'<>'revoked' then raise exception 'revocation_failed'; end if;
  perform public.update_platform_organization(organization_id,'{"status":"active"}'::jsonb);
@@ -46,6 +49,7 @@ begin
  if result->>'token'<>token::text then raise exception 'pending_invite_lookup_failed'; end if;
  result:=public.accept_organization_invite(token);
  if (result->>'alreadyAccepted')::boolean then raise exception 'first_accept_failed'; end if;
+ if not exists(select 1 from public.organization_units u where u.organization_id=(created->>'id')::uuid and unit_type='headquarters' and registration_code=org_code) then raise exception 'headquarters_code_mismatch'; end if;
  result:=public.accept_organization_invite(token);
  if not (result->>'alreadyAccepted')::boolean then raise exception 'repeat_accept_failed'; end if;
  denied:=false;
@@ -53,6 +57,11 @@ begin
  if not denied then raise exception 'incomplete_onboarding_was_allowed'; end if;
  perform public.save_organization_onboarding(organization_id,'{"step":"identity","name":"QA transacional","appName":"QA","seniorPastorName":"Pastor QA","primaryColor":"#285c45","accentColor":"#d9b960"}');
  perform public.save_organization_onboarding(organization_id,'{"step":"headquarters","name":"Sede QA","pastorName":"Pastor QA","email":"qa@example.invalid","city":"Cidade QA","state":"SP"}');
+ insert into public.organization_units(organization_id,name,slug,unit_type,registration_code) values(organization_id,'QA filha local','qa-filha-local','congregation',999999) returning registration_code into daughter_code;
+ if daughter_code=999999 or daughter_code=org_code or daughter_code<1000 then raise exception 'daughter_registration_code_failed'; end if;
+ denied:=false;
+ begin update public.organization_units u set registration_code=999999 where u.organization_id=(created->>'id')::uuid and slug='qa-filha-local'; exception when others then denied:=true; end;
+ if not denied then raise exception 'registration_code_was_mutable'; end if;
  perform public.save_organization_onboarding(organization_id,'{"step":"structure"}');
  perform public.save_organization_onboarding(organization_id,'{"step":"people"}');
  completed:=public.save_organization_onboarding(organization_id,'{"step":"completed"}');
