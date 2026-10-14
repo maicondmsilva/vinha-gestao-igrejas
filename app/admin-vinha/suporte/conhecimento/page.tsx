@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
-import Link from 'next/link';
+import Link from '@/app/admin-vinha/CentralLink';
 import {FormEvent,useCallback,useEffect,useMemo,useState} from 'react';
 import './knowledge.css';
 type Article={id:string;slug:string;category:string;title:string;summary:string;body:string;keywords?:string;featured:number;active:number;updated_at:number};

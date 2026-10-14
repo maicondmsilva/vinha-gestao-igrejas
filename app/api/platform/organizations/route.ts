@@ -1,9 +1,9 @@
 import {NextResponse} from 'next/server';
-import {createClient} from '@supabase/supabase-js';
+import type {OperationsClient} from '../../../lib/supabase/operations';
 import {platformSessionFrom} from '../../_auth';
 import {createSupabaseRequestClient} from '../../../lib/supabase/request';
 
-type UntypedClient=ReturnType<typeof createClient>;
+type UntypedClient=OperationsClient;
 const client=(request:Request)=>createSupabaseRequestClient(request) as unknown as UntypedClient;
 const activationOrigin=(request:Request)=>process.env.NEXT_PUBLIC_APP_URL||new URL(request.url).origin.replace('://central.','://app.');
 const message=(error:string)=>error.includes('invalid_plan')?'Plano inválido.':error.includes('organization_not_found')?'Organização não encontrada.':error.includes('invite_not_found')?'Responsável não encontrado.':error.includes('duplicate key')?'Já existe um cadastro com estes dados.':'Não foi possível concluir a operação.';
@@ -14,16 +14,17 @@ export async function GET(request:Request){
   supabase.rpc('platform_organizations_overview'),
   supabase.from('saas_plans').select('id,code,name,description,base_price_cents,active').eq('active',true).order('base_price_cents'),
  ]);
- const error=overview.error||plans.error;
+ const profiles=await supabase.from('saas_billing_profiles').select('church_id');
+ const error=overview.error||plans.error||profiles.error;
  if(error)return NextResponse.json({error:message(error.message)},{status:400});
- return NextResponse.json({organizations:overview.data||[],plans:plans.data||[]});
+ return NextResponse.json({organizations:(overview.data||[]).map((organization:{id:string})=>({...organization,billing_profile_complete:(profiles.data||[]).some(profile=>profile.church_id===organization.id)})),plans:plans.data||[]});
 }
 
 export async function POST(request:Request){
  if(!await platformSessionFrom(request))return NextResponse.json({error:'Acesso exclusivo da administração Vinha.'},{status:403});
  const d=await request.json<Record<string,unknown>>(),name=String(d.name||'').trim(),ownerEmail=String(d.ownerEmail||'').trim().toLowerCase(),ownerName=String(d.ownerName||'').trim();
- if(!name||!ownerEmail||!ownerName)return NextResponse.json({error:'Informe ministério, responsável e e-mail.'},{status:400});
- const supabase=client(request),result=await supabase.rpc('create_platform_organization',{p_name:name,p_owner_name:ownerName,p_owner_email:ownerEmail,p_plan_id:String(d.planId||'plan-essential'),p_app_addon:Boolean(d.appAddon),p_app_name:String(d.appName||name),p_primary_color:String(d.primaryColor||'#285c45'),p_senior_pastor_name:String(d.seniorPastorName||ownerName)});
+ if(!name||!ownerName||!String(d.seniorPastorName||'').trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail))return NextResponse.json({error:'Informe ministério, pastor titular, responsável e e-mail válido.'},{status:400});
+ const supabase=client(request),result=await supabase.rpc('create_platform_organization',{p_name:name,p_owner_name:ownerName,p_owner_email:ownerEmail,p_plan_id:String(d.planId||'plan-essential'),p_app_addon:Boolean(d.appAddon),p_app_name:String(d.appName||name),p_primary_color:String(d.primaryColor||'#285c45'),p_senior_pastor_name:String(d.seniorPastorName||'')});
  if(result.error)return NextResponse.json({error:message(result.error.message)},{status:400});
  const created=result.data as {id:string;slug:string;trial_ends_at:string;invite_token:string};
  return NextResponse.json({id:created.id,slug:created.slug,trialEndsAt:created.trial_ends_at,activationUrl:`${activationOrigin(request)}/ativar/${created.invite_token}`},{status:201});

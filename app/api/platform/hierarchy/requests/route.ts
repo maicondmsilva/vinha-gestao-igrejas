@@ -1,6 +1,3 @@
-import {env} from 'cloudflare:workers';
-import {NextResponse} from 'next/server';
-import {platformSessionFrom} from '../../../_auth';
-const platformAdmin=platformSessionFrom;
-export async function GET(request:Request){if(!await platformAdmin(request))return NextResponse.json({error:'Acesso exclusivo da administração Vinha.'},{status:403});const rows=await env.DB.prepare(`SELECT r.*,p.name parent_name,c.name child_name FROM saas_hierarchy_requests r JOIN churches p ON p.id=r.parent_church_id JOIN churches c ON c.id=r.child_church_id ORDER BY r.created_at DESC LIMIT 100`).all();return NextResponse.json({items:rows.results})}
-export async function POST(request:Request){const s=await platformAdmin(request);if(!s)return NextResponse.json({error:'Acesso exclusivo da administração Vinha.'},{status:403});const d=await request.json<any>(),parent=String(d.parentChurchId||''),child=String(d.childChurchId||''),mode=d.billingMode==='centralized'?'centralized':'individual';if(!parent||!child||parent===child)return NextResponse.json({error:'Selecione sede e igreja filha diferentes.'},{status:400});const active=await env.DB.prepare("SELECT id FROM saas_organization_links WHERE child_church_id=? AND status='active'").bind(child).first();if(active)return NextResponse.json({error:'A igreja já pertence a uma hierarquia.'},{status:409});try{await env.DB.prepare("INSERT INTO saas_hierarchy_requests (id,parent_church_id,child_church_id,billing_mode,status,requested_by,created_at) VALUES (?,?,?,?,'pending',?,?)").bind(crypto.randomUUID(),parent,child,mode,s.id,Date.now()).run();return NextResponse.json({ok:true},{status:201})}catch{return NextResponse.json({error:'Já existe uma solicitação pendente para essas igrejas.'},{status:409})}}
+import {hierarchyRequestsGET,hierarchyRequestsPOST} from '../../../../lib/supabase/central-hierarchy';
+export const GET=hierarchyRequestsGET;
+export const POST=hierarchyRequestsPOST;

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/purity, react-hooks/set-state-in-effect */
 'use client';
-import Link from 'next/link';
+import Link from '@/app/admin-vinha/CentralLink';
 import {FormEvent,useCallback,useEffect,useMemo,useState} from 'react';
 import './support.css';
 type Ticket={id:string;code:string;church_id:string;church_name:string;primary_color:string;category:string;priority:string;status:string;subject:string;description:string;requester_name:string|null;requester_email:string|null;assigned_platform_user_id:string|null;assigned_name:string|null;sla_due_at:number;first_response_at:number|null;resolved_at:number|null;created_at:number;updated_at:number};

@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
-import Link from 'next/link';
+import Link from '@/app/admin-vinha/CentralLink';
 import {useParams} from 'next/navigation';
 import '../../../faturamento/billing.css';
 import '../../../faturamento/providers.css';
