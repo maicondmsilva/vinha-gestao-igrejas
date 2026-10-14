@@ -1,6 +1,6 @@
 'use client';
-import Link from 'next/link';
 import {FormEvent,useCallback,useEffect,useMemo,useState} from 'react';
+import type {AnchorHTMLAttributes} from 'react';
 import './platform.css';
 import './operations.css';
 
@@ -10,6 +10,7 @@ type Plan={id:string;name:string;base_price_cents:number};
 const money=(n:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format((n||0)/100);
 const statusLabel:Record<string,string>={trialing:'Em teste',active:'Ativa',past_due:'Pendente',suspended:'Suspensa',cancelled:'Cancelada'};
 const stepLabel:Record<string,string>={identity:'Identidade',structure:'Estrutura',team:'Equipe',members:'Membros',finance:'Financeiro',app:'Aplicativo',completed:'Concluído'};
+function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:string}){return <a href={href} {...props}/>}
 
 export default function PlatformAdministration(){
  const[organizations,setOrganizations]=useState<Org[]>([]),[plans,setPlans]=useState<Plan[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState(''),[show,setShow]=useState(false),[saving,setSaving]=useState(false),[search,setSearch]=useState(''),[status,setStatus]=useState('all'),[health,setHealth]=useState('all'),[selected,setSelected]=useState<Org|null>(null),[form,setForm]=useState({name:'',ownerName:'',ownerEmail:'',planId:'plan-essential',appAddon:true});
