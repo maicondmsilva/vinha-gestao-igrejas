@@ -2,7 +2,7 @@
 import {useEffect,useState} from 'react';
 import './action-coordinator.css';
 type ActionDetail={label?:string};
-const destinations:[RegExp,string][]=[[/transmiss/i,'transmissoes'],[/escala/i,'escalas'],[/evento|programaç/i,'eventos'],[/canal|comunicaç/i,'comunicacao'],[/família/i,'familias'],[/sala/i,'kids'],[/logo|vídeo|modelo|configuraç/i,'configuracoes']];
+const destinations:[RegExp,string][]=[[/painel/i,'inicio'],[/transmiss/i,'transmissoes'],[/escala/i,'escalas'],[/evento|programaç/i,'eventos'],[/canal|comunicaç/i,'comunicacao'],[/família/i,'familias'],[/sala/i,'kids'],[/logo|vídeo|modelo|configuraç/i,'configuracoes']];
 export default function ActionCoordinator(){
  const[action,setAction]=useState('');
  useEffect(()=>{
