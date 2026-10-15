@@ -14,10 +14,10 @@ export async function GET(request:Request){
   supabase.rpc('platform_organizations_overview'),
   supabase.from('saas_plans').select('id,code,name,description,base_price_cents,active').eq('active',true).order('base_price_cents'),
  ]);
- const profiles=await supabase.from('saas_billing_profiles').select('church_id');
- const error=overview.error||plans.error||profiles.error;
+ const profiles=await supabase.from('saas_billing_profiles').select('church_id'),registrations=await supabase.from('saas_trial_registrations').select('organization_id,full_name,email');
+ const error=overview.error||plans.error||profiles.error||registrations.error;
  if(error)return NextResponse.json({error:message(error.message)},{status:400});
- return NextResponse.json({organizations:(overview.data||[]).map((organization:{id:string})=>({...organization,billing_profile_complete:(profiles.data||[]).some(profile=>profile.church_id===organization.id)})),plans:plans.data||[]});
+ return NextResponse.json({organizations:(overview.data||[]).map((organization:{id:string})=>({...organization,registration_source:(registrations.data||[]).some(r=>r.organization_id===organization.id)?'website':'central',owner_name:(registrations.data||[]).find(r=>r.organization_id===organization.id)?.full_name||(organization as {owner_name?:string}).owner_name,owner_email:(registrations.data||[]).find(r=>r.organization_id===organization.id)?.email||(organization as {owner_email?:string}).owner_email,billing_profile_complete:(profiles.data||[]).some(profile=>profile.church_id===organization.id)})),plans:plans.data||[]});
 }
 
 export async function POST(request:Request){
