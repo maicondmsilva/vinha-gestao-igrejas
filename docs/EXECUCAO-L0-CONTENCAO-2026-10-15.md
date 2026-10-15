@@ -18,6 +18,7 @@ O núcleo cadastral continua em validação. Nenhuma funcionalidade passou a ser
 6. Configurações: retiradas da navegação as telas com confirmação de salvamento somente visual e indicadores fictícios. Disponíveis os links para contratos/solicitações, segurança da própria conta e atendimento, além do catálogo operacional.
 7. Apresentação pública: identifica pré-lançamento, núcleo em validação, aplicativo futuro e ilustração com dados fictícios. Não promete plataforma completa, publicação nas lojas ou validação de backups já concluída.
 8. Quatro testes de contenção adicionados à automação do GitHub.
+9. Central: catálogo somente leitura em /admin-vinha/disponibilidade, protegido pelo acesso existente de operador, com atalho e orientação no guia. O cadastro público também informa os limites antes do formulário.
 
 ## Preservado
 
