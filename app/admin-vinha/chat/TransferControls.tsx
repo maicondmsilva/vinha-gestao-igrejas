@@ -1,0 +1,8 @@
+'use client';
+import {useEffect,useState} from 'react';
+import type {ChatData,Operator,Sector,Member} from './types';
+export default function TransferControls({id,departmentId,assignedId,busy,onTransfer}:{id:string;departmentId:string;assignedId:string|null;busy:boolean;onTransfer:(departmentId:string,operatorId:string)=>Promise<void>}){
+ const[sectors,setSectors]=useState<Sector[]>([]),[operators,setOperators]=useState<Operator[]>([]),[members,setMembers]=useState<Member[]>([]),[sector,setSector]=useState(departmentId),[operator,setOperator]=useState(assignedId||'');
+ useEffect(()=>{let active=true;setSector(departmentId);setOperator(assignedId||'');void fetch('/api/platform/chat',{cache:'no-store'}).then(async r=>{if(!r.ok)return;const d=await r.json<ChatData>();if(active){setSectors(d.departments);setOperators(d.operators);setMembers(d.memberships)}}).catch(()=>{});return()=>{active=false}},[id,departmentId,assignedId]);
+ return <div className="chat-transfer"><label>Setor de destino<select disabled={busy} value={sector} onChange={e=>{setSector(e.target.value);setOperator('')}}>{sectors.filter(s=>s.active||s.id===departmentId).map(s=><option key={s.id} value={s.id}>{s.name}{!s.active?' (inativo)':''}</option>)}</select></label><label>Atendente de destino<select disabled={busy} value={operator} onChange={e=>setOperator(e.target.value)}><option value="">Fila do setor</option>{operators.filter(o=>['owner','admin'].includes(o.role)||members.some(m=>m.operator_id===o.id&&m.department_id===sector)).map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></label><button type="button" disabled={busy||!sector} onClick={()=>void onTransfer(sector,operator)}>Transferir atendimento</button></div>
+}

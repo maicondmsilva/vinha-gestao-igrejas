@@ -1,0 +1,5 @@
+'use client';
+import {useState} from 'react';
+import {centralGuide} from './articles';
+import '../chat/team-chat.css';
+export default function Guide(){const[search,setSearch]=useState('');const normalize=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),items=centralGuide.filter(a=>normalize(a.title+' '+a.body).includes(normalize(search)));return <main className="team-chat-page"><a href="/admin-vinha">← Central da Vinha</a><h1>Guia da Central Vinha</h1><p>Orientações de operação e limites atuais. Revisão: 15/10/2026. Os itens planejados estão identificados e não representam serviços já ativos.</p><label>O que você precisa saber?<input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Ex.: convite, pagamento, setor, nota fiscal"/></label><nav className="guide-index" aria-label="Tópicos do guia">{items.map(a=><a key={a.id} href={'#'+a.id}>{a.title}</a>)}</nav>{!items.length&&<p>Nenhuma orientação corresponde à busca.</p>}{items.map(a=><article className="sector-card" id={a.id} key={a.id}><h2>{a.title}</h2><p>{a.body}</p><a href={a.href}>{a.link} →</a></article>)}</main>}
