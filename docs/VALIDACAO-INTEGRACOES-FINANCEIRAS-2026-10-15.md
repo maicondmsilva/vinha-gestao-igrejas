@@ -20,6 +20,10 @@
 
 ## Ativação ainda pendente
 
+Migração aplicada como `20261015093256_financial_integrations_tenant_summary.sql`. Confirmado após aplicação: zero operações financeiras, zero perfis da Vinha, zero eventos de entrega e zero avisos novos. As massas dos testes foram revertidas.
+
+O verificador de segurança sinaliza as duas tabelas de eventos com RLS sem políticas: é intencional, pois clientes não recebem grants nem políticas e somente o servidor privilegiado processa esses eventos. [Explicação do aviso](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). Avisos anteriores de funções privilegiadas devem seguir auditados; nenhuma autorização foi removida para silenciá-los. Permanece a pendência anterior de [proteção contra senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Índices novos ainda sem uso são esperados nas tabelas vazias; não foram removidos por esse motivo. Os índices de chaves estrangeiras ausentes apontados pelo verificador são de tabelas anteriores a este bloco e continuam no backlog de desempenho.
+
 1. Confirmar contas/provedores e conta emissora da Vinha, com a contabilidade. O cadastro local não configura a prefeitura nem substitui a configuração fiscal do provedor.
 2. Homologar Asaas com dados de teste autorizados. A chave do ambiente deve ser sandbox e testada; `FINANCIAL_SANDBOX_ENABLED=true` habilita apenas envio ao sandbox. Não trocar a conta real de um provedor em uso para fazer testes. Como as configurações atuais têm uma linha por provedor, isolamento simultâneo de credenciais sandbox/produção é um requisito antes do uso real.
 3. Configurar webhook Asaas `/api/webhooks/saas-billing/asaas`, token forte e eventos de checkout, assinatura e fiscal. A associação de assinatura só ocorre com referência exata; se o checkout não propagar `externalReference`, exige conciliação explícita ainda a implementar, nunca associação por nome/valor.
