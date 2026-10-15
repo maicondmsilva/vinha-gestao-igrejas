@@ -44,3 +44,6 @@ jobs:
       - name: Validar build
         run: pnpm run build
 
+      - name: Validar regras de avisos financeiros
+        run: pnpm run test:central
+

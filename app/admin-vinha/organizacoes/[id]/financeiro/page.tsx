@@ -18,6 +18,11 @@ type Form = {
   district: string;
   city: string;
   state: string;
+  dueDay: number;
+  emailEnabled: boolean;
+  whatsappEnabled: boolean;
+  whatsappNumber: string;
+  whatsappConsent: boolean;
 };
 
 const empty: Form = {
@@ -31,6 +36,11 @@ const empty: Form = {
   district: '',
   city: '',
   state: '',
+  dueDay: 10,
+  emailEnabled: false,
+  whatsappEnabled: false,
+  whatsappNumber: '',
+  whatsappConsent: false,
 };
 
 export default function FinancialProfile() {
@@ -65,6 +75,11 @@ export default function FinancialProfile() {
           district: profile.district || '',
           city: profile.city || '',
           state: profile.state || '',
+          dueDay: profile.due_day || 10,
+          emailEnabled: !!profile.email_enabled,
+          whatsappEnabled: !!profile.whatsapp_enabled,
+          whatsappNumber: profile.whatsapp_number || '',
+          whatsappConsent: !!profile.whatsapp_consent_at,
         });
       } catch {
         setNotice('Não foi possível carregar o cadastro financeiro.');
@@ -91,6 +106,11 @@ export default function FinancialProfile() {
       district: form.district,
       city: form.city,
       state: form.state,
+      dueDay: form.dueDay,
+      emailEnabled: form.emailEnabled,
+      whatsappEnabled: form.whatsappEnabled,
+      whatsappNumber: form.whatsappNumber,
+      whatsappConsent: form.whatsappConsent,
     } as Record<string,unknown>;
 
     try {
@@ -116,7 +136,7 @@ export default function FinancialProfile() {
     }
   }
 
-  const update = (key: keyof Form, value: string) =>
+  const update = (key: keyof Form, value: string | number | boolean) =>
     setForm((current) => ({ ...current, [key]: value }));
 
   return (
@@ -199,6 +219,8 @@ export default function FinancialProfile() {
               <input value={form.city} onChange={(e) => update('city', e.target.value)} />
             </label>
 
+            <label>Dia preferido de vencimento (1 a 28)<input type="number" min={1} max={28} required value={form.dueDay} onChange={e=>update('dueDay',Number(e.target.value))}/></label>
+            <fieldset className="full"><legend>Avisos de cobrança</legend><label className="billing-preference"><input type="checkbox" checked={form.emailEnabled} onChange={e=>update('emailEnabled',e.target.checked)}/>Enviar avisos ao e-mail financeiro</label><label className="billing-preference"><input type="checkbox" checked={form.whatsappEnabled} onChange={e=>update('whatsappEnabled',e.target.checked)}/>Enviar avisos no WhatsApp</label><label>Número com DDI e DDD<input value={form.whatsappNumber} onChange={e=>update('whatsappNumber',e.target.value.replace(/\D/g,''))}/></label><label className="billing-preference"><input type="checkbox" checked={form.whatsappConsent} onChange={e=>update('whatsappConsent',e.target.checked)}/>O titular autorizou os avisos neste número</label><p>O envio depende de canais e remetente configurados. Confira a situação em Avisos de cobrança na Central.</p></fieldset>
             <div className="full">
               <button className="billing-button" type="submit" disabled={saving}>
                 {saving ? 'Salvando…' : 'Salvar cadastro'}

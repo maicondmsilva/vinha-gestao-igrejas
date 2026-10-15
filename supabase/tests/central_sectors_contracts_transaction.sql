@@ -1,0 +1,50 @@
+-- Run in a transaction. All fixtures, including operator changes, are rolled back.
+begin;
+do $$
+declare manager uuid; assistant uuid; org uuid:=extensions.gen_random_uuid(); headquarters uuid:=extensions.gen_random_uuid(); daughter uuid:=extensions.gen_random_uuid(); sector_a uuid; sector_b uuid; chat uuid; result jsonb; contract uuid; inv uuid; n integer; denied boolean; stamp bigint:=(extract(epoch from now())*1000)::bigint;
+begin
+ select user_id into manager from public.platform_operators where active and role='owner' limit 1;
+ select id into assistant from auth.users where id<>manager and id not in(select user_id from public.platform_operators) limit 1;
+ if manager is null or assistant is null then raise exception 'test_requires_existing_owner_and_second_account'; end if;
+ insert into public.platform_operators(user_id,role,full_name,email) select assistant,'support','Operador QA transacional',email from auth.users where id=assistant;
+ insert into public.organizations(id,name,slug) values(org,'Organização QA contratos','qa-contratos-'||org::text);
+ insert into public.organization_units(id,organization_id,name,slug,unit_type) values(headquarters,org,'Sede QA','sede','headquarters'),(daughter,org,'Filha QA','filha','congregation');
+ insert into public.organization_memberships(organization_id,user_id,role,status,default_unit_id) values(org,assistant,'owner','active',headquarters);
+ update public.saas_subscriptions set status='active' where organization_id=org;
+ insert into public.saas_chat_departments(name) values('Setor QA A '||org::text) returning id into sector_a;
+ insert into public.saas_chat_departments(name) values('Setor QA B '||org::text) returning id into sector_b;
+ insert into public.saas_chat_department_members values(sector_a,assistant);
+ perform set_config('request.jwt.claims','{"role":"anon"}',true);execute 'set local role anon';
+ result:=public.support_chat('start',null,repeat('a',64),jsonb_build_object('name','Visitante QA','email','qa@example.invalid','body','Teste transacional','departmentId',sector_a));chat:=(result->>'id')::uuid;
+ denied:=false;begin perform count(*) from public.saas_chat_conversations;exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'anon_direct_chat_allowed';end if;
+ execute 'reset role';
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',assistant,'role','authenticated','aal','aal2')::text,true);execute 'set local role authenticated';
+ if not exists(select 1 from public.saas_chat_conversations where id=chat and department_id=sector_a and last_message_at>operator_last_read_at) then raise exception 'sector_or_unread_failed';end if;
+ if jsonb_array_length(public.chat_operator_directory())<2 then raise exception 'operator_directory_incomplete'; end if;
+ perform public.transfer_platform_chat(chat,sector_b,null);
+ if exists(select 1 from public.saas_chat_conversations where id=chat) then raise exception 'transferred_chat_leaked_to_old_sector';end if;
+ denied:=false;begin perform public.transfer_platform_chat(chat,sector_a,null);exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'unauthorized_transfer_allowed';end if;
+ execute 'reset role';perform set_config('request.jwt.claims',jsonb_build_object('sub',manager,'role','authenticated','aal','aal2')::text,true);execute 'set local role authenticated';
+ if not exists(select 1 from public.organization_units where id=daughter) then raise exception 'central_unit_directory_empty';end if;
+ perform public.save_unit_contract(jsonb_build_object('unitId',headquarters,'payerUnitId',headquarters,'planId','plan-essential','status','active','dueDay',20,'modules',jsonb_build_object('people',false)));
+ contract:=public.save_unit_contract(jsonb_build_object('unitId',daughter,'payerUnitId',headquarters,'planId','plan-essential','status','active','dueDay',5,'modules',jsonb_build_object('finance',true)));
+ n:=public.generate_platform_invoices('2099-01',null,org);if n<>2 then raise exception 'expected_two_unit_invoices_got_%',n;end if;
+ if public.generate_platform_invoices('2099-01',null,org)<>0 then raise exception 'invoice_not_idempotent';end if;
+ if exists(select 1 from public.saas_invoices where church_id=org and subscription_id is not null) then raise exception 'global_plus_units_duplicate';end if;
+ if exists(select 1 from public.saas_invoices where church_id=org and to_char(to_timestamp(due_at/1000) at time zone 'America/Sao_Paulo','DD')<>'20') then raise exception 'payer_due_day_not_used';end if;
+ select id into inv from public.saas_invoices where unit_contract_id=contract;perform public.record_platform_invoice_status(inv,'paid');
+ if not exists(select 1 from public.saas_invoices where id=inv and status='paid') then raise exception 'unit_payment_failed';end if;
+ -- An existing ministry invoice blocks unit invoices for that month.
+ insert into public.saas_invoices(church_id,subscription_id,reference_month,due_at,amount_cents,payer_church_id,created_at,updated_at) select org,id,'2099-02',stamp,1000,org,stamp,stamp from public.saas_subscriptions where organization_id=org;
+ if public.generate_platform_invoices('2099-02',null,org)<>0 then raise exception 'billing_mode_switch_double_billed';end if;
+ execute 'reset role';perform set_config('request.jwt.claims',jsonb_build_object('sub',assistant,'role','authenticated','aal','aal1')::text,true);execute 'set local role authenticated';
+ if public.unit_module_enabled(org,'people') then raise exception 'explicit_module_block_ignored'; end if;
+ perform public.request_unit_modules(headquarters,array['people','finance'],12,true);
+ if not exists(select 1 from public.saas_unit_contracts where unit_id=headquarters and requested_due_day=12 and due_day=20 and requested_modules @> array['finance']) then raise exception 'customer_request_not_pending';end if;
+ denied:=false;begin perform public.save_unit_contract(jsonb_build_object('unitId',headquarters));exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'customer_changed_contract';end if;
+ if exists(select 1 from public.saas_chat_conversations where id=chat) then raise exception 'aal1_read_chat';end if;
+ execute 'reset role';
+ perform set_config('vinha.central_sectors_contracts_test','passed',true);
+end $$;
+select current_setting('vinha.central_sectors_contracts_test') result;
+rollback;

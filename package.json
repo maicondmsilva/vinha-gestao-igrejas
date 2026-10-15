@@ -12,6 +12,7 @@
     "start": "vinext start",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "check:buttons": "node scripts/check-interactive-buttons.mjs",
+    "test:central": "node --experimental-strip-types --test scripts/central-billing.test.mjs",
     "db:generate": "drizzle-kit generate",
     "db:start": "supabase start",
     "db:stop": "supabase stop",

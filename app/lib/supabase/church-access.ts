@@ -3,6 +3,8 @@ import {tenantHint} from './tenant-hint';
 import {parseAccessContext,type AccessMembership} from './access';
 import type {Json} from './database.types';
 import {createSupabaseRequestClient,supabaseServerConfigured} from './request';
+import {moduleAllowed} from './module-guard';
+import type {OperationsClient} from './operations';
 
 const permissions:Record<string,string[]>={
  owner:['*'],
@@ -39,6 +41,7 @@ export async function authorizeSupabaseChurch(request:Request,permission:string)
  const grants=permissions[membership.role]||[];
  const can=(value:string)=>grants.includes('*')||grants.includes(value);
  if(!can(permission))return{access:null,response:NextResponse.json({error:'Você não possui permissão para esta ação.'},{status:403})};
+ if(!await moduleAllowed(client as unknown as OperationsClient,membership.organization_id,permission))return{access:null,response:NextResponse.json({error:'Este módulo não está liberado no contrato desta igreja. Fale com a Central Vinha.'},{status:403})};
  return{access:{client,userId:user.id,email:user.email||context.email||'',membership,can} satisfies SupabaseChurchAccess,response:null};
 }
 
