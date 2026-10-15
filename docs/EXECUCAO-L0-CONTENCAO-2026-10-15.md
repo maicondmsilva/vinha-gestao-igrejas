@@ -40,6 +40,7 @@ Convites locais antigos em /convite são diferentes da ativação comercial em /
 - HTTP local: GET /api/events retorna 503 FEATURE_NOT_RELEASED com no-store.
 - Navegador local: apresentação de pré-lançamento renderizada; /eventos/exemplo mostra a contenção em vez da página antiga.
 - Não foi validada nesta etapa uma sessão autenticada de cliente. Não foram realizados testes de isolamento no banco ao vivo, restauração, SMTP ou entrega real de mensagens.
+- Na prévia local houve erros de desenvolvimento RSC enquanto builds e recargas estavam em execução. A verificação pública após publicação encontrou também erro no prefetch do Link do Vinext e clique de login sem navegação. A apresentação foi ajustada para links HTML nativos, sem interceptação de navegação; as demais telas que usam o Link do framework exigem revisão específica na L1. Isso reforça que esta entrega não valida todas as jornadas autenticadas.
 
 O estado de publicação deve ser confirmado pelo commit, revisão e deploy vinculados à entrega. Build local não equivale a deploy.
 
