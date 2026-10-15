@@ -21,6 +21,7 @@ Atualizado em 15/10/2026. Guia consultável na aplicação: `/admin-vinha/guia`.
 6. Finalizar cartão recorrente com checkout hospedado, autorização, identificador de assinatura, retornos autenticados e cancelamento. A opção atual registra apenas interesse, não ativa débito.
 7. Consolidar faturas unitárias em uma só cobrança da sede: ainda pendente. O pagador pode ser comum, mas os links permanecem separados. A fila nova não processa faturas já incluídas na consolidação antiga.
 8. Auditar todos os pontos de acesso e RLS de cada módulo. O bloqueio do contrato foi conectado aos guardas comuns do servidor; rotas legadas e acesso direto aos dados precisam de cobertura completa antes de declarar enforcement integral.
+9. Migrar a consulta antiga `/api/tenant` para Supabase: o resumo antigo da assinatura ainda depende do banco anterior. A nova área `/minha-assinatura` usa Supabase e fica acessível diretamente no início de Configurações, independentemente desse resumo.
 
 ## Novo bloco planejado: Dados da Vinha e fiscal
 
