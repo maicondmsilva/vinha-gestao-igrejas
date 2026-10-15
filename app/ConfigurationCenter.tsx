@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import PaymentSettings from './PaymentSettings';
 import SecurityAccessCenter from './SecurityAccessCenter';
 import './configuration.css';
+import { releaseCatalog } from './lib/release-availability';
 
 type Church={name:string;app:string;primary:string;accent:string};
 type Section='overview'|'subscription'|'brand'|'payments'|'documents'|'integrations'|'notifications'|'security';
@@ -17,7 +18,29 @@ const sections=[
  {id:'security',icon:'⌾',title:'Segurança e privacidade',copy:'Sessões, retenção, consentimentos e auditoria.'},
 ] as const;
 
-export default function ConfigurationCenter({church,setChurch}:{church:Church;setChurch:(church:Church)=>void}){
+export default function ConfigurationCenter({church}:{church:Church;setChurch:(church:Church)=>void}){
+ return <div className="content config-center">
+  <div className="page-head"><div><p className="section-over">PRÉ-LANÇAMENTO</p><h1>Configurações</h1><p>{church.name}</p></div></div>
+  <section className="config-panel"><h2>Configurações disponíveis nesta etapa</h2>
+   <p><a href="/minha-assinatura">Consultar contratos e solicitar alterações de módulos ou vencimento →</a></p>
+   <p><a href="/conta/seguranca">Acessar a segurança da minha conta →</a></p>
+   <p><a href="/suporte">Falar com a equipe Vinha →</a></p>
+  </section>
+  <section className="config-panel"><h2>Em desenvolvimento</h2>
+   <p>Identidade visual, aplicativo, padrões de PDFs, integrações e preferências da igreja ainda não estão liberados para operação real.</p>
+   <p>As prévias antigas foram retiradas deste acesso. Nenhuma integração é considerada conectada sem validação do serviço correspondente. Contratar um módulo não antecipa sua liberação operacional.</p>
+  </section>
+  <section className="config-panel"><h2>Disponibilidade operacional</h2>
+   <p>Este catálogo é independente dos módulos contratados e não substitui as permissões da sua conta.</p>
+   <ul>{releaseCatalog.map(feature=><li key={feature.id} style={{marginBottom:16}}>
+    <strong>{feature.title} — {feature.status==='pilot'?'núcleo em validação':'em desenvolvimento'}</strong>
+    <p>{feature.detail}</p>
+   </li>)}</ul>
+  </section>
+ </div>;
+}
+
+function LegacyConfigurationCenter({church,setChurch}:{church:Church;setChurch:(church:Church)=>void}){
  const [active,setActive]=useState<Section>('overview');
  const [notice,setNotice]=useState('');
  const open=(id:string)=>setActive(id as Section);

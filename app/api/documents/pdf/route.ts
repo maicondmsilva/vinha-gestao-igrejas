@@ -1,3 +1,4 @@
+import { withLegacyContainment } from '../../../lib/release-availability';
 import { NextResponse } from 'next/server';
 import { env } from 'cloudflare:workers';
 import { sessionFrom } from '../../_auth';
@@ -43,7 +44,7 @@ function makePdf(title: string, paragraphs: string[], church: string, person: st
   return new TextEncoder().encode(pdf);
 }
 
-export async function GET(request: Request) {
+async function legacyGET(request: Request) {
   const session=await sessionFrom(request);if(!session)return NextResponse.json({error:'Autenticação necessária.'},{status:401});const churchId=session.churchId;
   const url = new URL(request.url); const type = url.searchParams.get('type') || 'privacy'; const fallback = terms[type] || terms.privacy;
   const churchRow=await env.DB.prepare('SELECT name,senior_pastor_name FROM churches WHERE id=?').bind(churchId).first<{name:string;senior_pastor_name:string}>();
@@ -55,3 +56,5 @@ export async function GET(request: Request) {
   const id = `${type.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`; const pdf = makePdf(termRow?.title||fallback.title,paragraphs,church,person,id,churchRow?.senior_pastor_name||'Pastor titular',details);
   return new NextResponse(pdf, { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${type}-${clean(person||'modelo').toLowerCase().replace(/\s+/g,'-')}.pdf"`, 'Cache-Control': 'no-store' } });
 }
+
+export const GET = withLegacyContainment(legacyGET);

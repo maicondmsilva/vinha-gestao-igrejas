@@ -1,3 +1,4 @@
+import { withLegacyContainment } from '../../../lib/release-availability';
 import {env} from 'cloudflare:workers';
 import {NextResponse} from 'next/server';
 import {audit,hierarchyAccess,sessionFrom} from '../../_auth';
@@ -5,7 +6,7 @@ import {audit,hierarchyAccess,sessionFrom} from '../../_auth';
 type Grant={allowed:boolean;level:string;personalData:boolean};
 const moduleNames:Record<string,string>={dashboard:'Visão geral',people:'Membresia',finance:'Financeiro',kids:'Kids',events:'Eventos',cells:'Células',scales:'Escalas',reports:'Relatórios'};
 
-export async function GET(request:Request){
+async function legacyGET(request:Request){
   const session=await sessionFrom(request);
   if(!session)return NextResponse.json({error:'Autenticação necessária.'},{status:401});
   const childId=new URL(request.url).searchParams.get('child')||'';
@@ -61,3 +62,5 @@ export async function GET(request:Request){
   await audit(request,session,'hierarchy.overview.view','church',childId,{modules:codes.filter(code=>grants[code].allowed)});
   return NextResponse.json(result);
 }
+
+export const GET = withLegacyContainment(legacyGET);

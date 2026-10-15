@@ -1,8 +1,9 @@
+import { withLegacyContainment } from '../../../lib/release-availability';
 import {env} from 'cloudflare:workers';
 import {NextResponse} from 'next/server';
 import {sessionFrom} from '../../_auth';
 
-export async function POST(request:Request){
+async function legacyPOST(request:Request){
   const session=await sessionFrom(request);
   if(!session)return NextResponse.json({error:'Autenticação necessária.'},{status:401});
   if(!session.personId)return NextResponse.json({error:'Usuário sem membro vinculado.'},{status:409});
@@ -13,3 +14,5 @@ export async function POST(request:Request){
   if(ids.length)await env.DB.batch(ids.map(id=>env.DB.prepare('INSERT OR IGNORE INTO chat_mentions (id,church_id,message_id,mentioned_person_id,created_at) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM people WHERE id=? AND church_id=?)').bind(crypto.randomUUID(),session.churchId,message.id,id,now,id,session.churchId)));
   return NextResponse.json({ok:true,count:ids.length});
 }
+
+export const POST = withLegacyContainment(legacyPOST);

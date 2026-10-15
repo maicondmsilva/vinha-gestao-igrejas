@@ -1,2 +1,6 @@
-import Link from 'next/link';
-export default function LinksLayout({children}:{children:React.ReactNode}){return <>{children}<div style={{position:'fixed',right:18,bottom:18,zIndex:60,display:'flex',gap:8}}><Link href="/vinculos/visao-geral" style={{background:'#d8b769',color:'#173e30',textDecoration:'none',borderRadius:24,padding:'11px 16px',fontSize:13,fontWeight:800,boxShadow:'0 8px 24px #143c2e25'}}>▦ Visão da sede</Link><Link href="/vinculos/permissoes" style={{background:'#173e30',color:'white',textDecoration:'none',borderRadius:24,padding:'11px 16px',fontSize:13,boxShadow:'0 8px 24px #143c2e35'}}>⚙ Permissões</Link></div></>}
+import { UnavailableFeature } from '../PilotAvailability';
+
+// Do not mount legacy client pages while their operations are unavailable.
+export default function ContainedLegacyLayout({ children: _children }: { children: React.ReactNode }) {
+  return <UnavailableFeature/>;
+}
