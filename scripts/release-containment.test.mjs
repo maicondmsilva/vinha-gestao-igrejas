@@ -88,4 +88,7 @@ test('legacy page entrypoints are contained and the dashboard gates mounting', (
   assert.match(dashboard, /<\/PilotModuleBoundary>/);
   assert.equal(existsSync(join(rootPath, 'app/teste/layout.tsx')), false, 'public trial terms must remain accessible');
   assert.match(readFileSync(join(rootPath, 'app/teste/termos/page.tsx'), 'utf8'), /Condições do período de teste/);
+  const landing = readFileSync(join(rootPath, 'app/page.tsx'), 'utf8');
+  assert.doesNotMatch(landing, /next\/link|<Link/);
+  assert.match(landing, /<a className="site-login" href="\/login">Entrar<\/a>/);
 });
