@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, relative, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -78,7 +78,7 @@ test('all 50 legacy-only endpoints have guarded exports; core adapters remain se
 });
 
 test('legacy page entrypoints are contained and the dashboard gates mounting', () => {
-  for (const path of ['app-chat', 'app-notificacoes', 'app-voluntario', 'escalas', 'eventos', 'convite', 'vinculos', 'teste', 'onboarding/importar-membros', 'configuracoes/notificacoes', 'configuracoes/equipe-inicial']) {
+  for (const path of ['app-chat', 'app-notificacoes', 'app-voluntario', 'escalas', 'eventos', 'convite', 'vinculos', 'onboarding/importar-membros', 'configuracoes/notificacoes', 'configuracoes/equipe-inicial']) {
     const content = readFileSync(join(rootPath, 'app', path, 'layout.tsx'), 'utf8');
     assert.match(content, /return <UnavailableFeature/);
     assert.doesNotMatch(content, /\{children\}/);
@@ -86,4 +86,6 @@ test('legacy page entrypoints are contained and the dashboard gates mounting', (
   const dashboard = readFileSync(join(rootPath, 'app/DashboardApp.tsx'), 'utf8');
   assert.match(dashboard, /<PilotModuleBoundary view=\{viewSlug\[active\]/);
   assert.match(dashboard, /<\/PilotModuleBoundary>/);
+  assert.equal(existsSync(join(rootPath, 'app/teste/layout.tsx')), false, 'public trial terms must remain accessible');
+  assert.match(readFileSync(join(rootPath, 'app/teste/termos/page.tsx'), 'utf8'), /Condições do período de teste/);
 });
