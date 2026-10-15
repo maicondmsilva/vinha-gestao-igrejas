@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {tenantHint} from './tenant-hint';
+import {selectActiveMembership,trustedSessionRequest} from '../access-security';
 import {parseAccessContext,type AccessMembership} from './access';
 import type {Json} from './database.types';
 import {createSupabaseRequestClient,supabaseServerConfigured} from './request';
@@ -27,6 +28,7 @@ export type SupabaseChurchAccess={
 
 export async function authorizeSupabaseChurch(request:Request,permission:string){
  if(!supabaseServerConfigured)return null;
+ if(!trustedSessionRequest(request))return{access:null,response:NextResponse.json({error:'Origem da solicitação não autorizada.'},{status:403})};
  const client=createSupabaseRequestClient(request);
  const {data:{user},error:userError}=await client.auth.getUser();
  if(userError||!user)return{access:null,response:NextResponse.json({error:'Autenticação necessária.'},{status:401})};
@@ -35,8 +37,7 @@ export async function authorizeSupabaseChurch(request:Request,permission:string)
  const context=parseAccessContext(data);
  const hint=tenantHint(request);
  const preferred=context.preference.selected_organization_id||'';
- const membership=hint?context.memberships.find(item=>item.organization_slug===hint||item.organization_id===hint)
-  :context.memberships.find(item=>item.organization_id===preferred)||context.memberships[0];
+ const membership=selectActiveMembership(context.memberships,hint,preferred);
  if(!membership)return{access:null,response:NextResponse.json({error:'Nenhuma organização ativa foi encontrada para este usuário.'},{status:403})};
  const grants=permissions[membership.role]||[];
  const can=(value:string)=>grants.includes('*')||grants.includes(value);

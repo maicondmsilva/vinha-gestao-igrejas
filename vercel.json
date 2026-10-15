@@ -2,43 +2,288 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "buildCommand": "pnpm run build:vercel",
-  "crons": [{"path":"/api/platform/lifecycle/run","schedule":"0 11 * * *"}],
+  "crons": [
+    {
+      "path": "/api/platform/lifecycle/run",
+      "schedule": "0 11 * * *"
+    }
+  ],
   "redirects": [
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "app.vinhaigrejas.com.br" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "app.vinhaigrejas.com.br"
+        }
+      ],
       "destination": "/login",
       "permanent": false
     },
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "central.vinhaigrejas.com.br" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "central.vinhaigrejas.com.br"
+        }
+      ],
       "destination": "/central-vinha/login",
       "permanent": false
     },
     {
       "source": "/login",
-      "has": [{ "type": "host", "value": "central.vinhaigrejas.com.br" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "central.vinhaigrejas.com.br"
+        }
+      ],
       "destination": "https://app.vinhaigrejas.com.br/login",
       "permanent": false
     },
     {
       "source": "/painel/:path*",
-      "has": [{ "type": "host", "value": "central.vinhaigrejas.com.br" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "central.vinhaigrejas.com.br"
+        }
+      ],
       "destination": "https://app.vinhaigrejas.com.br/painel/:path*",
       "permanent": false
     },
     {
       "source": "/central-vinha/:path*",
-      "has": [{ "type": "host", "value": "app.vinhaigrejas.com.br" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "app.vinhaigrejas.com.br"
+        }
+      ],
       "destination": "https://central.vinhaigrejas.com.br/central-vinha/:path*",
       "permanent": false
     },
     {
       "source": "/admin-vinha/:path*",
-      "has": [{ "type": "host", "value": "app.vinhaigrejas.com.br" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "app.vinhaigrejas.com.br"
+        }
+      ],
       "destination": "https://central.vinhaigrejas.com.br/admin-vinha/:path*",
       "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+        }
+      ]
+    },
+    {
+      "source": "/api/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/painel/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/admin-vinha/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/onboarding/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/central-vinha/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/conta/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/acesso",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/minha-assinatura",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/login",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/cadastro",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/ativar/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ]
 }
