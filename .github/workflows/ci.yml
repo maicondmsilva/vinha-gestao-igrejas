@@ -50,3 +50,6 @@ jobs:
       - name: Validar contencao de recursos nao liberados
         run: pnpm run test:release
 
+      - name: Validar politicas de acesso e protecoes de publicacao
+        run: pnpm run test:security
+
