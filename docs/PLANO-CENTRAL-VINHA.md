@@ -13,15 +13,25 @@ Atualizado em 15/10/2026. Guia consultável na aplicação: `/admin-vinha/guia`.
 
 ## Dependências para operação financeira externa
 
+### Desenvolvimento adicional de 15/10/2026
+
+- Novas áreas `/admin-vinha/empresa` e `/admin-vinha/financeiro-integracoes`: cadastro da Vinha com revisão/auditoria, validação dos canais, preparação e acompanhamento de solicitações.
+- Adaptador Asaas **somente sandbox** para checkout recorrente e agendamento/consulta de NFS-e. O banco também rejeita operações destes tipos em produção. Nenhum cartão é coletado na Vinha.
+- Solicitações persistidas antes do envio, trava concorrente e referência única. Resultado incerto fica bloqueado para reenvio automático. Retornos de homologação não quitam faturas reais.
+- Notificações financeiras com identidade Vinha, logotipo configurado, consulta do domínio verificado e dos modelos utilitários Meta. Nova validação exigida em sete dias ou após alteração de credencial/configuração.
+- Retornos assinados Resend/Meta, histórico idempotente de entrega e proteção contra retorno antecipado e regressão de confirmação.
+- `/api/tenant` migrada para Supabase, sem criar plano ou avaliação ao fazer GET. Consulta comercial limitada ao ministério do usuário; contagens respeitam RLS.
+- Estes itens não significam que recorrência, fiscal ou mensagens estejam operacionais em produção. Consultar o relatório `VALIDACAO-INTEGRACOES-FINANCEIRAS-2026-10-15.md` e seguir a homologação abaixo.
+
 1. Configurar/testar credenciais do provedor financeiro e retorno autenticado. Não emitir cobrança real para testes sem autorização específica do responsável pelo pagamento.
 2. Validar remetente de e-mail e domínio. Para avisos financeiros, configurar o canal Resend em Automações → Notificações. Isso é separado do SMTP de autenticação.
 3. No canal WhatsApp, informar número/credencial e modelos aprovados em `provider_config.billingTemplates`: `upcoming`, `overdue`, `paid`; idioma em `billingLanguage` e versão de API em `apiVersion`. Cada modelo deve receber quatro parâmetros de corpo: referência, valor, vencimento e link/orientação. Configurar primeiro no provedor e testar com destinatário autorizado.
 4. Habilitar `BILLING_NOTIFICATIONS_ENABLED=true` apenas depois de validar remetente, destinos e autorização. A rotina diária já prevista na Vercel processa a fila; a Central também oferece processamento manual. Não há envio instantâneo garantido após pagamento: depende da execução da rotina.
-5. Status `submitted` significa aceito pela API, não entregue/lido. Falhas e envios de estado incerto devem ser conciliados no provedor antes de reenvio. Retornos de entrega ainda são próximo bloco.
+5. Status `submitted` significa aceito pela API, não entregue/lido. Retornos de entrega já têm implementação com assinatura, mas precisam das chaves/configuração dos provedores e de teste real autorizado. Falhas e envios de estado incerto devem ser conciliados no provedor antes de reenvio.
 6. Finalizar cartão recorrente com checkout hospedado, autorização, identificador de assinatura, retornos autenticados e cancelamento. A opção atual registra apenas interesse, não ativa débito.
 7. Consolidar faturas unitárias em uma só cobrança da sede: ainda pendente. O pagador pode ser comum, mas os links permanecem separados. A fila nova não processa faturas já incluídas na consolidação antiga.
 8. Auditar todos os pontos de acesso e RLS de cada módulo. O bloqueio do contrato foi conectado aos guardas comuns do servidor; rotas legadas e acesso direto aos dados precisam de cobertura completa antes de declarar enforcement integral.
-9. Migrar a consulta antiga `/api/tenant` para Supabase: o resumo antigo da assinatura ainda depende do banco anterior. A nova área `/minha-assinatura` usa Supabase e fica acessível diretamente no início de Configurações, independentemente desse resumo.
+9. Validar visualmente o resumo `/api/tenant` agora migrado e prosseguir com as rotas legadas dos módulos das igrejas. Restam 55 arquivos com referências a D1: três possuem adaptadores ou caminhos mistos; os demais exigem migração e testes próprios. A Central em `app/api/platform` não contém `env.DB`. Não confundir essa conclusão com migração integral de Eventos, Kids, financeiro das igrejas ou chat interno.
 
 ## Novo bloco planejado: Dados da Vinha e fiscal
 

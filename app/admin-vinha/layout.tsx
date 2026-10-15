@@ -4,4 +4,12 @@ import ChatNavigation from './ChatNavigation';
 import './chat/team-chat.css';
 import './faturamento/financial.css';
 import './hierarquia/hierarchy.css';
-export default function AdminVinhaLayout({children}:{children:React.ReactNode}){return <AdminVinhaGate>{children}<nav className="admin-shortcuts" aria-label="Atalhos da Central"><a href="/admin-vinha/guia">? Guia da Central</a><a href="/admin-vinha/contratos">▤ Contratos por igreja</a><TrialNavigation/><ChatNavigation/><a href="/admin-vinha/suporte">◌ Suporte</a><a href="/admin-vinha/suporte/conhecimento">◇ Qualidade</a><a href="/admin-vinha/automacoes">✦ Automações</a><a href="/admin-vinha/automacoes/notificacoes">⌁ Alertas</a><a href="/admin-vinha/automacoes/execucoes">◷ Execuções</a><a href="/admin-vinha/operadores">♙ Operadores</a><a href="/admin-vinha/hierarquia/solicitacoes">◌ Solicitações</a><a href="/admin-vinha/faturamento/consolidadas">▤ Consolidadas</a><a href="/admin-vinha/hierarquia">⌘ Hierarquia</a><a href="/admin-vinha/faturamento/clientes">▣ Dados financeiros</a></nav></AdminVinhaGate>}
+import FinancialNavigation from './financeiro-integracoes/FinancialNavigation';
+export default function AdminVinhaLayout({children}:{children:React.ReactNode}){
+ return <AdminVinhaGate>{children}<nav className="admin-shortcuts" aria-label="Atalhos da Central">
+  <a href="/admin-vinha/guia">? Guia da Central</a><a href="/admin-vinha/contratos">▤ Contratos por igreja</a><FinancialNavigation/><TrialNavigation/><ChatNavigation/>
+  <a href="/admin-vinha/suporte">◌ Suporte</a><a href="/admin-vinha/suporte/conhecimento">◇ Qualidade</a><a href="/admin-vinha/automacoes">✦ Automações</a>
+  <a href="/admin-vinha/automacoes/notificacoes">⌁ Alertas</a><a href="/admin-vinha/automacoes/execucoes">◷ Execuções</a><a href="/admin-vinha/operadores">♙ Operadores</a>
+  <a href="/admin-vinha/hierarquia/solicitacoes">◌ Solicitações</a><a href="/admin-vinha/faturamento/consolidadas">▤ Consolidadas</a><a href="/admin-vinha/hierarquia">⌘ Hierarquia</a><a href="/admin-vinha/faturamento/clientes">▣ Dados financeiros</a>
+ </nav></AdminVinhaGate>;
+}
