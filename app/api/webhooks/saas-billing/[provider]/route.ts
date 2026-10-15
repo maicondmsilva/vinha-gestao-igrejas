@@ -5,6 +5,7 @@ import {supabaseAdminClient} from '../../../../lib/supabase/server-admin';
 import {one,rpc,check,uuid,OperationError} from '../../../../lib/supabase/operations';
 import {decryptSecret} from '../../../payments/secrets';
 import {verifyMercadoPagoPayment} from '../../../payments/provider';
+import {handleFinancialSandboxEvent} from '../../../../lib/supabase/financial-webhook';
 const paidStates=new Set(['approved','paid','received','confirmed','payment_received','payment_confirmed','checkout_paid','3','4']);
 function secretMatches(expected:string|null,received:string){if(!expected||!received)return false;const a=Buffer.from(expected),b=Buffer.from(received);return a.length===b.length&&timingSafeEqual(a,b)}
 export async function POST(request:Request,{params}:{params:Promise<{provider:string}>}){try{
@@ -23,6 +24,10 @@ export async function POST(request:Request,{params}:{params:Promise<{provider:st
   const expected=await decryptSecret(setting.webhook_token_ciphertext,setting.webhook_token_iv);
   const received=provider==='asaas'?request.headers.get('asaas-access-token')||'':String(body?.SecretKey||body?.ResponseDetail?.SecretKey||request.headers.get('x-webhook-token')||'');
   if(!secretMatches(expected,received))return NextResponse.json({error:'Notificação não autenticada.'},{status:401});
+  if(provider==='asaas'&&setting.environment==='sandbox'){
+   const handled=await handleFinancialSandboxEvent(client,body);
+   return NextResponse.json({ok:true,sandbox:true,ignored:!handled});
+  }
   if(provider==='asaas'){
    const value=body.payment||body.checkout||{};paymentId=String(value.id||'');reference=String(value.externalReference||'');status=String(body.event||value.status||'');externalId=String(body.id||paymentId+':'+status);
    amount=body.payment?Math.round(Number(value.value)*100):Array.isArray(value.items)?Math.round(value.items.reduce((sum:number,item:any)=>sum+Number(item.quantity)*Number(item.value),0)*100):null;
