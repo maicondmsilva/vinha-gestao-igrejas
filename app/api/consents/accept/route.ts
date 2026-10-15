@@ -1,8 +1,9 @@
+import { withLegacyContainment } from '../../../lib/release-availability';
 import {env} from 'cloudflare:workers';
 import {NextResponse} from 'next/server';
 import {audit, sessionFrom} from '../../_auth';
 
-export async function POST(request:Request){
+async function legacyPOST(request:Request){
   const session=await sessionFrom(request);
   if(!session)return NextResponse.json({error:'Autenticação necessária.'},{status:401});
   if(!session.personId)return NextResponse.json({error:'Seu usuário precisa estar vinculado ao cadastro de responsável.'},{status:409});
@@ -25,7 +26,7 @@ export async function POST(request:Request){
   return NextResponse.json({id,acceptedAt:now,termVersion:term.version});
 }
 
-export async function PATCH(request:Request){
+async function legacyPATCH(request:Request){
   const session=await sessionFrom(request);
   if(!session)return NextResponse.json({error:'Autenticação necessária.'},{status:401});
   if(!session.personId)return NextResponse.json({error:'Seu usuário precisa estar vinculado ao cadastro de responsável.'},{status:409});
@@ -37,3 +38,6 @@ export async function PATCH(request:Request){
   await audit(request,session,'consent.revoke','person_consent',data.consentId,{});
   return NextResponse.json({ok:true});
 }
+
+export const POST = withLegacyContainment(legacyPOST);
+export const PATCH = withLegacyContainment(legacyPATCH);

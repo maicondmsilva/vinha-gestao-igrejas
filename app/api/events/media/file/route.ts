@@ -1,4 +1,7 @@
+import { withLegacyContainment } from '../../../../lib/release-availability';
 import { env } from 'cloudflare:workers';
 import { NextResponse } from 'next/server';
 import { sessionFrom } from '../../../_auth';
-export async function GET(request:Request){const session=await sessionFrom(request);if(!session)return NextResponse.json({error:'Autenticação necessária.'},{status:401});const id=new URL(request.url).searchParams.get('id'),media=await env.DB.prepare('SELECT object_key,content_type FROM event_media WHERE id=? AND church_id=?').bind(id,session.churchId).first<{object_key:string;content_type:string}>();if(!media)return NextResponse.json({error:'Imagem não encontrada.'},{status:404});const object=await env.FILES.get(media.object_key);if(!object)return NextResponse.json({error:'Arquivo não encontrado.'},{status:404});return new Response(object.body,{headers:{'content-type':media.content_type,'cache-control':'private, max-age=3600'}})}
+async function legacyGET(request:Request){const session=await sessionFrom(request);if(!session)return NextResponse.json({error:'Autenticação necessária.'},{status:401});const id=new URL(request.url).searchParams.get('id'),media=await env.DB.prepare('SELECT object_key,content_type FROM event_media WHERE id=? AND church_id=?').bind(id,session.churchId).first<{object_key:string;content_type:string}>();if(!media)return NextResponse.json({error:'Imagem não encontrada.'},{status:404});const object=await env.FILES.get(media.object_key);if(!object)return NextResponse.json({error:'Arquivo não encontrado.'},{status:404});return new Response(object.body,{headers:{'content-type':media.content_type,'cache-control':'private, max-age=3600'}})}
+
+export const GET = withLegacyContainment(legacyGET);

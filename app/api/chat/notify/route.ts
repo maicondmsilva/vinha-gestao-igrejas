@@ -1,8 +1,9 @@
+import { withLegacyContainment } from '../../../lib/release-availability';
 import {env} from 'cloudflare:workers';
 import {NextResponse} from 'next/server';
 import {sessionFrom} from '../../_auth';
 
-export async function POST(request:Request){
+async function legacyPOST(request:Request){
   const session=await sessionFrom(request);
   if(!session)return NextResponse.json({error:'Autenticação necessária.'},{status:401});
   if(!session.personId)return NextResponse.json({error:'Usuário sem membro vinculado.'},{status:409});
@@ -18,3 +19,5 @@ export async function POST(request:Request){
   if(statements.length)await env.DB.batch(statements);
   return NextResponse.json({ok:true,count:statements.length,status:ready?'queued':'waiting_configuration'});
 }
+
+export const POST = withLegacyContainment(legacyPOST);

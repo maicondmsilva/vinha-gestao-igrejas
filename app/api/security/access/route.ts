@@ -1,10 +1,11 @@
+import { withLegacyContainment } from '../../../lib/release-availability';
 import {env} from 'cloudflare:workers';
 import {NextResponse} from 'next/server';
 import {audit,authorize,unitGrant} from '../../_auth';
 
 const bool=(value:unknown)=>value===true||value===1;
 
-export async function GET(request:Request){
+async function legacyGET(request:Request){
  const auth=await authorize(request,'users.read');if(auth.response)return auth.response;const session=auth.session!;
  const [policy,users,events,units,recovery]=await Promise.all([
   env.DB.prepare('SELECT * FROM auth_security_policies WHERE church_id=?').bind(session.churchId).first(),
@@ -16,7 +17,7 @@ export async function GET(request:Request){
  return NextResponse.json({policy:policy||{require_mfa_admins:1,require_mfa_finance:1,require_verified_email:1,require_verified_phone_members:0,session_timeout_minutes:480,max_failed_attempts:5},users:users.results,events:events.results,units:units.results,recovery:recovery.results,currentUserId:session.id,provider:'openai_sites'});
 }
 
-export async function PATCH(request:Request){
+async function legacyPATCH(request:Request){
  const auth=await authorize(request,'*');if(auth.response)return auth.response;const session=auth.session!,d=await request.json<Record<string,unknown>>(),now=Date.now();
  if(d.action==='policy'){
   const timeout=Math.min(1440,Math.max(30,Number(d.sessionTimeoutMinutes)||480)),attempts=Math.min(10,Math.max(3,Number(d.maxFailedAttempts)||5));
@@ -35,3 +36,6 @@ export async function PATCH(request:Request){
  }
  return NextResponse.json({error:'Ação inválida.'},{status:400});
 }
+
+export const GET = withLegacyContainment(legacyGET);
+export const PATCH = withLegacyContainment(legacyPATCH);

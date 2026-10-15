@@ -1,3 +1,4 @@
+import { withLegacyContainment } from '../../../lib/release-availability';
 import { env } from 'cloudflare:workers';
 import { NextResponse } from 'next/server';
 import { audit, authorize } from '../../_auth';
@@ -5,7 +6,7 @@ import { audit, authorize } from '../../_auth';
 const clean=(v:unknown)=>String(v||'').trim();
 const digits=(v:unknown)=>clean(v).replace(/\D/g,'');
 
-export async function GET(request:Request){
+async function legacyGET(request:Request){
  const auth=await authorize(request,'people.read');if(auth.response)return auth.response;
  const churchId=auth.session!.churchId;
  const rows=await env.DB.prepare(`SELECT r.*,u.name unit_name,u.type unit_type,p.full_name person_name
@@ -15,7 +16,7 @@ export async function GET(request:Request){
  return NextResponse.json({requests:rows.results});
 }
 
-export async function POST(request:Request){
+async function legacyPOST(request:Request){
  const externalUserId=request.headers.get('oai-authenticated-user-id'),authenticatedEmail=clean(request.headers.get('oai-authenticated-user-email')).toLowerCase();
  if(!externalUserId||!authenticatedEmail)return NextResponse.json({error:'Entre com sua conta antes de solicitar o cadastro.'},{status:401});
  const d=await request.json<Record<string,unknown>>(),fullName=clean(d.fullName),email=clean(d.email).toLowerCase(),phone=digits(d.phone),cpf=digits(d.cpf),birthDate=clean(d.birthDate),unitId=clean(d.unitId);
@@ -34,7 +35,7 @@ export async function POST(request:Request){
  await env.DB.batch(statements);return NextResponse.json({id,matched:Boolean(match),status},{status:201});
 }
 
-export async function PATCH(request:Request){
+async function legacyPATCH(request:Request){
  const auth=await authorize(request,'people.write');if(auth.response)return auth.response;const d=await request.json<Record<string,string>>();
  const churchId=auth.session!.churchId;
  if(!d.id||!['approve','reject','merge'].includes(d.action))return NextResponse.json({error:'Ação inválida.'},{status:400});
@@ -45,3 +46,7 @@ export async function PATCH(request:Request){
  else if(item.status==='new_pending')statements.push(env.DB.prepare(`UPDATE people SET status='rejected' WHERE id=? AND church_id=? AND status='pending_approval'`).bind(item.matched_person_id,churchId));
  await env.DB.batch(statements);await audit(request,auth.session!,`app.registration.${next}`,'app_registration',d.id,{personId:item.matched_person_id,unitId:item.unit_id});return NextResponse.json({ok:true,message:approved?'Cadastro aprovado e perfil integrado ao aplicativo.':'Solicitação recusada e registrada na auditoria.'});
 }
+
+export const GET = withLegacyContainment(legacyGET);
+export const POST = withLegacyContainment(legacyPOST);
+export const PATCH = withLegacyContainment(legacyPATCH);

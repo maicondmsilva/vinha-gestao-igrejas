@@ -1,3 +1,4 @@
+import { withLegacyContainment } from '../../lib/release-availability';
 import { env } from 'cloudflare:workers';
 import { NextResponse } from 'next/server';
 import { audit, authorize } from '../_auth';
@@ -18,7 +19,7 @@ async function ensureDefaults(churchId:string) {
     .bind(`${churchId}-${type}-1`,churchId,type,title,content,now,now).run();
 }
 
-export async function GET(request:Request) {
+async function legacyGET(request:Request) {
   const auth=await authorize(request,'terms.read'); if(auth.response)return auth.response;
   const churchId=auth.session!.churchId;await ensureDefaults(churchId);
   const church = await env.DB.prepare('SELECT name, senior_pastor_name, senior_pastor_cpf FROM churches WHERE id=?').bind(churchId).first();
@@ -26,7 +27,7 @@ export async function GET(request:Request) {
   return NextResponse.json({ church, terms: terms.results });
 }
 
-export async function PATCH(request: Request) {
+async function legacyPATCH(request: Request) {
   const auth=await authorize(request,'terms.write'); if(auth.response)return auth.response;
   const churchId=auth.session!.churchId;await ensureDefaults(churchId); const data = await request.json<{pastorName?:string;pastorCpf?:string;type?:string;title?:string;content?:string}>();
   if (data.pastorName) await env.DB.prepare('UPDATE churches SET senior_pastor_name=?, senior_pastor_cpf=? WHERE id=?').bind(data.pastorName,data.pastorCpf||null,churchId).run();
@@ -42,3 +43,6 @@ export async function PATCH(request: Request) {
   await audit(request,auth.session!,'terms.updated','consent_term',data.type,{pastorUpdated:Boolean(data.pastorName)});
   return NextResponse.json({ok:true});
 }
+
+export const GET = withLegacyContainment(legacyGET);
+export const PATCH = withLegacyContainment(legacyPATCH);
