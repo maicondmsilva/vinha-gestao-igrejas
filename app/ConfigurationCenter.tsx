@@ -24,6 +24,7 @@ export default function ConfigurationCenter({church,setChurch}:{church:Church;se
  const save=(message='Configurações salvas com sucesso.')=>{setNotice(message);setTimeout(()=>setNotice(''),3500)};
  return <div className="content config-center">
   <div className="page-head config-title"><div><p className="section-over">ADMINISTRAÇÃO</p><h1>{active==='overview'?'Configurações':sections.find(s=>s.id===active)?.title}</h1><small>{active==='overview'?'Personalize a experiência e centralize as regras de toda a organização.':'Ajustes aplicados conforme a unidade e as permissões do usuário.'}</small></div>{active!=='overview'&&<button className="back-settings" onClick={()=>setActive('overview')}>← Todas as configurações</button>}</div>
+  <a className="back-settings" href="/minha-assinatura">Solicitar módulos e vencimento por igreja →</a>
   {notice&&<div className="success-note">✓ {notice}</div>}
   {active==='overview'?<Overview open={open}/>:active==='subscription'?<Subscription/>:active==='brand'?<Brand church={church} setChurch={setChurch} save={save}/>:active==='payments'?<PaymentSettings/>:active==='documents'?<Documents save={save}/>:active==='integrations'?<Integrations save={save}/>:active==='notifications'?<Notifications save={save}/>:<Security save={save}/>} 
  </div>
