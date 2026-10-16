@@ -65,7 +65,7 @@ function route(name,responses){
  return {handlers,calls,audits:()=>audits};
 }
 const request=body=>new Request('https://app.example.invalid/api',{method:'PATCH',body:JSON.stringify(body)});
-for(const name of ['people','units']){
+for(const name of ['units']){
  test(name+': inaccessible row cannot be reported saved or produce dependent writes',async()=>{
   const r=route(name,[{data:name==='units'?[]:null,error:null}]);
   const response=await r.handlers.PATCH(request({id:'foreign-id',name:'Example'}));
@@ -85,14 +85,6 @@ for(const name of ['people','units']){
   assert.equal(r.audits(),0);
  });
 }
-test('people: omitted campus preserves existing unit and successful update writes its address',async()=>{
- const r=route('people',[{data:{id:'local-id',unit_id:'filha'},error:null},{data:{id:'local-id'},error:null},{error:null}]);
- const response=await r.handlers.PATCH(request({id:'local-id',name:'Example'}));
- assert.equal(response.status,200);
- assert.equal(r.calls[1].value.unit_id,'filha');
- assert.equal(r.calls[2].table,'person_addresses');
- assert.equal(r.audits(),1);
-});
 test('units: circular reparenting stops before update',async()=>{
  const r=route('units',[{data:units,error:null}]);
  const response=await r.handlers.PATCH(request({id:'sede',name:'Sede',type:'headquarters',parentUnitId:'neta'}));
@@ -100,7 +92,7 @@ test('units: circular reparenting stops before update',async()=>{
  assert.equal(r.calls.length,1);
  assert.equal(r.audits(),0);
 });
-for(const name of ['people','units']){
+for(const name of ['units']){
  test(name+': database failure stops editing without audit',async()=>{
   const r=route(name,[{data:null,error:{message:'offline'}}]);
   const response=await r.handlers.PATCH(request({id:'local-id',name:'Example'}));

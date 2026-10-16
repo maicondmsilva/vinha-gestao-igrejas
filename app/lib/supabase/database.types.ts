@@ -365,6 +365,7 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
+            "save_person_record": { Args: {p_organization:string;p_unit:string|null;p_person:string|null;p_data:Json}; Returns:string },
             "accept_platform_operator_invite":
 { Args: { "p_full_name": string,"p_token": string }; Returns: {
               "active": boolean,"full_name": string,"role": Database["public"]['Enums']["platform_operator_role"],"user_id": string
