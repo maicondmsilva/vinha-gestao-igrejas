@@ -79,3 +79,14 @@ test('continuar cancels the native click before changing step and never reuses t
  assert.match(ui,/key="member-save" type="submit"/);
  assert.match(ui,/e.preventDefault\(\);if\(step!==4\)/);
 });
+test('global button fallback ignores handled events and nodes removed during React navigation',()=>{
+ const file=readFileSync(new URL('../app/ActionCoordinator.tsx',import.meta.url),'utf8');
+ const source=file.slice(file.indexOf('const buttonFallback='),file.indexOf("  window.addEventListener('vinha:action'"));
+ const open=[];
+ const fallback=new Function('open',ts.transpile(source,{target:ts.ScriptTarget.ES2022})+';return buttonFallback')(value=>open.push(value));
+ fallback({defaultPrevented:true,target:{closest:()=>{throw Error('handled event must be ignored')}}});
+ fallback({defaultPrevented:false,target:{closest:()=>({isConnected:false})}});
+ assert.deepEqual(open,[]);
+ fallback({defaultPrevented:false,target:{closest:()=>({isConnected:true,disabled:false,getAttribute:()=>null,form:null,textContent:'Ação pendente'})}});
+ assert.deepEqual(open,['Ação pendente']);
+});

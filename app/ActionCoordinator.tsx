@@ -33,8 +33,9 @@ export default function ActionCoordinator(){
   const listener=(event:Event)=>open(String((event as CustomEvent<ActionDetail>).detail?.label||'Ação'));
 
   const buttonFallback=(event:MouseEvent)=>{
+    if(event.defaultPrevented)return;
     const button=(event.target as Element|null)?.closest('button') as HTMLButtonElement|null;
-    if(!button||button.disabled||button.getAttribute('aria-current'))return;
+    if(!button||!button.isConnected||button.disabled||button.getAttribute('aria-current'))return;
     const reactKey=Object.keys(button).find(key=>key.startsWith('__reactProps$'));
     const props=reactKey?(button as unknown as Record<string,unknown>)[reactKey] as {onClick?:unknown;formAction?:unknown}:undefined;
     if(typeof props?.onClick==='function'||props?.formAction)return;
