@@ -1,6 +1,6 @@
 # L1 — bloco 11: identidade confirmada no cadastro inicial
 
-Base publicada: 3922262c854a697d1a35c726d24d66f7c44b538c. Em revisão, sem aplicação desta migração em produção. Requer testes isolados e autorização específica antes da implantação. Não encerra L1 nem libera o piloto.
+Base publicada: 3922262c854a697d1a35c726d24d66f7c44b538c. Autorização específica recebida em 16/10/2026. Migração 20261016232219 aplicada pela conexão Supabase Vinha Igrejas, projeto aoxibaaydfgffrdqtkva, sem reclassificação/exclusão de contas ou envio de mensagens. Publicação do código em acompanhamento no PR 29. Não encerra L1 nem libera o piloto.
 
 ## Problema comprovado
 
@@ -18,12 +18,18 @@ Sem reclassificação, exclusão ou envio automático de mensagens. Contas antig
 
 ## Testes e limites
 
-Preparados testes SQL de confirmação, mudança de e-mail, conta suspensa/removida/anônima/inexistente, acesso direto, idempotência e isolamento de identidade; testes da rota real com banco simulado cobrem falhas e respostas privadas. Validar SQL no banco efêmero do CI: Docker local está inacessível por permissão do canal. Migração criada com ferramenta oficial, não por diff local. Não testar gravações em produção.
+787 asserções SQL aprovadas em 15 arquivos, incluindo 30 novas de confirmação, mudança de e-mail, conta suspensa/removida/anônima/inexistente, acesso direto, idempotência e isolamento de identidade. 74 testes de aplicação aprovados, incluindo 12 novos da rota real com banco simulado. Build e 6 cenários concorrentes anteriores de governança aprovados no CI 38979186737, commit 0f4560623315693aa734195fb5651b5204fe394f; prévia Vercel aprovada. Esses cenários concorrentes não comprovam todas as disputas de identidade/cadastro.
+
+SQL executado no banco efêmero do CI: Docker local está inacessível por permissão do canal. Migração criada com ferramenta oficial, não por diff local. Conferência em produção somente de leitura, sem gravações fictícias em clientes.
+
+Pós-verificação principal: bootstrap e demonstração continuam invoker; verificação da identidade de auth.uid() e de e-mail confirmado presentes; demonstração não usa mais auth.jwt(); helper negado a anon, sem wrapper público e sem abrir SELECT de auth.users a authenticated; gatilho de identidade da demonstração habilitado; RLS das organizações e demonstrações mantida. Arquivo conciliado com a versão efetivamente registrada, sem alteração do SQL aprovado.
+
+Permanecem avisos anteriores do advisor: [RLS sem política](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy), [funções privilegiadas acessíveis a visitantes](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [funções privilegiadas acessíveis a autenticados](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) e [proteção contra senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Não alterar permissões apenas para ocultar os avisos.
 
 Isto não valida entrega de e-mail/SMTP com conta real, não altera a configuração de confirmação do Supabase, não substitui revogação de sessões e não adiciona verificação estrita de session_id em auth.sessions. Uma suspensão da autenticação não é o mesmo que a suspensão do contrato do ministério. Outros endpoints e todos os cenários concorrentes continuam exigindo revisão própria. O limite de tamanho da API é conferido após leitura do corpo; limitação de tráfego/abuso e leitura incremental ficam para revisão específica. Não há aprovação global de TypeScript nem nova inspeção visual de telas autenticadas.
 
 ## Aplicação e recuperação
 
-Após CI aprovado e autorização específica, aplicar somente pela conexão Vinha Igrejas no projeto aoxibaaydfgffrdqtkva; conferir funções, gatilhos, RLS e grants sem criar clientes fictícios. Alinhar versão registrada e publicar o código aprovado. Em regressão, corrigir seletivamente sem remover a exigência de identidade confirmada nem confiar no e-mail do JWT.
+Aplicação autorizada e realizada; funções, gatilhos, RLS e grants conferidos sem criar clientes fictícios. Publicar o código aprovado e confirmar a implantação correspondente. Em regressão, corrigir seletivamente sem remover a exigência de identidade confirmada nem confiar no e-mail do JWT.
 
 As orientações Supabase levaram a manter as gravações como invoker e restringir o uso de definer à leitura da própria identidade. Referências: [changelog](https://supabase.com/changelog), [usuários anônimos](https://supabase.com/docs/guides/auth/auth-anonymous), [sessões](https://supabase.com/docs/guides/auth/sessions).
