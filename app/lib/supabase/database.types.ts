@@ -53,14 +53,14 @@ isOneToOne: false
                   ]
                 },"membership_unit_access": {
                   Row: {
-                    "access_level": Database["public"]['Enums']["unit_access_level"],"created_at": string,"include_children": boolean,"membership_id": string,"unit_id": string
+                    "access_level": Database["public"]['Enums']["unit_access_level"],"created_at": string,"include_children": boolean,"membership_id": string,"unit_id": string,"organization_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "access_level"?: Database["public"]['Enums']["unit_access_level"],"created_at"?: string,"include_children"?: boolean,"membership_id": string,"unit_id": string
+                    "access_level"?: Database["public"]['Enums']["unit_access_level"],"created_at"?: string,"include_children"?: boolean,"membership_id": string,"unit_id": string,"organization_id"?: string
                   }
                   Update: {
-                    "access_level"?: Database["public"]['Enums']["unit_access_level"],"created_at"?: string,"include_children"?: boolean,"membership_id"?: string,"unit_id"?: string
+                    "access_level"?: Database["public"]['Enums']["unit_access_level"],"created_at"?: string,"include_children"?: boolean,"membership_id"?: string,"unit_id"?: string,"organization_id"?: string
                   }
                   Relationships: [
                     {

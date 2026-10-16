@@ -1,10 +1,28 @@
--- Fixtures use existing Auth identities and are rolled back; no external provider calls.
+-- Local regression: synthetic accounts and all changes are rolled back. No external calls.
 begin;
-do $$
+
+create extension if not exists pgtap with schema extensions;
+select plan(1);
+-- Isolated, synthetic identities: no existing operator/customer accounts are used.
+insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
+values
+ ('f1000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','operator@fixture.example.invalid','',now(),now(),now()),
+ ('f1000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','owner@fixture.example.invalid','',now(),now(),now()),
+ ('f1000000-0000-4000-8000-000000000003','00000000-0000-0000-0000-000000000000','authenticated','authenticated','trial@fixture.example.invalid','',now(),now(),now());
+insert into public.platform_operators(user_id,role,full_name,email)
+values('f1000000-0000-4000-8000-000000000001','owner','Operador sintético','operator@fixture.example.invalid');
+insert into public.organizations(id,name,slug)
+values('f2000000-0000-4000-8000-000000000001','Ministério sintético','fixture-ministry');
+insert into public.organization_units(id,organization_id,name,slug,unit_type)
+values('f3000000-0000-4000-8000-000000000001','f2000000-0000-4000-8000-000000000001','Sede sintética','sede','headquarters');
+insert into public.organization_memberships(organization_id,user_id,default_unit_id,role,status)
+values('f2000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000002','f3000000-0000-4000-8000-000000000001','owner','active');
+
+select lives_ok($scenario$ do $$
 declare manager uuid; customer uuid; org uuid:=extensions.gen_random_uuid(); other_org uuid:=extensions.gen_random_uuid(); unit_id uuid:=extensions.gen_random_uuid(); inv uuid; notification uuid; op uuid; denied boolean; r integer; summary jsonb; stamp bigint:=(extract(epoch from now())*1000)::bigint;
 begin
- select user_id into manager from public.platform_operators where active and role='owner' limit 1;
- select id into customer from auth.users where id<>manager and id not in(select user_id from public.platform_operators) limit 1;
+ select user_id into manager from public.platform_operators where user_id='f1000000-0000-4000-8000-000000000001' and active and role='owner' limit 1;
+ select id into customer from auth.users where id='f1000000-0000-4000-8000-000000000002' limit 1;
  if manager is null or customer is null then raise exception 'test_requires_two_existing_auth_identities'; end if;
  insert into public.organizations(id,name,slug) values(org,'Empresa QA financeiro','qa-finance-'||org::text),(other_org,'Outra QA','qa-other-'||other_org::text);
  insert into public.organization_units(id,organization_id,name,slug,unit_type) values(unit_id,org,'Sede QA','sede','headquarters');
@@ -47,6 +65,7 @@ begin
  if not exists(select 1 from public.saas_financial_operations where id=op and status='authorized') then raise exception 'fiscal_confirmation_regressed'; end if;
  if (select count(*) from public.saas_financial_operation_events where event_id='qa-authorized')<>1 then raise exception 'financial_webhook_not_idempotent'; end if;
  execute 'reset role';perform set_config('vinha.financial_integration_test','passed',true);
-end $$;
-select current_setting('vinha.financial_integration_test') result;
+end $$; $scenario$, 'financial_integrations_transaction');
+reset role;
+select * from finish();
 rollback;
