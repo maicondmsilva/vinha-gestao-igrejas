@@ -53,3 +53,18 @@ jobs:
       - name: Validar politicas de acesso e protecoes de publicacao
         run: pnpm run test:security
 
+      - name: Instalar CLI oficial do Supabase
+        uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb
+        with:
+          version: 2.120.0
+
+      - name: Preparar banco PostgreSQL isolado do CI
+        run: supabase db start
+
+      - name: Validar migracoes e permissoes no banco local
+        run: supabase test db --local
+
+      - name: Parar banco local preservando volumes
+        if: always()
+        run: supabase stop
+

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(6);
+select plan(15);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
@@ -35,6 +35,12 @@ values
   ('e0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001', null, 'Pessoa Sede A', 'sede-a@example.test'),
   ('e0000000-0000-4000-8000-000000000002', 'b0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000002', null, 'Pessoa Campus A', 'campus-a@example.test'),
   ('e0000000-0000-4000-8000-000000000003', 'b0000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000003', 'a0000000-0000-4000-8000-000000000003', 'Pessoa Sede B', 'sede-b@example.test');
+
+insert into public.person_addresses (organization_id,person_id,street)
+values ('b0000000-0000-4000-8000-000000000001','e0000000-0000-4000-8000-000000000002','Endereço privado');
+
+insert into public.pastoral_notes (organization_id,person_id,author_user_id,content)
+values ('b0000000-0000-4000-8000-000000000001','e0000000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000001','Nota privada');
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
@@ -72,6 +78,37 @@ select is(
   'líder visualiza somente a unidade concedida'
 );
 
+with changed as (
+ update public.people set full_name='Indevido' where id='e0000000-0000-4000-8000-000000000002' returning id
+) select is((select count(*) from changed),0::bigint,'concessão de leitura não permite editar membro');
+
+select throws_ok(
+ $$insert into public.people (organization_id,unit_id,full_name) values ('b0000000-0000-4000-8000-000000000001','c0000000-0000-4000-8000-000000000002','Indevido')$$,
+ '42501',null,'concessão de leitura não permite inserir membro');
+
+select is((select count(*) from public.pastoral_notes),0::bigint,'líder não visualiza notas pastorais');
+select is((select count(*) from public.person_addresses),1::bigint,'líder lê endereço somente do membro autorizado');
+
+with changed as (
+ update public.people set full_name='Indevido' where id='e0000000-0000-4000-8000-000000000003' returning id
+) select is((select count(*) from changed),0::bigint,'líder não edita membro de outra organização');
+
+select set_config('request.jwt.claims', '{"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select throws_ok(
+ $$update public.people set unit_id='c0000000-0000-4000-8000-000000000003' where id='e0000000-0000-4000-8000-000000000002'$$,
+ '23503',null,'membro não pode apontar para unidade de outra organização');
+
+with changed as (
+ delete from public.people where id='e0000000-0000-4000-8000-000000000003' returning id
+) select is((select count(*) from changed),0::bigint,'administrador não exclui membro de outra organização');
+
+reset role;
+update public.organization_memberships set status='suspended'
+where id='d0000000-0000-4000-8000-000000000002';
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated"}', true);
+select is((select count(*) from public.people),0::bigint,'suspensão da participação remove acesso do líder');
+
 select set_config('request.jwt.claims', '{"sub":"a0000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
 
 select is(
@@ -79,6 +116,10 @@ select is(
   1::bigint,
   'membro visualiza o próprio cadastro vinculado'
 );
+
+with changed as (
+ update public.people set full_name='Indevido' where id='e0000000-0000-4000-8000-000000000003' returning id
+) select is((select count(*) from changed),0::bigint,'leitura do próprio cadastro não concede edição administrativa');
 
 select * from finish();
 rollback;

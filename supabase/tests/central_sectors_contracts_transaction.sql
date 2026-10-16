@@ -1,10 +1,28 @@
--- Run in a transaction. All fixtures, including operator changes, are rolled back.
+-- Local regression: synthetic accounts and all changes are rolled back. No external calls.
 begin;
-do $$
+
+create extension if not exists pgtap with schema extensions;
+select plan(1);
+-- Isolated, synthetic identities: no existing operator/customer accounts are used.
+insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
+values
+ ('f1000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','operator@fixture.example.invalid','',now(),now(),now()),
+ ('f1000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','owner@fixture.example.invalid','',now(),now(),now()),
+ ('f1000000-0000-4000-8000-000000000003','00000000-0000-0000-0000-000000000000','authenticated','authenticated','trial@fixture.example.invalid','',now(),now(),now());
+insert into public.platform_operators(user_id,role,full_name,email)
+values('f1000000-0000-4000-8000-000000000001','owner','Operador sintético','operator@fixture.example.invalid');
+insert into public.organizations(id,name,slug)
+values('f2000000-0000-4000-8000-000000000001','Ministério sintético','fixture-ministry');
+insert into public.organization_units(id,organization_id,name,slug,unit_type)
+values('f3000000-0000-4000-8000-000000000001','f2000000-0000-4000-8000-000000000001','Sede sintética','sede','headquarters');
+insert into public.organization_memberships(organization_id,user_id,default_unit_id,role,status)
+values('f2000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000002','f3000000-0000-4000-8000-000000000001','owner','active');
+
+select lives_ok($scenario$ do $$
 declare manager uuid; assistant uuid; org uuid:=extensions.gen_random_uuid(); headquarters uuid:=extensions.gen_random_uuid(); daughter uuid:=extensions.gen_random_uuid(); sector_a uuid; sector_b uuid; chat uuid; result jsonb; contract uuid; inv uuid; n integer; denied boolean; stamp bigint:=(extract(epoch from now())*1000)::bigint;
 begin
- select user_id into manager from public.platform_operators where active and role='owner' limit 1;
- select id into assistant from auth.users where id<>manager and id not in(select user_id from public.platform_operators) limit 1;
+ select user_id into manager from public.platform_operators where user_id='f1000000-0000-4000-8000-000000000001' and active and role='owner' limit 1;
+ select id into assistant from auth.users where id='f1000000-0000-4000-8000-000000000002' limit 1;
  if manager is null or assistant is null then raise exception 'test_requires_existing_owner_and_second_account'; end if;
  insert into public.platform_operators(user_id,role,full_name,email) select assistant,'support','Operador QA transacional',email from auth.users where id=assistant;
  insert into public.organizations(id,name,slug) values(org,'Organização QA contratos','qa-contratos-'||org::text);
@@ -45,6 +63,7 @@ begin
  if exists(select 1 from public.saas_chat_conversations where id=chat) then raise exception 'aal1_read_chat';end if;
  execute 'reset role';
  perform set_config('vinha.central_sectors_contracts_test','passed',true);
-end $$;
-select current_setting('vinha.central_sectors_contracts_test') result;
+end $$; $scenario$, 'central_sectors_contracts_transaction');
+reset role;
+select * from finish();
 rollback;
