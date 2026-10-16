@@ -98,9 +98,9 @@ select throws_ok(
  $$update public.people set unit_id='c0000000-0000-4000-8000-000000000003' where id='e0000000-0000-4000-8000-000000000002'$$,
  '23503',null,'membro não pode apontar para unidade de outra organização');
 
-with changed as (
- delete from public.people where id='e0000000-0000-4000-8000-000000000003' returning id
-) select is((select count(*) from changed),0::bigint,'administrador não exclui membro de outra organização');
+select throws_ok(
+ $$delete from public.people where id='e0000000-0000-4000-8000-000000000003'$$,
+ '42501',null,'exclusão física exige fluxo administrativo controlado');
 
 reset role;
 update public.organization_memberships set status='suspended'
