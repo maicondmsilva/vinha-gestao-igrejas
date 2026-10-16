@@ -55,7 +55,8 @@ begin
  insert into public.saas_lifecycle_runs(trigger_type,status,started_at,finished_at) values('manual','completed',1,2);
  execute 'set local role anon';
  if public.organization_invite_preview(token)->>'status'<>'pending' then raise exception 'anonymous_preview_failed'; end if;
- perform set_config('request.jwt.claims',jsonb_build_object('sub',owner_row.id,'email','wrong-email@example.invalid','role','authenticated','aal','aal1')::text,true);
+ -- Reject a different account even when its JWT advertises the invited email.
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',operator_row.user_id,'email',owner_row.email,'role','authenticated','aal','aal1')::text,true);
  execute 'set local role authenticated';
  denied:=false;
  begin perform public.accept_organization_invite(token); exception when insufficient_privilege then denied:=true; end;
