@@ -54,7 +54,7 @@ select is(
 select throws_ok(
   $$insert into public.people (organization_id, unit_id, full_name) values ('b0000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000003', 'Inserção indevida')$$,
   '42501',
-  'new row violates row-level security policy for table "people"',
+  'target_unit_module_not_enabled',
   'administrador não insere membro em outra organização'
 );
 
@@ -96,7 +96,7 @@ with changed as (
 select set_config('request.jwt.claims', '{"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
 select throws_ok(
  $$update public.people set unit_id='c0000000-0000-4000-8000-000000000003' where id='e0000000-0000-4000-8000-000000000002'$$,
- '23503',null,'membro não pode apontar para unidade de outra organização');
+ '42501','target_unit_module_not_enabled','membro não pode apontar para unidade de outra organização antes da FK');
 
 select throws_ok(
  $$delete from public.people where id='e0000000-0000-4000-8000-000000000003'$$,
