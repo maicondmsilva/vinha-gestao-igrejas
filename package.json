@@ -13,7 +13,7 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "check:buttons": "node scripts/check-interactive-buttons.mjs",
     "test:release": "node --experimental-strip-types --test scripts/release-containment.test.mjs",
-    "test:security": "node --experimental-strip-types --test scripts/access-security.test.mjs scripts/unit-integrity.test.mjs scripts/member-write.test.mjs",
+    "test:security": "node --experimental-strip-types --test scripts/access-security.test.mjs scripts/unit-integrity.test.mjs scripts/member-write.test.mjs scripts/operator-security.test.mjs",
     "test:central": "node --experimental-strip-types --test scripts/central-billing.test.mjs scripts/financial-integrations.test.mjs",
     "db:generate": "drizzle-kit generate",
     "db:start": "supabase start",
