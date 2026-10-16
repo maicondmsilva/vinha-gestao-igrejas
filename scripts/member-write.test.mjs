@@ -67,3 +67,15 @@ test('route has no parallel writes or compensating deletes; form uses live units
  assert.match(ui,/units.map/);assert.match(ui,/memberFormPayload/);assert.match(ui,/goToStep/);
  assert.doesNotMatch(ui,/Unidade Norte|Família Souza|Convidar como administrador/);
 });
+test('continuar cancels the native click before changing step and never reuses the submit button',()=>{
+ const ui=readFileSync(new URL('../app/DashboardApp.tsx',import.meta.url),'utf8').split('function PersonModal')[1].split('function FamiliesAndTerms')[0];
+ const source=ui.match(/function advance\([^\n]+/)[0];
+ const js=ts.transpile(source,{target:ts.ScriptTarget.ES2022});
+ const events=[];
+ const advance=new Function('goToStep','step',js+';return advance')(next=>events.push(next),3);
+ advance({preventDefault:()=>events.push('cancel-native-submit')});
+ assert.deepEqual(events,['cancel-native-submit',4]);
+ assert.match(ui,/key="member-continue" type="button"/);
+ assert.match(ui,/key="member-save" type="submit"/);
+ assert.match(ui,/e.preventDefault\(\);if\(step!==4\)/);
+});
