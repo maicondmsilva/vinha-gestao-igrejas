@@ -5,7 +5,7 @@ Conexão exclusiva: Supabase Vinha Igrejas, projeto aoxibaaydfgffrdqtkva.
 
 ## Situação
 
-Implementado e validado no banco isolado. Ainda não aplicado à produção; aguarda autorização específica. A publicação e a aplicação da migração são etapas separadas. Não declarar este bloco concluído em produção nem liberar clientes por esta evidência.
+Implementado e validado no banco isolado. Após autorização específica do responsável, aplicado ao Supabase principal em 16/10/2026, versão 20261016094706. A publicação e a aplicação da migração são etapas separadas: acompanhar a conclusão pelo PR 24 e pelo deployment correspondente. Este bloco não libera clientes nem encerra L1.
 
 ## Problema confirmado
 
@@ -38,12 +38,14 @@ Consulta remota somente de leitura confirmou as definições e dois contratos at
 - Dois testes anteriores passaram a esperar a negativa antecipada `42501: target_unit_module_not_enabled`, em vez da negativa posterior por RLS/FK; as operações continuam proibidas.
 - 54 testes de aplicação aprovados: 36 segurança, 4 contenção e 14 financeiro.
 - Advisor de segurança local no nível warn: sem avisos. Isso não elimina os avisos remotos anteriores nem constitui certificação de segurança integral.
-- Migração gerada por comparação do banco isolado: `20261016093851_unit_contract_write_scope.sql`. Revisada ordem de criação (dependência primeiro), compilação habilitada, limites de espera/execução e grants mínimos. Excluídas do diff as normalizações antigas de ACL de operadores, que não pertencem a este bloco.
-- Histórico local conferido. Banco principal consultado somente para diagnóstico; não foram executados testes sintéticos na produção.
+- Migração gerada por comparação do banco isolado, inicialmente 20261016093851; arquivo conciliado com a versão registrada na produção: `20261016094706_unit_contract_write_scope.sql`. Revisada ordem de criação (dependência primeiro), compilação habilitada, limites de espera/execução e grants mínimos. Excluídas do diff as normalizações antigas de ACL de operadores, que não pertencem a este bloco.
+- Histórico local conferido. Aplicação principal via migração transacional autorizada, sem alteração dos registros de clientes e sem testes sintéticos em produção. Pós-verificação confirmou gatilho habilitado, RLS preservada, helper negado a anônimos, gatilho sem execução direta pelo cliente e verificações de unidade-alvo presentes nas funções de módulo/gestão de pessoas e de escopo no pedido de contrato.
+- CI e compilação Vercel aprovados para a revisão inicial 89a4200. Depois da conciliação do arquivo/histórico, aguardar novamente as verificações do novo commit antes da integração.
+- Advisors principais mantêm avisos prévios: [funções públicas privilegiadas para visitantes](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [funções privilegiadas para autenticados](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [eventos internos com RLS sem política, negados por padrão](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) e [proteção contra senhas comprometidas desativada](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Não remover controles para silenciar avisos nem declarar segurança integral.
 
 ## Implantação e contingência
 
-Depois da autorização específica: aplicar a migração transacional no projeto correto, conferir definições/grants/gatilho/histórico remotamente e conciliar o nome do arquivo com a versão registrada. Aguardar a revisão automatizada do PR antes de integrar na branch de produção. Não testar cadastro fictício no banco principal.
+Aplicação autorizada concluída no projeto correto e definições/grants/gatilho/histórico conferidos. Nome do arquivo conciliado com a versão registrada. Aguardar a revisão automatizada do PR antes de integrar na branch de produção. Não testar cadastro fictício no banco principal. Evidência de publicação será o merge SHA e seu deployment de produção, consultáveis no PR 24.
 
 Em regressão, identificar unidade, contrato e concessão efetivos; reproduzir isoladamente e corrigir apenas a regra incompatível, mantendo casos permitido/negado. Não remover RLS, reabrir contratos suspensos ou restaurar a validação baseada somente na preferência. Nenhum dado existente precisa ser restaurado, pois esta migração não o altera.
 
