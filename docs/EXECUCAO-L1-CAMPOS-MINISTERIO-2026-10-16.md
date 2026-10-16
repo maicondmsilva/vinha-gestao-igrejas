@@ -2,7 +2,7 @@
 
 ## Estado
 
-Base publicada: 80ade0a2f7bec3d4aea516d6f5cfd23b272fea29. Proposta em revisão, sem aplicação desta migração em produção. Exige testes isolados e autorização específica antes de aplicação/publicação. O bloco não encerra L1 nem libera o piloto comercial.
+Base publicada: 80ade0a2f7bec3d4aea516d6f5cfd23b272fea29. Autorização específica recebida em 16/10/2026. Aplicada a migração 20261016225141 no Supabase Vinha Igrejas, projeto aoxibaaydfgffrdqtkva, sem exclusão ou reclassificação de dados existentes. Publicação do registro em acompanhamento no PR 28. O bloco não encerra L1 nem libera o piloto comercial.
 
 ## Evidência e mudança delimitada
 
@@ -20,7 +20,11 @@ Não há alteração automática de registros existentes, exclusão de dados ou 
 
 ## Validação e limitações
 
-Testes pgTAP preparados para papéis owner/admin/pastor/viewer, isolamento entre ministérios, campos permitidos e recusados, suspensão, horário do banco, bootstrap legítimo e sincronização interna de assinatura. A suíte existente cobre o cadastro de demonstração e as operações da Central. A execução SQL será comprovada pelo CI antes de pedir autorização.
+757 asserções pgTAP aprovadas em 14 arquivos, incluindo 27 novas para papéis owner/admin/pastor/viewer, isolamento entre ministérios, campos permitidos e recusados, suspensão, horário do banco, bootstrap legítimo e sincronização interna de assinatura. A suíte existente cobre o cadastro de demonstração e as operações da Central. Build, 62 testes de aplicação e 6 cenários concorrentes anteriores de governança aprovados no CI 38977701617, commit afd1ac1c945951cd5fe18f75780293978ac32680; prévia Vercel aprovada. Os cenários concorrentes não comprovam todas as disputas de configuração/contrato.
+
+Conferência somente de leitura em produção: gatilho habilitado, função invoker, validações administrativa/suspensão/bootstrap presentes, RLS mantida e execução direta negada a anon, authenticated e service_role. Sem testes de escrita em clientes reais. O nome do arquivo foi conciliado com a versão efetivamente registrada pelo Supabase, sem mudar o SQL aprovado.
+
+Permanecem avisos anteriores do advisor: [RLS sem política](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy), [funções privilegiadas acessíveis a visitantes](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [funções privilegiadas acessíveis a autenticados](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) e [proteção contra senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Não foram reabertas permissões nem removidas APIs necessárias para silenciar esses avisos.
 
 O Docker local continua inacessível por permissão do canal nesta sessão. Não haverá teste substituto com escrita em produção: usar o banco efêmero do GitHub Actions. Migração criada com a ferramenta oficial, não por comparação local; revisar seu SQL e permissões explicitamente.
 
@@ -30,4 +34,4 @@ As orientações de privilégio mínimo do Supabase levaram a preservar a RLS e 
 
 ## Aplicação e recuperação
 
-Somente após testes e autorização específica: aplicar no projeto aoxibaaydfgffrdqtkva pela conexão Vinha Igrejas, confirmar gatilho, função invoker e acessos; conciliar o nome da migração com a versão real e publicar o código/histórico aprovado. Em regressão, reproduzir isoladamente e corrigir a operação legítima afetada, sem permitir reativação comercial por atualização direta do cliente. Permanecem as demais pendências do plano de lançamento.
+Aplicação autorizada e realizada pela conexão Vinha Igrejas; gatilho, função invoker e acessos conferidos. Publicar o histórico aprovado e confirmar a implantação de produção pelo SHA correspondente. Em regressão, reproduzir isoladamente e corrigir a operação legítima afetada, sem permitir reativação comercial por atualização direta do cliente. Permanecem as demais pendências do plano de lançamento.
