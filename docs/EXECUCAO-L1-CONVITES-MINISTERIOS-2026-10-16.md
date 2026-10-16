@@ -2,7 +2,7 @@
 
 ## Situação
 
-Em revisão, sem aplicação no Supabase de produção e sem publicação. A aplicação em produção depende de autorização específica e da aprovação dos testes. Este bloco não encerra a L1 nem libera o piloto comercial.
+Autorizado especificamente pelo usuário em 16/10/2026. Migração aplicada no Supabase Vinha Igrejas, projeto aoxibaaydfgffrdqtkva, com versão efetiva 20261016222547. Publicação do código em acompanhamento. Este bloco não encerra a L1 nem libera o piloto comercial.
 
 ## Mudanças propostas
 
@@ -19,10 +19,13 @@ Não há remoção de dados, migração de destinatários antigos nem suspensão
 ## Validação
 
 - 62 testes de aplicação aprovados: 44 de segurança, 14 da Central e 4 de preparação para publicação.
-- Testes SQL adicionais preparados para e-mail confirmado/alterado, identidade real versus e-mail do token, expiração, revogação, emissor suspenso, ministério suspenso e retomada sem elevação de poderes.
+- 730 asserções SQL aprovadas em 13 arquivos, incluindo e-mail confirmado/alterado, identidade real versus e-mail do token, expiração, revogação, emissor suspenso, ministério suspenso e retomada sem elevação de poderes.
+- Build e 6 cenários concorrentes anteriores de governança aprovados no CI 38971820998, commit 2d4c1d5eeaa801dc2bf7ccde18e101169d82f20c. Prévia Vercel aprovada. O ajuste posterior apenas alinha o nome do arquivo com a versão efetivamente registrada em produção e atualiza este documento; o SQL não foi alterado.
 - Teste transacional anterior atualizado para distinguir a identidade real de um e-mail forjado no token.
-- O Docker local está inacessível nesta sessão por permissão no canal do mecanismo. Nenhum teste foi redirecionado para produção. A validação SQL será feita no banco efêmero da integração contínua.
-- O arquivo de migração foi criado com a ferramenta oficial; não foi gerado por comparação com o banco local nem por consulta de estrutura em produção. A execução SQL ainda precisa ser comprovada pela integração contínua.
+- O Docker local está inacessível nesta sessão por permissão no canal do mecanismo. Nenhum teste foi redirecionado para produção. A validação SQL foi feita no banco efêmero da integração contínua.
+- O arquivo de migração foi criado com a ferramenta oficial; não foi gerado por comparação com o banco local nem por consulta de estrutura em produção. A execução SQL foi comprovada pela integração contínua.
+- Conferência em produção: coluna accepted_user_id do tipo uuid, RLS da tabela de convites mantida, validação do e-mail confirmado e bloqueio de acesso revogado presentes, aceitação indisponível a anon e disponível a authenticated, esquema private indisponível a anon. Sem cadastros fictícios em produção.
+- Avisos de segurança anteriores continuam pendentes: tabelas com RLS sem política, funções privilegiadas expostas de forma controlada e proteção contra senhas vazadas desativada. Nenhuma regra foi reaberta para ocultar esses avisos.
 - Consulta restrita em produção não encontrou convites de ministério existentes no momento da inspeção; isso não substitui os testes isolados nem garante que não surjam novos registros depois.
 
 ## Limites e próximos cuidados
@@ -37,4 +40,4 @@ Não há remoção de dados, migração de destinatários antigos nem suspensão
 
 ## Aplicação e recuperação
 
-Depois dos testes e de autorização específica, aplicar somente a migração deste bloco pelo conector Vinha Igrejas, conferir estrutura/permissões e publicar o código aprovado. Em caso de regressão, corrigir seletivamente o fluxo afetado, sem voltar a promover ou reativar participantes por convite.
+Aplicação autorizada e realizada pelo conector Vinha Igrejas; estrutura e permissões conferidas. Publicar somente o código aprovado e verificar a implantação de produção. Em caso de regressão, corrigir seletivamente o fluxo afetado, sem voltar a promover ou reativar participantes por convite.
