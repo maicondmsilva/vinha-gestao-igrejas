@@ -16,11 +16,13 @@ Somente conexão Supabase Vinha Igrejas, projeto aoxibaaydfgffrdqtkva. Migraçã
 
 ## Testes e limites
 
-126 verificações pgTAP em oito arquivos aprovadas em banco isolado. 47 testes de aplicação (29 segurança, 4 contenção, 14 financeiro) e build Vercel aprovados localmente. Advisors locais sem avisos no nível warn. CI repete migrações em instalação limpa. Não significa que os advisors remotos não tenham pendências anteriores nem que o TypeScript global tenha passado (baseline anterior: 313 diagnósticos).
+126 verificações pgTAP em oito arquivos aprovadas em banco isolado. 48 testes de aplicação (30 segurança, 4 contenção, 14 financeiro), com regressões do avanço e coordenador global. Build Vercel aprovado antes do pequeno ajuste final do coordenador; CI deve recompilar a versão final. Advisors locais sem avisos no nível warn. CI repete migrações em instalação limpa. Não significa que os advisors remotos não tenham pendências anteriores nem que o TypeScript global tenha passado (baseline anterior: 313 diagnósticos).
 
 Validação com a sessão fornecida pelo usuário: membresia abre, modal abre, dados pessoais/endereço avançam e unidades reais aparecem. A conta disponível é proprietária; papéis restritos e segundo navegador ainda não foram homologados visualmente.
 
 Foi identificado envio antecipado ao clicar Continuar na etapa 3: React reaproveitava o botão como submit durante a mesma interação. A correção cancela o evento nativo antes de avançar, usa chaves distintas e exige etapa final para submit. Regressão do handler incluída; PR de correção separado. Antes da correção, o comportamento criou um cadastro sintético em produção. O usuário autorizou remover exclusivamente esse teste; um cadastro, um endereço e três preferências foram removidos e uma auditoria preservada. Nenhuma pessoa real foi excluída. Não repetir testes de escrita em produção; homologação de gravação deve ocorrer em ambiente separado.
+
+Após a primeira correção, a revisão final passou a abrir sem salvar, mas o coordenador global exibia uma falsa ação pendente ao inspecionar o botão já removido por React. Ajustado para ignorar eventos já tratados e elementos desconectados, com regressão específica. A nova verificação de interface não acionou Concluir cadastro.
 
 ## Publicação e reversão
 
