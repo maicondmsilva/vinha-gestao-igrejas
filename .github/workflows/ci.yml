@@ -64,6 +64,9 @@ jobs:
       - name: Validar migracoes e permissoes no banco local
         run: supabase test db --local
 
+      - name: Validar governanca com conexoes concorrentes isoladas
+        run: pnpm run test:governance-concurrency
+
       - name: Parar banco local preservando volumes
         if: always()
         run: supabase stop
