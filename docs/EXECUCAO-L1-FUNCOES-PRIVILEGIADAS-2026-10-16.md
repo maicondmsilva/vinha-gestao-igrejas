@@ -43,7 +43,9 @@ Estas entradas públicas não foram convertidas indiscriminadamente para INVOKER
 - Build Vercel local aprovado antes do pequeno ajuste final de botão de convite expirado; CI deve recompilar o estado final.
 - TypeScript global continua com 313 diagnósticos; não anunciar aprovação global.
 - Advisor local sem avisos no nível warn. As permissões geradas pelo diff foram revisadas para excluir normalizações do bloco anterior e retirar grants anônimos herdados, sem conceder novos acessos.
-- A aplicação da migração em produção requer autorização específica para esta correção. A publicação de código é comprovada separadamente pelo PR/deploy; não presumir que a migração local esteja no banco principal.
+- Após autorização específica do responsável, migração 20261016091915_operator_invite_security aplicada no Supabase principal em 16/10/2026. A primeira solicitação expirou sem registrar migração; a repetição ocorreu somente depois de conferir a ausência no histórico. A publicação de código é comprovada separadamente pelo PR/deploy.
+- Pós-verificação remota: gatilho ativo, sem execução direta por authenticated, leitura anônima e TRUNCATE bloqueados nos convites, auditoria sem INSERT de cliente, validação de e-mail confirmado presente e política de proprietário atualizada. Não foram feitas chamadas de aceite com contas reais para simular testes.
+- Advisors remotos mantêm avisos anteriores: [funções privilegiadas públicas para visitantes](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [funções privilegiadas para autenticados](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [tabelas de eventos com RLS sem política, negadas por padrão](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) e [proteção contra senhas comprometidas desativada](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Não declarar segurança integral nem remover regras apenas para silenciar avisos.
 
 ## Contingência e continuidade
 
