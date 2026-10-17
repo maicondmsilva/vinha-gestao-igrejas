@@ -10,7 +10,7 @@ export const releaseCatalog = [
   { id: 'familias', title: 'Famílias e termos', status: 'development', detail: 'Vínculos, consentimentos e PDFs aguardam migração e validação de acesso.' },
   { id: 'aplicativo', title: 'Aplicativo do membro', status: 'development', detail: 'Aplicativos personalizados ainda não estão publicados nas lojas.' },
   { id: 'kids', title: 'Área Kids', status: 'development', detail: 'Responsáveis, salas e retirada segura aguardam validação ponta a ponta.' },
-  { id: 'usuarios', title: 'Usuários e permissões da igreja', status: 'development', detail: 'Convites e permissões locais aguardam migração; não confundir com os convites da Central.' },
+  { id: 'usuarios', title: 'Usuários e permissões da igreja', status: 'pilot', detail: 'Equipe e convites no Supabase, sujeitos à governança de papéis; envio por e-mail ainda não homologado.' },
   { id: 'eventos', title: 'Cultos e eventos', status: 'development', detail: 'Inscrições, ingressos e recebimentos ainda não liberados para operação real.' },
   { id: 'celulas', title: 'Células', status: 'development', detail: 'Encontros, presenças e acompanhamento aguardam migração.' },
   { id: 'escalas', title: 'Escalas', status: 'development', detail: 'Publicação e confirmações aguardam migração.' },

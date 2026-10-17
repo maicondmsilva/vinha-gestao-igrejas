@@ -21,7 +21,7 @@ jobs:
   build:
     name: Build da aplicacao
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Baixar o codigo
@@ -43,6 +43,22 @@ jobs:
 
       - name: Validar build
         run: pnpm run build
+
+      - name: Verificar segredos e botoes
+        run: |
+          pnpm run check:secrets
+          pnpm run check:buttons
+          pnpm run check:types:core
+
+      - name: Registrar auditoria de dependencias
+        run: pnpm audit --json > dependency-audit.json || test -s dependency-audit.json
+
+      - name: Preservar diagnostico de dependencias
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit
+          path: dependency-audit.json
+          retention-days: 14
 
       - name: Validar regras de avisos financeiros
         run: pnpm run test:central
