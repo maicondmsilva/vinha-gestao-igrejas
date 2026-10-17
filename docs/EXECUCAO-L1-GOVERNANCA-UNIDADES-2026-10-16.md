@@ -1,6 +1,6 @@
 # L1 — bloco 12: governança das unidades
 
-Base publicada: eb90f5769ddc0e8b6f0fe5c25ae142397b1b6934. Proposta em revisão, sem aplicação em produção. Exige CI aprovado e autorização específica antes da implantação. Não encerra L1 nem libera o piloto.
+Base publicada: eb90f5769ddc0e8b6f0fe5c25ae142397b1b6934. Autorização específica recebida em 17/10/2026. Migração 20261017041013_unit_client_governance aplicada na produção pela conexão Vinha Igrejas. Código em publicação na PR 30; o resultado da implantação será registrado na PR. Não encerra L1 nem libera o piloto.
 
 ## Evidência
 
@@ -21,14 +21,18 @@ Sem exclusão, migração ou reclassificação de registros existentes. A troca 
 
 ## Validação e limites
 
-78 testes de aplicação aprovados localmente: 60 de segurança, 14 da Central e 4 de preparação de publicação. SQL novo preparado para identidade, campos permitidos, sede, datas, papéis, outro ministério, suspensão e bootstrap; aguardando CI em banco efêmero. O Docker local continua inacessível por permissão do canal. Migração criada com a ferramenta oficial, não por diff local; o prefixo UTC do arquivo foi gerado pela ferramenta, enquanto a data deste relatório segue America/Sao_Paulo.
+78 testes de aplicação aprovados: 60 de segurança, 14 da Central e 4 de preparação de publicação. CI 38996161652 no SHA d93e1e022ef433517c44284b31d08ec900cef820 aprovado: 817 verificações SQL em 16 arquivos, incluindo os 30 novos casos, seis cenários concorrentes anteriores e build. Os testes SQL usaram banco efêmero. O Docker local continua inacessível por permissão do canal. Migração criada com a ferramenta oficial e renomeada para a versão efetivamente registrada no Supabase, sem modificar o SQL aprovado.
 
 Os testes concorrentes anteriores de governança não provam todos os interleavings de hierarquia/classificação/contrato. O lock da organização não é apresentado como solução integral de concorrência, sucessão ou governança de credenciais de serviço. Não houve nova validação visual de telas autenticadas nem aprovação global de TypeScript. E-mail real, sessões, importação, armazenamento e os demais itens do plano continuam abertos.
 
-Na primeira execução SQL, os 30 novos casos passaram, mas a regressão de ciclo existente recebeu a nova recusa de sede (42501) antes do erro de hierarquia esperado (23514). Ajustada a ordem dos gatilhos para preservar o verificador anterior antes da nova proteção, sem enfraquecer nenhuma regra. É necessário aprovar a suíte completa no SHA final; a execução inicial não foi aprovada e nada foi aplicado em produção.
+Na primeira execução SQL, os 30 novos casos passaram, mas a regressão de ciclo existente recebeu a nova recusa de sede (42501) antes do erro de hierarquia esperado (23514). Ajustada a ordem dos gatilhos para preservar o verificador anterior antes da nova proteção, sem enfraquecer nenhuma regra. A suíte completa passou no SHA final antes da autorização e aplicação; a execução inicial não foi usada como aprovação.
 
 As orientações de Supabase levaram a preservar RLS, usar gatilho invoker e retirar o privilégio de exclusão física, sem elevar o acesso de cliente. Referências: [changelog](https://supabase.com/changelog), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security) e [privilégios](https://supabase.com/blog/postgres-roles-and-privileges).
 
 ## Aplicação e recuperação
 
-Após testes e autorização específica: aplicar somente no projeto aoxibaaydfgffrdqtkva pela conexão Vinha Igrejas; conferir função/gatilho, privilégio DELETE e RLS sem escrever em cadastros reais. Conciliar o nome do arquivo com a versão registrada e publicar a revisão aprovada. Em regressão, reproduzir isoladamente e corrigir seletivamente sem restaurar exclusão física irrestrita ou mudança de sede por cliente.
+Aplicado somente no projeto aoxibaaydfgffrdqtkva pela conexão Vinha Igrejas, após testes e autorização específica. Conferência de leitura confirmou função invoker, EXECUTE negado a anon/authenticated/service_role, DELETE negado a anon/authenticated, RLS ativa nas duas tabelas e gatilhos de hierarquia/proteção habilitados na ordem prevista. Nenhuma escrita fictícia em produção.
+
+O diagnóstico permanece com as categorias anteriores: [RLS sem política](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy), funções definer executáveis por [anon](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable) e [authenticated](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), e [proteção de senhas vazadas desativada](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Essas pendências não foram removidas nem declaradas resolvidas neste bloco.
+
+Em regressão, reproduzir isoladamente e corrigir seletivamente sem restaurar exclusão física irrestrita ou mudança de sede por cliente. O registro da publicação e seu SHA final ficam na PR 30.
