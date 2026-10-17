@@ -1,17 +1,49 @@
-import { withLegacyContainment } from '../../../lib/release-availability';
-import {env} from 'cloudflare:workers';
+import {createHash} from 'node:crypto';
 import {NextResponse} from 'next/server';
-import {audit,authorize} from '../../_auth';
+import {authorizeSupabaseChurch} from '../../../lib/supabase/church-access';
+import {resolveUnitSelection} from '../../../lib/unit-integrity';
+import {validateImportRows} from '../../../lib/member-import';
+import type {Json} from '../../../lib/supabase/database.types';
 
-type Row={nome?:string;email?:string;telefone?:string;cpf?:string;nascimento?:string;status?:string;campus?:string;grupo?:string};
-const mail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const digits=(v?:string)=>String(v||'').replace(/\D/g,'');
-const text=(v?:string,n=160)=>String(v||'').trim().slice(0,n);
-
-function validate(rows:Row[]){const seenEmail=new Set<string>(),seenCpf=new Set<string>();return rows.slice(0,500).map((row,index)=>{const errors:string[]=[],nome=text(row.nome),email=text(row.email).toLowerCase(),cpf=digits(row.cpf);if(!nome)errors.push('Nome obrigatório');if(email&&!mail.test(email))errors.push('E-mail inválido');if(email&&seenEmail.has(email))errors.push('E-mail repetido na planilha');if(cpf&&cpf.length!==11&&cpf.length!==14)errors.push('CPF/CNPJ inválido');if(cpf&&seenCpf.has(cpf))errors.push('Documento repetido na planilha');if(email)seenEmail.add(email);if(cpf)seenCpf.add(cpf);return{line:index+2,row:{nome,email,telefone:text(row.telefone,30),cpf,nascimento:text(row.nascimento,10),status:text(row.status,30)||'visitor',campus:text(row.campus,120),grupo:text(row.grupo,120)},errors}})}
-
-async function legacyGET(request:Request){const auth=await authorize(request,'people.read');if(auth.response)return auth.response;const jobs=await env.DB.prepare('SELECT id,file_name,total_rows,imported_rows,skipped_rows,error_rows,status,created_at,completed_at FROM member_import_jobs WHERE church_id=? ORDER BY created_at DESC LIMIT 10').bind(auth.session!.churchId).all();return NextResponse.json({jobs:jobs.results})}
-async function legacyPOST(request:Request){const auth=await authorize(request,'people.write');if(auth.response)return auth.response;const d=await request.json<{mode?:string;fileName?:string;rows?:Row[]}>(),rows=Array.isArray(d.rows)?d.rows:[];if(!rows.length)return NextResponse.json({error:'A planilha não possui linhas para importar.'},{status:400});if(rows.length>500)return NextResponse.json({error:'Importe no máximo 500 pessoas por arquivo.'},{status:400});const checked=validate(rows),valid=checked.filter(x=>!x.errors.length);if(d.mode!=='commit')return NextResponse.json({total:checked.length,valid:valid.length,invalid:checked.length-valid.length,rows:checked.slice(0,50)});const emails=valid.map(x=>x.row.email).filter(Boolean),cpfs=valid.map(x=>x.row.cpf).filter(Boolean),existing=new Set<string>();if(emails.length){const q=emails.map(()=>'?').join(',');const found=await env.DB.prepare(`SELECT lower(email) value FROM people WHERE church_id=? AND lower(email) IN (${q})`).bind(auth.session!.churchId,...emails).all<{value:string}>();found.results.forEach(x=>existing.add(`e:${x.value}`))}if(cpfs.length){const q=cpfs.map(()=>'?').join(',');const found=await env.DB.prepare(`SELECT cpf value FROM people WHERE church_id=? AND cpf IN (${q})`).bind(auth.session!.churchId,...cpfs).all<{value:string}>();found.results.forEach(x=>existing.add(`c:${x.value}`))}const insertable=valid.filter(x=>!(x.row.email&&existing.has(`e:${x.row.email}`))&&!(x.row.cpf&&existing.has(`c:${x.row.cpf}`))),skipped=valid.length-insertable.length,jobId=crypto.randomUUID(),now=Date.now();await env.DB.prepare("INSERT INTO member_import_jobs (id,church_id,file_name,total_rows,imported_rows,skipped_rows,error_rows,status,summary,created_by_user_id,created_at) VALUES (?,?,?,?,0,?,?, 'processing',?,?,?)").bind(jobId,auth.session!.churchId,text(d.fileName,180)||'membros.csv',checked.length,skipped,checked.length-valid.length,JSON.stringify({columns:['nome','email','telefone','cpf','nascimento','status','campus','grupo']}),auth.session!.id,now).run();for(let start=0;start<insertable.length;start+=80){const statements=insertable.slice(start,start+80).map(item=>env.DB.prepare("INSERT INTO people (id,church_id,full_name,birth_date,cpf,email,phone,journey_status,campus,group_name,tags,app_role,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,'[]','member','active',?)").bind(crypto.randomUUID(),auth.session!.churchId,item.row.nome,item.row.nascimento||null,item.row.cpf||null,item.row.email||null,item.row.telefone||null,item.row.status,item.row.campus||null,item.row.grupo||null,now));if(statements.length)await env.DB.batch(statements)}await env.DB.prepare("UPDATE member_import_jobs SET imported_rows=?,status='completed',completed_at=? WHERE id=?").bind(insertable.length,Date.now(),jobId).run();await audit(request,auth.session!,'people.imported','member_import_job',jobId,{fileName:d.fileName,total:checked.length,imported:insertable.length,skipped,invalid:checked.length-valid.length});return NextResponse.json({jobId,total:checked.length,imported:insertable.length,skipped,invalid:checked.length-valid.length})}
-
-export const GET = withLegacyContainment(legacyGET);
-export const POST = withLegacyContainment(legacyPOST);
+type ImportClient={from:(table:string)=>any;rpc:(name:string,args:Record<string,unknown>)=>Promise<{data:any;error:{code?:string}|null}>};
+function failure(code?:string){
+ const status=code==='42501'||code==='28000'?403:code==='22023'?400:503;
+ return NextResponse.json({error:status===403?'Você não pode importar nesta unidade ou o módulo está bloqueado.':status===400?'Revise a planilha, a unidade e o lote. Nenhum dado deste lote foi alterado.':'Não foi possível confirmar o lote. Use Tentar novamente; o mesmo lote não será importado duas vezes.'},{status,headers:{'Cache-Control':'no-store'}});
+}
+export async function GET(request:Request){
+ const auth=await authorizeSupabaseChurch(request,'people.write');if(!auth||auth.response)return auth?.response||failure();
+ const access=auth.access!,client=access.client as unknown as ImportClient;
+ const {data,error}=await client.from('member_import_receipts').select('id,file_name,result,created_at').eq('organization_id',access.membership.organization_id).eq('created_by',access.userId).order('created_at',{ascending:false}).limit(10);
+ if(error)return failure(error.code);
+ return NextResponse.json({jobs:(data||[]).map((item:any)=>({id:item.id,file_name:item.file_name,total_rows:item.result.total,imported_rows:item.result.imported,skipped_rows:item.result.skipped,error_rows:item.result.invalid,status:'completed',created_at:item.created_at})),units:access.membership.units,defaultUnitId:access.membership.default_unit_id},{headers:{'Cache-Control':'no-store'}});
+}
+export async function POST(request:Request){
+ const auth=await authorizeSupabaseChurch(request,'people.write');if(!auth||auth.response)return auth?.response||failure();
+ const access=auth.access!,client=access.client as unknown as ImportClient;
+ let body:Record<string,unknown>;let checked:ReturnType<typeof validateImportRows>;
+ try{
+  const raw=await request.text();if(raw.length>524288)return NextResponse.json({error:'Arquivo excede o limite de 512 KB por solicitação.'},{status:413});
+  body=JSON.parse(raw);if(!body||typeof body!=='object'||Array.isArray(body))throw new Error('Solicitação inválida.');
+  if(body.mode!=='preview'&&body.mode!=='commit')throw new Error('Escolha validar ou importar.');
+  checked=validateImportRows(body.rows);
+  if(body.mode==='commit'&&(checked.length>100||checked.some(item=>item.errors.length)))throw new Error('Valide a planilha e envie até 100 linhas válidas por lote.');
+ }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Planilha inválida.'},{status:400})}
+ const {data:units,error:unitError}=await client.from('organization_units').select('id,name').eq('organization_id',access.membership.organization_id).eq('status','active');
+ if(unitError)return failure();
+ if(body.unitId!==undefined&&typeof body.unitId!=='string')return NextResponse.json({error:'Selecione uma unidade válida.'},{status:400});
+ const unitId=resolveUnitSelection(units||[],body.unitId as string|undefined,access.membership.default_unit_id);
+ if(!unitId)return NextResponse.json({error:'Selecione uma unidade ativa e autorizada.'},{status:400});
+ const rows=checked.map(item=>item.row);
+ // Stable content identity also protects re-uploading a name-only CSV after a lost response.
+ const hash=createHash('sha256').update(JSON.stringify([access.membership.organization_id,access.userId,unitId,rows])).digest('hex');
+ const requestId=`${hash.slice(0,8)}-${hash.slice(8,12)}-${hash.slice(12,16)}-${hash.slice(16,20)}-${hash.slice(20,32)}`;
+ const {data,error}=await client.rpc('import_member_batch',{p_organization:access.membership.organization_id,p_unit:unitId,p_rows:rows as unknown as Json,p_mode:body.mode,p_request:body.mode==='commit'?requestId:null,p_file:typeof body.fileName==='string'?body.fileName.slice(0,180):'membros.csv'});
+ if(error)return failure(error.code);if(!data||typeof data!=='object')return failure();
+ if(body.mode==='preview'){
+  if(!Array.isArray(data.rows)||data.rows.length!==checked.length)return failure();
+  const previewRows=data.rows.map((item:any,index:number)=>({...item,line:checked[index].line,errors:Array.from(new Set([...checked[index].errors,...(Array.isArray(item.errors)?item.errors:[])]))}));
+  return NextResponse.json({...data,rows:previewRows,valid:previewRows.filter((item:any)=>!item.errors.length&&!item.duplicate).length,invalid:previewRows.filter((item:any)=>item.errors.length).length,skipped:previewRows.filter((item:any)=>!item.errors.length&&item.duplicate).length,unitId},{headers:{'Cache-Control':'no-store'}});
+ }
+ if(data.total!==rows.length||typeof data.imported!=='number'||typeof data.skipped!=='number'||typeof data.invalid!=='number'||data.imported+data.skipped+data.invalid!==data.total)return failure();
+ return NextResponse.json(data,{headers:{'Cache-Control':'no-store'}});
+}
