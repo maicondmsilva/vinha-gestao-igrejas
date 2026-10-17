@@ -92,7 +92,7 @@ begin
  if p_mode is null or p_mode not in('preview','commit') or p_rows is null or jsonb_typeof(p_rows)<>'array' or octet_length(p_rows::text)>524288 then
   raise exception 'invalid_import_payload' using errcode='22023';end if;
  total_count:=jsonb_array_length(p_rows);
- if total_count<1 or total_count>case when p_mode='commit' then 100 else 500 end then raise exception 'invalid_import_size' using errcode='22023';end if;
+ if total_count<1 or total_count>(case when p_mode='commit' then 100 else 500 end) then raise exception 'invalid_import_size' using errcode='22023';end if;
  select name into unit_name from public.organization_units where id=p_unit and organization_id=p_organization;
  fingerprint:=encode(extensions.digest(p_rows::text||':'||p_unit::text,'sha256'),'hex');
  if p_mode='commit' then

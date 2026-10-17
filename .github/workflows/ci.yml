@@ -48,6 +48,7 @@ jobs:
         run: |
           pnpm run check:secrets
           pnpm run check:buttons
+          pnpm run check:types:core
 
       - name: Registrar auditoria de dependencias
         run: pnpm audit --json > dependency-audit.json || test -s dependency-audit.json
