@@ -49,6 +49,7 @@ jobs:
           pnpm run check:secrets
           pnpm run check:buttons
           pnpm run check:types:core
+          pnpm exec tsc --noEmit -p tsconfig.ledger.json
 
       - name: Registrar auditoria de dependencias
         run: pnpm audit --json > dependency-audit.json || test -s dependency-audit.json
@@ -64,6 +65,7 @@ jobs:
         run: |
           pnpm run test:central
           node --experimental-strip-types --test scripts/operations-foundation.test.mjs
+          node --experimental-strip-types --test scripts/ledger-pilot.test.mjs
 
       - name: Validar contencao de recursos nao liberados
         run: pnpm run test:release

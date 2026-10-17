@@ -1,0 +1,5 @@
+{
+ "extends":"./tsconfig.core.json",
+ "compilerOptions":{"incremental":false},
+ "include":["next-env.d.ts","env.d.ts","db/env.d.ts","app/lib/ledger-pilot.ts","app/api/church-ledger/route.ts","app/financeiro-piloto/page.tsx"]
+}
