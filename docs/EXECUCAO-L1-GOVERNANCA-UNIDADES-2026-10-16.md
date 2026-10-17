@@ -25,6 +25,8 @@ Sem exclusão, migração ou reclassificação de registros existentes. A troca 
 
 Os testes concorrentes anteriores de governança não provam todos os interleavings de hierarquia/classificação/contrato. O lock da organização não é apresentado como solução integral de concorrência, sucessão ou governança de credenciais de serviço. Não houve nova validação visual de telas autenticadas nem aprovação global de TypeScript. E-mail real, sessões, importação, armazenamento e os demais itens do plano continuam abertos.
 
+Na primeira execução SQL, os 30 novos casos passaram, mas a regressão de ciclo existente recebeu a nova recusa de sede (42501) antes do erro de hierarquia esperado (23514). Ajustada a ordem dos gatilhos para preservar o verificador anterior antes da nova proteção, sem enfraquecer nenhuma regra. É necessário aprovar a suíte completa no SHA final; a execução inicial não foi aprovada e nada foi aplicado em produção.
+
 As orientações de Supabase levaram a preservar RLS, usar gatilho invoker e retirar o privilégio de exclusão física, sem elevar o acesso de cliente. Referências: [changelog](https://supabase.com/changelog), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security) e [privilégios](https://supabase.com/blog/postgres-roles-and-privileges).
 
 ## Aplicação e recuperação

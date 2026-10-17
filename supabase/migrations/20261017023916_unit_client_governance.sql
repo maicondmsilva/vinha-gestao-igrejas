@@ -37,5 +37,6 @@ begin
  return new;
 end $$;
 revoke all on function private.guard_unit_client_fields() from public,anon,authenticated,service_role;
-create trigger unit_client_fields_guard before insert or update on public.organization_units
+-- Run after unit_hierarchy_guard so existing cycle/foreign-ministry failures keep their contract.
+create trigger unit_write_fields_guard before insert or update on public.organization_units
 for each row execute function private.guard_unit_client_fields();
