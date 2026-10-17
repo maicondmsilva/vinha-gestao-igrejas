@@ -61,7 +61,9 @@ jobs:
           retention-days: 14
 
       - name: Validar regras de avisos financeiros
-        run: pnpm run test:central
+        run: |
+          pnpm run test:central
+          node --experimental-strip-types --test scripts/operations-foundation.test.mjs
 
       - name: Validar contencao de recursos nao liberados
         run: pnpm run test:release
