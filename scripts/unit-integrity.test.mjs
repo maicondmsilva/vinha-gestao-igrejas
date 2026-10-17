@@ -108,6 +108,11 @@ test('units: only known write failures are translated',()=>{
  assert.match(unitWriteError('unit_headquarters_parent_denied','Falha'),/subordinada/);
  assert.equal(unitWriteError('sensitive SQL detail','Falha'),'Falha');
 });
+test('units: partial headquarters edit preserves its existing type',async()=>{
+ const r=route('units',[{data:[{id:'sede',name:'Sede',parent_unit_id:null,unit_type:'headquarters'}],error:null},{data:{id:'sede'},error:null}]);
+ const response=await r.handlers.PATCH(request({id:'sede',name:'Sede atualizada'}));
+ assert.equal(response.status,200);assert.equal(r.calls[1].value.unit_type,'headquarters');assert.equal(r.calls[1].value.parent_unit_id,null);assert.equal(r.audits(),1);
+});
 for(const name of ['units']){
  test(name+': database failure stops editing without audit',async()=>{
   const r=route(name,[{data:null,error:{message:'offline'}}]);

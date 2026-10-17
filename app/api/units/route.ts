@@ -43,12 +43,13 @@ async function supabasePOST(request:Request){
 async function supabasePATCH(request:Request){
  const auth=await authorizeSupabaseChurch(request,'units.manage');if(!auth||auth.response)return auth?.response||NextResponse.json({error:'Supabase indisponível.'},{status:503});
  const access=auth.access!,d=await request.json<Record<string,string|boolean>>();if(!d.id||!d.name)return NextResponse.json({error:'Unidade inválida.'},{status:400});
- const type=String(d.type||'campus');if(!types.includes(type))return NextResponse.json({error:'Tipo de unidade inválido.'},{status:400});
  const organizationId=access.membership.organization_id;
- const {data:existing,error:readError}=await access.client.from('organization_units').select('id,name,parent_unit_id').eq('organization_id',organizationId).eq('status','active');
+ const {data:existing,error:readError}=await access.client.from('organization_units').select('id,name,parent_unit_id,unit_type').eq('organization_id',organizationId).eq('status','active');
  if(readError)return NextResponse.json({error:'Não foi possível validar a hierarquia.'},{status:503});
  const current=(existing||[]).find(unit=>unit.id===String(d.id));
  if(!current)return NextResponse.json({error:'Unidade não encontrada ou sem acesso.'},{status:404});
+ const type=d.type===undefined?uiType(current.unit_type||'campus'):String(d.type);
+ if(!types.includes(type))return NextResponse.json({error:'Tipo de unidade inválido.'},{status:400});
  const parentId=d.parentUnitId===undefined?current.parent_unit_id:d.parentUnitId?String(d.parentUnitId):null;
  if((type!=='headquarters'&&!parentId)||!validUnitParent(existing||[],String(d.id),parentId))return NextResponse.json({error:'Unidade responsável inválida ou vínculo circular na hierarquia.'},{status:400});
  const {data:updated,error}=await access.client.from('organization_units').update({parent_unit_id:parentId,name:String(d.name),unit_type:pgType(type) as 'headquarters'|'regional'|'campus'|'congregation'|'branch',legal_name:d.legalName?String(d.legalName):null,tax_id:d.taxId?String(d.taxId):null,pastor_name:d.pastorName?String(d.pastorName):null,email:d.email?String(d.email):null,phone:d.phone?String(d.phone):null,address:{city:String(d.city||''),state:String(d.state||'')},financial_autonomy:Boolean(d.financialAutonomy),communication_autonomy:d.communicationAutonomy!==false,branding_autonomy:Boolean(d.brandingAutonomy)}).eq('id',String(d.id)).eq('organization_id',organizationId).select('id').maybeSingle();

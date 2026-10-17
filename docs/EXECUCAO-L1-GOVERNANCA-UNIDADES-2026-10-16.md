@@ -15,13 +15,13 @@ A contagem agregada principal não encontrou ministérios com mais de uma sede n
 - Impede converter unidade em sede ou sede em outro tipo, subordinar sede e criar segunda sede por escrita de cliente. A primeira sede do cadastro legítimo continua permitida.
 - Preserva nome, dados legais, responsável, contato, endereço, autonomias operacionais, tipos não sede, hierarquia autorizada e estado operacional da unidade. Reativar uma unidade não reativa o contrato, cujas regras anteriores continuam independentes.
 - Horário de atualização é atribuído pelo banco; INSERT de cliente não fabrica data antiga.
-- A API traduz somente recusas conhecidas em mensagens compreensíveis e não registra sucesso/auditoria positiva quando o banco recusa a gravação.
+- A API traduz somente recusas conhecidas em mensagens compreensíveis e não registra sucesso/auditoria positiva quando o banco recusa a gravação. Quando uma edição omite o tipo, preserva o existente, sem tentar converter uma sede em campus.
 
 Sem exclusão, migração ou reclassificação de registros existentes. A troca legítima de sede exigirá procedimento administrativo auditado separado, não atualização direta do tipo. Não foi implementada nova tela de arquivamento/restauração: o estado operacional existente é preservado, mas DELETE deixa de ser uma opção de cliente.
 
 ## Validação e limites
 
-77 testes de aplicação aprovados localmente: 59 de segurança, 14 da Central e 4 de preparação de publicação. SQL novo preparado para identidade, campos permitidos, sede, datas, papéis, outro ministério, suspensão e bootstrap; aguardando CI em banco efêmero. O Docker local continua inacessível por permissão do canal. Migração criada com a ferramenta oficial, não por diff local; o prefixo UTC do arquivo foi gerado pela ferramenta, enquanto a data deste relatório segue America/Sao_Paulo.
+78 testes de aplicação aprovados localmente: 60 de segurança, 14 da Central e 4 de preparação de publicação. SQL novo preparado para identidade, campos permitidos, sede, datas, papéis, outro ministério, suspensão e bootstrap; aguardando CI em banco efêmero. O Docker local continua inacessível por permissão do canal. Migração criada com a ferramenta oficial, não por diff local; o prefixo UTC do arquivo foi gerado pela ferramenta, enquanto a data deste relatório segue America/Sao_Paulo.
 
 Os testes concorrentes anteriores de governança não provam todos os interleavings de hierarquia/classificação/contrato. O lock da organização não é apresentado como solução integral de concorrência, sucessão ou governança de credenciais de serviço. Não houve nova validação visual de telas autenticadas nem aprovação global de TypeScript. E-mail real, sessões, importação, armazenamento e os demais itens do plano continuam abertos.
 
