@@ -83,7 +83,9 @@ jobs:
         run: supabase test db --local
 
       - name: Validar governanca com conexoes concorrentes isoladas
-        run: pnpm run test:governance-concurrency
+        run: |
+          pnpm run test:governance-concurrency
+          node scripts/ledger-concurrency.mjs
 
       - name: Parar banco local preservando volumes
         if: always()

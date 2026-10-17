@@ -14,7 +14,8 @@ create table public.church_ledger_accounts(
 create table public.church_ledger_periods(
  organization_id uuid not null,
  unit_id uuid not null,
- closed_through date not null,
+ closed_through date not null default '-infinity',
+ generation bigint not null default 0,
  primary key(organization_id,unit_id),
  foreign key(unit_id,organization_id) references public.organization_units(id,organization_id)
 );
@@ -73,6 +74,8 @@ begin
  perform private.require_confirmed_self_service_email();
  perform 1 from public.organization_units where id=p_unit and organization_id=p_org for update;
  if not found or not private.church_ledger_allowed(p_org,p_unit) then raise exception 'ledger_access_denied' using errcode='42501';end if;
+ insert into public.church_ledger_periods(organization_id,unit_id) values(p_org,p_unit) on conflict do nothing;
+ update public.church_ledger_periods set generation=generation+1 where organization_id=p_org and unit_id=p_unit;
  insert into public.church_ledger_accounts(organization_id,unit_id,name,kind) values(p_org,p_unit,trim(p_name),p_kind) returning id into result;
  insert into public.audit_logs(organization_id,actor_user_id,action,entity_type,entity_id,metadata) values(p_org,auth.uid(),'ledger.account_created','church_ledger_account',result::text,jsonb_build_object('unit_id',p_unit));
  return result;
@@ -86,6 +89,9 @@ begin
  -- Same lock for postings and closing: no post can cross a concurrent close.
  perform 1 from public.organization_units where id=p_unit and organization_id=p_org for update;
  if not found or not private.church_ledger_allowed(p_org,p_unit) then raise exception 'ledger_access_denied' using errcode='42501';end if;
+ insert into public.church_ledger_periods(organization_id,unit_id) values(p_org,p_unit) on conflict do nothing;
+ -- A row version change also rejects stale REPEATABLE READ/SERIALIZABLE snapshots.
+ update public.church_ledger_periods set generation=generation+1 where organization_id=p_org and unit_id=p_unit;
  if p_request is null or p_date is null or p_date>current_date or p_memo is null or char_length(trim(p_memo)) not between 2 and 300 then raise exception 'invalid_ledger_input' using errcode='22023';end if;
  if p_reversal is not null then
   if p_lines is distinct from '[]'::jsonb or not exists(select 1 from public.church_ledger_journals where id=p_reversal and organization_id=p_org and unit_id=p_unit and reversal_of is null) then raise exception 'invalid_ledger_reversal' using errcode='22023';end if;
@@ -118,10 +124,28 @@ begin
  perform private.require_confirmed_self_service_email();
  perform 1 from public.organization_units where id=p_unit and organization_id=p_org for update;
  if not found or not private.church_ledger_allowed(p_org,p_unit) then raise exception 'ledger_access_denied' using errcode='42501';end if;
+ insert into public.church_ledger_periods(organization_id,unit_id) values(p_org,p_unit) on conflict do nothing;
+ update public.church_ledger_periods set generation=generation+1 where organization_id=p_org and unit_id=p_unit;
  if p_through is null or p_through>=current_date then raise exception 'invalid_ledger_close' using errcode='22023';end if;
  if exists(select 1 from public.church_ledger_periods where organization_id=p_org and unit_id=p_unit and closed_through>=p_through) then raise exception 'ledger_already_closed' using errcode='22023';end if;
- insert into public.church_ledger_periods values(p_org,p_unit,p_through) on conflict(organization_id,unit_id) do update set closed_through=excluded.closed_through;
+ update public.church_ledger_periods set closed_through=p_through where organization_id=p_org and unit_id=p_unit;
  insert into public.audit_logs(organization_id,actor_user_id,action,entity_type,entity_id,metadata) values(p_org,auth.uid(),'ledger.period_closed','organization_unit',p_unit::text,jsonb_build_object('closed_through',p_through));
 end $$;
 revoke all on function public.create_church_ledger_account(uuid,uuid,text,text),public.post_church_journal(uuid,uuid,uuid,date,text,jsonb,uuid),public.close_church_ledger_period(uuid,uuid,date) from public,anon,service_role;
 grant execute on function public.create_church_ledger_account(uuid,uuid,text,text),public.post_church_journal(uuid,uuid,uuid,date,text,jsonb,uuid),public.close_church_ledger_period(uuid,uuid,date) to authenticated;
+
+-- Text cents preserve exact totals even if a sum exceeds the JS safe integer range.
+create function public.church_ledger_balances(p_org uuid,p_unit uuid,p_through date) returns jsonb
+language plpgsql stable security invoker set search_path='' as $$
+begin
+ if not private.church_ledger_allowed(p_org,p_unit) then raise exception 'ledger_access_denied' using errcode='42501';end if;
+ if p_through is null or p_through>current_date then raise exception 'invalid_ledger_date' using errcode='22023';end if;
+ if (select count(*) from public.church_ledger_accounts where organization_id=p_org and unit_id=p_unit)>500 then raise exception 'ledger_report_requires_pagination' using errcode='22023';end if;
+ return coalesce((select jsonb_agg(jsonb_build_object('accountId',a.id,'name',a.name,'kind',a.kind,'balanceCents',coalesce(b.total,0)::text) order by a.name,a.id)
+ from public.church_ledger_accounts a left join (
+ select l.account_id,sum(l.delta_cents) total from public.church_ledger_lines l join public.church_ledger_journals j on j.id=l.journal_id and j.organization_id=l.organization_id and j.unit_id=l.unit_id
+ where j.organization_id=p_org and j.unit_id=p_unit and j.effective_date<=p_through group by l.account_id) b on b.account_id=a.id
+ where a.organization_id=p_org and a.unit_id=p_unit),'[]'::jsonb);
+end $$;
+revoke all on function public.church_ledger_balances(uuid,uuid,date) from public,anon,service_role;
+grant execute on function public.church_ledger_balances(uuid,uuid,date) to authenticated;
