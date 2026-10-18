@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useState,type FormEvent} from 'react';
 import {ledgerCurrency as currency} from '../lib/ledger-pilot';
+import './ledger-pilot.css';
 type Unit={id:string;name:string};
 type Balance={accountId:string;name:string;kind:string;balanceCents:string};
 type Journal={id:string;effective_date:string;memo:string;reversal_of:string|null};
@@ -9,10 +10,12 @@ const initial:Snapshot={balances:[],journals:[],closedThrough:null,pagination:{p
 const kinds:Record<string,string>={asset:'Banco / caixa',income:'Receita',expense:'Despesa'};
 export default function LedgerPilot(){
  const[units,setUnits]=useState<Unit[]>([]),[unit,setUnit]=useState(''),[date,setDate]=useState(()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())),[page,setPage]=useState(1),[snapshot,setSnapshot]=useState(initial),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(false),[revision,setRevision]=useState(0),[pending,setPending]=useState<Record<string,unknown>|null>(null);
- const tenant=typeof window==='undefined'?'':new URLSearchParams(window.location.search).get('tenant')||'';
+ const[scope,setScope]=useState<{tenant:string}|null>(null);
+ useEffect(()=>{setScope({tenant:new URLSearchParams(window.location.search).get('tenant')||''})},[]);
+ const tenant=scope?.tenant||'';
  const endpoint=(params:Record<string,string>={})=>'/api/church-ledger?'+new URLSearchParams({...params,...(tenant?{tenant}:{})});
- useEffect(()=>{const abort=new AbortController();fetch(endpoint(),{signal:abort.signal,cache:'no-store'}).then(async r=>{const data=await r.json() as {units?:Unit[];error?:string};if(!r.ok)throw Error(data.error||'Acesso indisponível.');setUnits(data.units||[]);setUnit(data.units?.[0]?.id||'')}).catch(e=>{if(!abort.signal.aborted)setNotice(e.message)});return()=>abort.abort()},[tenant]);
- useEffect(()=>{if(!unit)return;const abort=new AbortController();setLoading(true);setSnapshot(initial);fetch(endpoint({unitId:unit,date,page:String(page)}),{signal:abort.signal,cache:'no-store'}).then(async r=>{const data=await r.json() as Snapshot&{error?:string};if(!r.ok)throw Error(data.error||'Não foi possível consultar.');setSnapshot(data)}).catch(e=>{if(!abort.signal.aborted)setNotice(e.message)}).finally(()=>{if(!abort.signal.aborted)setLoading(false)});return()=>abort.abort()},[tenant,unit,date,page,revision]);
+ useEffect(()=>{if(!scope)return;const abort=new AbortController();fetch(endpoint(),{signal:abort.signal,cache:'no-store'}).then(async r=>{const data=await r.json() as {units?:Unit[];error?:string};if(!r.ok)throw Error(data.error||'Acesso indisponível.');if(!abort.signal.aborted){setUnits(data.units||[]);setUnit(data.units?.[0]?.id||'')}}).catch(e=>{if(!abort.signal.aborted)setNotice(e.message)});return()=>abort.abort()},[scope,tenant]);
+ useEffect(()=>{if(!scope||!unit)return;const abort=new AbortController();setLoading(true);setSnapshot(initial);fetch(endpoint({unitId:unit,date,page:String(page)}),{signal:abort.signal,cache:'no-store'}).then(async r=>{const data=await r.json() as Snapshot&{error?:string};if(!r.ok)throw Error(data.error||'Não foi possível consultar.');if(!abort.signal.aborted)setSnapshot(data)}).catch(e=>{if(!abort.signal.aborted)setNotice(e.message)}).finally(()=>{if(!abort.signal.aborted)setLoading(false)});return()=>abort.abort()},[scope,tenant,unit,date,page,revision]);
  async function send(command:Record<string,unknown>){
   setBusy(true);setNotice('');
   if(['post','reverse'].includes(String(command.action)))setPending(command);
@@ -22,10 +25,10 @@ export default function LedgerPilot(){
   }catch(e){if(e instanceof TypeError&&['post','reverse'].includes(String(command.action)))setPending(command);setNotice(e instanceof Error?e.message:'Falha de conexão.')}finally{setBusy(false)}
  }
  function submit(event:FormEvent<HTMLFormElement>,action:string){event.preventDefault();const fields=Object.fromEntries(new FormData(event.currentTarget));void send({...fields,action,unitId:unit,...(['post','reverse'].includes(action)?{requestId:crypto.randomUUID()}:{})})}
- const disabled=busy||loading||!unit||!!pending;
+ const disabled=busy||loading||!scope||!unit||!!pending;
  const card={background:'#fff',border:'1px solid #dce6df',borderRadius:16,padding:24,marginBottom:20};
  const field={display:'grid',gap:6,marginBottom:14} as const;
- return <main style={{maxWidth:1100,margin:'32px auto',padding:20,color:'#173d30'}}>
+ return <main className="ledger-pilot" style={{maxWidth:1100,margin:'32px auto',padding:20,color:'#173d30'}}>
   <a href={'/painel'+(tenant?'?tenant='+encodeURIComponent(tenant):'')}>← Voltar ao painel</a>
   <h1>Livro financeiro — homologação</h1><p>Ambiente de testes. Não emite cobranças, notas fiscais ou pagamentos. Não substitui a conciliação bancária e a revisão contábil.</p>
   {notice&&<p role="status" style={{...card,background:'#fff7df'}}>{notice}</p>}

@@ -44,6 +44,10 @@ test('reversal cannot manufacture its amounts and database failure is never succ
 test('UI retains pending command before network call and has explicit submit/actions',()=>{
  const source=readFileSync(new URL('../app/financeiro-piloto/page.tsx',import.meta.url),'utf8');assert.ok(source.indexOf('setPending(command)')<source.indexOf("fetch(endpoint(),{method:'POST'"));assert.match(source,/send\(pending\)/);assert.match(source,/Resultado ainda não confirmado/);
 });
+test('ledger scope waits for client mount instead of changing SSR attributes during hydration',()=>{
+ const source=readFileSync(new URL('../app/financeiro-piloto/page.tsx',import.meta.url),'utf8');
+ assert.doesNotMatch(source,/typeof window===/);assert.match(source,/useEffect\(\(\)=>\{setScope/);assert.match(source,/if\(!scope\)return/);assert.match(source,/if\(!abort.signal.aborted\)setSnapshot/);
+});
 test('GET bootstraps only authorized units and rejects foreign scope or malformed balances',async()=>{
  const setup=route({result:{data:[],error:null}});const bootstrap=await setup.GET(new Request('https://vinha.test/api/church-ledger'));assert.equal(bootstrap.status,200);assert.equal(setup.calls.length,0);
  assert.equal((await setup.GET(new Request(`https://vinha.test/api/church-ledger?unitId=${other}&date=2026-10-17`))).status,403);assert.equal(setup.calls.length,0);
