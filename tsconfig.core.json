@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {"incremental": false},
+  "include": ["next-env.d.ts", "env.d.ts", "db/env.d.ts", "proxy.ts", "app/lib/deployment-safety.ts", "app/lib/operational-readiness.ts", "app/lib/member-import.ts", "app/lib/people-query.ts", "app/lib/private-files.ts", "app/lib/hierarchy-governance.ts", "app/lib/supabase/staff-routes.ts", "app/api/member-files/route.ts", "app/api/onboarding/members-import/route.ts", "app/api/people/route.ts"],
+  "exclude": ["node_modules"]
+}
