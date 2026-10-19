@@ -35,4 +35,6 @@ Em regressão, reverter seletivamente a interface/código, preservando tabelas, 
 
 Supervisão, multiplicação e vínculo do responsável como líder formal continuam fora desta entrega.
 
+Conferência de desempenho complementou os índices das cinco relações compostas novas (recibo `20261019180429`), validados no Docker antes da aplicação. Índices novos ainda sem uso não devem ser removidos apenas por falta de tráfego.
+
 Estrutura aplicada ao Supabase Vinha Igrejas, recibo `20261019180052`. Conferidos RLS nas seis tabelas, ausência de leitura anônima e ausência de escrita direta autenticada. Os dois novos avisos de função privilegiada autenticada são esperados para as gravações validadas; nenhum EXECUTE anônimo foi concedido. Alertas anteriores sobre senhas comprometidas e funções antigas permanecem fora desta entrega. Referência: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
