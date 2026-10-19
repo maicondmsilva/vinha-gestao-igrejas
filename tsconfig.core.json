@@ -21,7 +21,11 @@
     "app/api/reports/people/route.ts",
     "app/PeopleSummaryReport.tsx",
     "app/CellDirectory.tsx",
-    "app/api/cell-directory/route.ts"
+    "app/api/cell-directory/route.ts",
+    "app/CellModule.tsx",
+    "app/MinistryLanguage.tsx",
+    "app/api/ministry-language/route.ts",
+    "app/api/cell-operations/route.ts"
   ],
   "exclude": [
     "node_modules"

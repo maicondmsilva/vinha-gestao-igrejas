@@ -38,7 +38,7 @@ const localBindingConfig = {
     : [],
 };
 
-export default defineConfig(async () => {
+export default defineConfig(async ({command}) => {
   assertDeploymentIsolation(process.env);
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
@@ -48,6 +48,9 @@ export default defineConfig(async () => {
 
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.
   const isVercelBuild = Boolean(process.env.VERCEL || process.env.NITRO_PRESET === 'vercel');
+  // Nitro's fetchable dev environment has no RSC `runner`. Use Vinext's native
+  // runner only for the Docker-local preview; deployment builds retain Nitro.
+  const localPreview = command === 'serve' && process.env.NEXT_PUBLIC_VINHA_ENV === 'local';
   const { cloudflare } = isVercelBuild ? { cloudflare: null } : await import('@cloudflare/vite-plugin');
 
   return {
@@ -60,7 +63,7 @@ export default defineConfig(async () => {
       },
     } : undefined,
     plugins: isVercelBuild
-      ? [vinext(), tailwindcss(), nitro()]
+      ? [vinext(), tailwindcss(), ...(localPreview ? [] : [nitro()])]
       : [
           vinext(),
           tailwindcss(),

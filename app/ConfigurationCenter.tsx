@@ -1,4 +1,5 @@
 'use client';
+import {useMinistryLanguage} from './MinistryLanguage';
 import { useEffect, useState } from 'react';
 import PaymentSettings from './PaymentSettings';
 import SecurityAccessCenter from './SecurityAccessCenter';
@@ -19,8 +20,9 @@ const sections=[
 ] as const;
 
 export default function ConfigurationCenter({church}:{church:Church;setChurch:(church:Church)=>void}){
+ const {t}=useMinistryLanguage();
  return <div className="content config-center">
-  <div className="page-head"><div><p className="section-over">PRÉ-LANÇAMENTO</p><h1>Configurações</h1><p>{church.name}</p></div></div>
+  <div className="page-head"><div><p className="section-over">PRÉ-LANÇAMENTO</p><h1>{t('configuracoes')}</h1><p>{church.name}</p></div></div>
   <section className="config-panel"><h2>Configurações disponíveis nesta etapa</h2>
    <p><a href="/minha-assinatura">Consultar contratos e solicitar alterações de módulos ou vencimento →</a></p>
    <p><a href="/conta/seguranca">Acessar a segurança da minha conta →</a></p>
