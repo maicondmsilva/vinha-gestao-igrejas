@@ -1,4 +1,5 @@
 -- Read-only, single-statement aggregate: no personal fields leave the database.
+-- Applied after explicit production approval; version aligned to the MCP receipt.
 create function public.people_summary_report(p_organization uuid,p_unit uuid) returns jsonb
 language plpgsql stable security invoker set search_path='' as $$
 declare result jsonb;
