@@ -18,7 +18,7 @@ export const releaseCatalog = [
   { id: 'comunicacao', title: 'Comunicação entre membros', status: 'development', detail: 'Chat e notificações dos membros aguardam migração. O atendimento à Vinha é separado.' },
   { id: 'transmissoes', title: 'Transmissões', status: 'development', detail: 'Agendamento e distribuição ainda não disponíveis para operação real.' },
   { id: 'financeiro', title: 'Financeiro da igreja', status: 'development', detail: 'Lançamentos, conciliação e recebimentos ainda não liberados; a cobrança da assinatura é separada.' },
-  { id: 'relatorios', title: 'Relatórios', status: 'development', detail: 'Relatórios e exportações contábeis aguardam dados reais, migração e validação.' },
+  { id: 'relatorios', title: 'Relatórios cadastrais', status: 'pilot', detail: 'Primeira entrega: contagens cadastrais por unidade e situação. Financeiro, exportações nominais e consolidação continuam em desenvolvimento.' },
 ] as const;
 
 export function pilotViewAllowed(id: string) {

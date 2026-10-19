@@ -63,6 +63,7 @@ jobs:
 
       - name: Validar regras de avisos financeiros
         run: |
+          node --experimental-strip-types --test scripts/people-summary.test.mjs scripts/people-summary-route.test.mjs
           pnpm run test:central
           node --experimental-strip-types --test scripts/operations-foundation.test.mjs
           node --experimental-strip-types --test scripts/ledger-pilot.test.mjs
