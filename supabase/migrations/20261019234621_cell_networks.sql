@@ -21,6 +21,7 @@ create table public.church_cell_network_links (
  foreign key(network_id,organization_id,unit_id) references public.church_cell_networks(id,organization_id,unit_id) on delete restrict
 );
 create index cell_network_links_network_idx on public.church_cell_network_links(network_id,organization_id,unit_id);
+create index cell_network_links_cell_fk_idx on public.church_cell_network_links(cell_id,organization_id,unit_id);
 create index cell_network_links_scope_idx on public.church_cell_network_links(organization_id,unit_id);
 create index cell_network_links_actor_idx on public.church_cell_network_links(updated_by);
 alter table public.church_cell_networks enable row level security;
