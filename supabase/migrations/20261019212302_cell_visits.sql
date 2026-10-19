@@ -41,7 +41,7 @@ revoke all on function public.cell_visits_read(uuid,uuid,uuid,date,date,uuid) fr
 grant execute on function public.cell_visits_read(uuid,uuid,uuid,date,date,uuid) to authenticated;
 
 -- Definer is required for the audited/versioned write: clients have no table write grant.
-create function public.cell_visits_save(p_organization uuid,p_unit uuid,p_cell uuid,p_id uuid,p_version integer,p_data jsonb) returns jsonb
+create function private.cell_visits_save(p_organization uuid,p_unit uuid,p_cell uuid,p_id uuid,p_version integer,p_data jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare actor uuid=auth.uid(); previous public.church_cell_visits; saved public.church_cell_visits;
  chosen uuid; chosen_name text; chosen_date date; chosen_status text;
@@ -92,6 +92,13 @@ begin
  jsonb_build_object('unit_id',p_unit,'cell_id',p_cell,'version',saved.version,'status',saved.status,'member_linked',saved.person_id is not null));
  return jsonb_build_object('id',saved.id,'version',saved.version);
 end $$;
+revoke all on function private.cell_visits_save(uuid,uuid,uuid,uuid,integer,jsonb) from public,anon,service_role;
+grant execute on function private.cell_visits_save(uuid,uuid,uuid,uuid,integer,jsonb) to authenticated;
+-- Exposed API is an invoker wrapper; privileged implementation stays outside the API schema.
+create function public.cell_visits_save(p_organization uuid,p_unit uuid,p_cell uuid,p_id uuid,p_version integer,p_data jsonb) returns jsonb
+language sql security invoker set search_path='' as $$
+ select private.cell_visits_save(p_organization,p_unit,p_cell,p_id,p_version,p_data);
+$$;
 revoke all on function public.cell_visits_save(uuid,uuid,uuid,uuid,integer,jsonb) from public,anon,service_role;
 grant execute on function public.cell_visits_save(uuid,uuid,uuid,uuid,integer,jsonb) to authenticated;
 

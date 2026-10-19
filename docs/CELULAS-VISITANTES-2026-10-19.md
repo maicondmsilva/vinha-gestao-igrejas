@@ -10,7 +10,7 @@ Editar permite corrigir nome/data e cancelar ou reativar uma visita, sem exclus�
 
 ## Acesso
 
-Somente os papéis já autorizados a ler Células/Pessoas podem consultar, na unidade autorizada e com os dois módulos habilitados. Gravação exige papel de proprietário, administrador, pastor ou líder, com gestão da unidade, conta confirmada e ministério/unidade ativos. A função auditada trava estados de acesso, contrato, grupo e pessoa durante a operação. Não altera planos ou poderes existentes. Nenhuma escrita direta ou execução anônima é concedida. Leitura invoker com RLS; escrita definer com autorização explícita, `search_path` vazio e privilégios restritos, seguindo o padrão auditado existente.
+Somente os papéis já autorizados a ler Células/Pessoas podem consultar, na unidade autorizada e com os dois módulos habilitados. Gravação exige papel de proprietário, administrador, pastor ou líder, com gestão da unidade, conta confirmada e ministério/unidade ativos. A função auditada trava estados de acesso, contrato, grupo e pessoa durante a operação. Não altera planos ou poderes existentes. Nenhuma escrita direta ou execução anônima é concedida. Consultas públicas invoker com RLS; escrita pública invoker delega à implementação definer no esquema privado não exposto pela API, com autorização explícita, `search_path` vazio e privilégios restritos.
 
 Migração: `20261019212302_cell_visits.sql`. Índices cobrem paginação, chaves estrangeiras e duplicidade de membro por dia/grupo. API usa ministério da sessão, JSON limitado a 8 KiB, validação estrita de campos e resposta, sem cache compartilhado ou mensagens SQL ao usuário.
 
