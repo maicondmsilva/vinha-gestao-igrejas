@@ -64,6 +64,7 @@ jobs:
       - name: Validar regras de avisos financeiros
         run: |
           node --experimental-strip-types --test scripts/people-summary.test.mjs scripts/people-summary-route.test.mjs
+          node --experimental-strip-types --test scripts/cell-directory.test.mjs
           pnpm run test:central
           node --experimental-strip-types --test scripts/operations-foundation.test.mjs
           node --experimental-strip-types --test scripts/ledger-pilot.test.mjs
@@ -92,6 +93,7 @@ jobs:
         run: |
           pnpm run test:governance-concurrency
           node scripts/ledger-concurrency.mjs
+          node scripts/cell-directory-concurrency.mjs
 
       - name: Parar banco local preservando volumes
         if: always()
