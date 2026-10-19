@@ -1,0 +1,5 @@
+-- Production release receipt, applied atomically on 2026-10-19.
+-- The preceding twelve source migrations were executed in filename order in
+-- that transaction, and their exact versions/names registered in migration history.
+-- Local/CI builds already execute those source files; this receipt has no DDL.
+-- Recovery metadata was captured separately in ignored outputs/, not in Git.

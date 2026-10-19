@@ -40,3 +40,11 @@ Preparar alteração, testar, conferir impacto de banco, publicar, verificar e r
 - Consulta somente leitura à conexão Supabase **Vinha Igrejas** confirmou histórico até `20261017100325`. As 12 candidatas locais posteriores ainda não constam como aplicadas.
 - Log da implantação Vercel `BdvuYEuhfmSQobwoeJs8B3Jod7Q2` confirmou: `Preview exige ambiente público test.` A validação de isolamento foi mantida. É necessário ambiente de homologação com projeto separado; não reutilizar o banco principal para contornar o erro.
 - Produção não promovida. Próximas dependências: destino isolado de homologação e conferência/backup/validação das 12 migrações antes de aplicá-las ao principal. Nenhum dado de cliente foi alterado nesta conciliação.
+
+## Execução autorizada posterior
+
+- As 12 candidatas foram compiladas na estrutura real em transação desfeita e depois aplicadas atomicamente com `release_consolidated_sources_20261019`, versão efetiva `20261019033241`. As versões originais foram registradas na mesma transação, preservando compatibilidade do histórico local/remoto. O arquivo de recibo não repete DDL.
+- Recuperação seletiva: definições de funções, ACLs, índices e políticas capturados em arquivo ignorado `outputs/recovery-production-schema-2026-10-19.json`; não é backup integral de dados. Não houve execução dos novos fluxos sobre clientes.
+- Verificadas oito tabelas representativas: RLS habilitada, leitura anônima negada e INSERT direto autenticado negado. Bucket member-private confirmado privado. Bypass direto da confirmação proporcional negado.
+- Bateria local: 12/13 suites passaram de primeira; a suite HTTP/MFA falhou por inicialização e passou na repetição isolada, com aal1 recusado e aal2 aceito. Compilação aprovada. CI remoto Build da aplicação aprovado antes do recibo.
+- A prévia Vercel continua recusando ambiente sem homologação isolada. Essa proteção foi preservada; o candidato foi validado em banco local isolado. A implantação de produção será verificada separadamente, sem usar o principal em Preview.
