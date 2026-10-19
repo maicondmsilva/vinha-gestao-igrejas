@@ -1,0 +1,6 @@
+import {NextResponse} from 'next/server';
+import {authorizeSupabaseChurch} from '../../lib/supabase/church-access';
+import type {OperationsClient} from '../../lib/supabase/operations';
+import {memberChoicePage,memberChoiceQuery} from '../../lib/member-choice';
+const headers={'Cache-Control':'private, no-store'};
+export async function GET(request:Request){const auth=await authorizeSupabaseChurch(request,'units.read');if(!auth||auth.response)return auth?.response||NextResponse.json({error:'Acesso indisponível.'},{status:503,headers});let input;try{input=memberChoiceQuery(request)}catch{return NextResponse.json({error:'Informe unidade e nome válidos.'},{status:400,headers})}if(!auth.access!.membership.units.some(u=>u.id===input.unitId))return NextResponse.json({error:'Unidade sem acesso.'},{status:403,headers});try{const client=auth.access!.client as unknown as OperationsClient;const {data,error}=await client.rpc('member_choices',{p_organization:auth.access!.membership.organization_id,p_unit:input.unitId,p_search:input.q});if(error)return NextResponse.json({error:'Não foi possível consultar membros nesta unidade.'},{status:error.code==='42501'?403:503,headers});return NextResponse.json(memberChoicePage(data,input.unitId),{headers})}catch{return NextResponse.json({error:'Busca temporariamente indisponível.'},{status:503,headers})}}
