@@ -31,3 +31,12 @@ Mercado Pago: credencial de uma conta de teste validada, mas não armazenada; en
 ## Política de próximas melhorias
 
 Preparar alteração, testar, conferir impacto de banco, publicar, verificar e registrar resultado. Mudanças financeiras ou de acesso precisam de avaliação específica; autorização de publicação não elimina proteções nem autoriza efeitos externos inesperados.
+
+## Conciliação realizada
+
+- Pacote enviado no PR 34. Histórico de `main` integrado na branch de preparação.
+- Conflito de unidades era exclusivamente CRLF/LF (conteúdo normalizado idêntico); preservado integralmente. Scripts de teste locais mais completos preservados no package.json.
+- 200 testes passaram novamente; tipos principais e varredura estática de segredos aprovados.
+- Consulta somente leitura à conexão Supabase **Vinha Igrejas** confirmou histórico até `20261017100325`. As 12 candidatas locais posteriores ainda não constam como aplicadas.
+- Log da implantação Vercel `BdvuYEuhfmSQobwoeJs8B3Jod7Q2` confirmou: `Preview exige ambiente público test.` A validação de isolamento foi mantida. É necessário ambiente de homologação com projeto separado; não reutilizar o banco principal para contornar o erro.
+- Produção não promovida. Próximas dependências: destino isolado de homologação e conferência/backup/validação das 12 migrações antes de aplicá-las ao principal. Nenhum dado de cliente foi alterado nesta conciliação.
