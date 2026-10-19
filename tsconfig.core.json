@@ -23,6 +23,10 @@
     "app/CellDirectory.tsx",
     "app/api/cell-directory/route.ts",
     "app/CellModule.tsx",
+    "app/CellOverview.tsx",
+    "app/MemberPicker.tsx",
+    "app/api/cell-overview/route.ts",
+    "app/api/member-choices/route.ts",
     "app/MinistryLanguage.tsx",
     "app/api/ministry-language/route.ts",
     "app/api/cell-operations/route.ts"

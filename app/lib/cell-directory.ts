@@ -1,10 +1,11 @@
 export const cellUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-export type CellInput={name:string;leader_name:string;meeting_day:number;meeting_time:string;meeting_format:'presential'|'online'|'hybrid';location:string;status:'active'|'archived'};
+export type CellInput={name:string;leader_name:string;leader_person_id?:string|null;meeting_day:number;meeting_time:string;meeting_format:'presential'|'online'|'hybrid';location:string;status:'active'|'archived'};
 export type CellRecord=CellInput&{id:string;version:number};
 export function cellInput(value:unknown):CellInput{
  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('invalid');
  const v=value as Record<string,unknown>, keys=['name','leader_name','meeting_day','meeting_time','meeting_format','location','status'];
- if(Object.keys(v).length!==keys.length||keys.some(k=>!(k in v)))throw Error('invalid');
+ if(Object.keys(v).some(k=>!keys.includes(k)&&k!=='leader_person_id')||keys.some(k=>!(k in v)))throw Error('invalid');
+ if('leader_person_id' in v&&v.leader_person_id!==null&&(typeof v.leader_person_id!=='string'||!cellUuid.test(v.leader_person_id)))throw Error('invalid');
  for(const [key,min,max] of [['name',2,120],['leader_name',0,120],['location',0,300]] as const){if(typeof v[key]!=='string'||v[key].trim().length<min||v[key].length>max||/[\x00-\x1f\x7f]/.test(v[key]))throw Error('invalid')}
  if(!Number.isInteger(v.meeting_day)||Number(v.meeting_day)<0||Number(v.meeting_day)>6||typeof v.meeting_time!=='string'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(v.meeting_time)||typeof v.meeting_format!=='string'||!['presential','online','hybrid'].includes(v.meeting_format)||typeof v.status!=='string'||!['active','archived'].includes(v.status))throw Error('invalid');
  return {...v,name:String(v.name).trim(),leader_name:String(v.leader_name).trim(),location:String(v.location).trim()} as CellInput;

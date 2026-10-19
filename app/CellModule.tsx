@@ -1,8 +1,9 @@
 'use client';
 import {useEffect,useRef,useState,type FormEvent,type ReactNode} from 'react';
 import CellDirectory from './CellDirectory';
+import CellOverview from './CellOverview';
 import {useMinistryLanguage} from './MinistryLanguage';
-import {cellPage,type CellRecord} from './lib/cell-directory';
+import {cellPage,cellUuid,type CellRecord} from './lib/cell-directory';
 import {cellOperationsPage,type Category,type Participant,type Meeting,type Roster,type PersonChoice,type CellReport,type CellReadKind} from './lib/cell-operations';
 import type {CellSection,LanguageKey} from './lib/ministry-language';
 import './cell-operations.css';
@@ -19,13 +20,14 @@ async function read(unitId:string,kind:CellReadKind,values:Record<string,string>
 const failure=(e:unknown)=>e instanceof Error?(e.name==='TimeoutError'?'A operação demorou mais que o esperado. Atualize antes de repetir.':e.message):'Não foi possível concluir. Atualize antes de repetir.';
 function localToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 const displayDate=(d:string)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'UTC'}).format(new Date(d+'T12:00:00Z'));
+function periodHint(key:string,fallback:string){if(typeof location==='undefined')return fallback;const value=new URLSearchParams(location.search).get(key)||'';return /^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))?value:fallback}
 type Page=ReturnType<typeof cellOperationsPage>;
 type CategoryDraft={id:string;version:number;name:string;status:'active'|'archived'};
 
 export default function CellModule({unitId,section}:{unitId:string;section:CellSection}){
  const {t}=useMinistryLanguage();
- const [cells,setCells]=useState<CellRecord[]>([]),[cellCursor,setCellCursor]=useState<string|null>(null),[cellLoading,setCellLoading]=useState(false),[cellError,setCellError]=useState(''),[selected,setSelected]=useState('');
- const [from,setFrom]=useState(()=>localToday().slice(0,8)+'01'),[to,setTo]=useState(localToday),[cursor,setCursor]=useState(''),[revision,setRevision]=useState(0),[cellsRevision,setCellsRevision]=useState(0);
+ const [cells,setCells]=useState<CellRecord[]>([]),[cellCursor,setCellCursor]=useState<string|null>(null),[cellLoading,setCellLoading]=useState(false),[cellError,setCellError]=useState(''),[selected,setSelected]=useState(()=>{if(typeof location==='undefined')return '';const id=new URLSearchParams(location.search).get('celula')||'';return cellUuid.test(id)?id:''});
+ const [from,setFrom]=useState(()=>periodHint('de',localToday().slice(0,8)+'01')),[to,setTo]=useState(()=>periodHint('ate',localToday())),[cursor,setCursor]=useState(''),[revision,setRevision]=useState(0),[cellsRevision,setCellsRevision]=useState(0);
  const [result,setResult]=useState<{key:string;page:Page}|null>(null),[loading,setLoading]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
  const [category,setCategory]=useState<CategoryDraft|null>(null),[addParticipant,setAddParticipant]=useState(false),[meeting,setMeeting]=useState<Meeting|null|false>(false),[assignedCategory,setAssignedCategory]=useState('');
  const scope=unitId+'|'+section+'|'+selected,liveScope=useRef(scope),operation=useRef<AbortController|null>(null),cellOperation=useRef<AbortController|null>(null),previousUnit=useRef(unitId);liveScope.current=scope;
@@ -54,6 +56,7 @@ export default function CellModule({unitId,section}:{unitId:string;section:CellS
   finally{if(liveScope.current===stamp)setBusy(false)}
  }
  const run=(command:unknown)=>{void save(command).catch(()=>{})};
+ if(section==='geral')return <CellOverview unitId={unitId}/>;
  if(section==='cadastro')return <CellDirectory unitId={unitId} onSaved={()=>setCellsRevision(v=>v+1)}/>;
  const title=t(('celulas.'+section) as LanguageKey),categories=(page?.items||[]) as Category[],participants=(page?.items||[]) as Participant[],meetings=(page?.items||[]) as Meeting[],reports=(page?.items||[]) as CellReport[];
  const totals=section==='relatorios'?reports.reduce((a,c)=>({participants:a.participants+c.participants,meetings:a.meetings+c.meetings,expected:a.expected+c.expected,present:a.present+c.present}),{participants:0,meetings:0,expected:0,present:0}):null;

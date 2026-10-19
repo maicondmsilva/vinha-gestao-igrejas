@@ -25,7 +25,7 @@ async function handle(request:Request,write:boolean){
   let body;try{body=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));if(!body||Object.keys(body).sort().join(',')!=='data,id,version'||typeof body.id!=='string'||!cellUuid.test(body.id)||!Number.isSafeInteger(body.version)||body.version<0)throw Error();body.data=cellInput(body.data)}catch{return NextResponse.json({error:'Revise os campos do cadastro.'},{status:400,headers})}
   args={p_organization:auth.access!.membership.organization_id,p_unit:unitId,p_id:body.id,p_version:body.version,p_data:body.data};
  }
- const {data,error}=await client.rpc(write?'cell_directory_save':'cell_directory_list',args);
+ const {data,error}=await client.rpc(write?'cell_directory_save':'cell_directory_list_v2',args);
  if(error){const code=error.code;return NextResponse.json({error:code==='42501'?'Células não autorizado para esta unidade, papel ou contrato.':code==='40001'?'Este cadastro mudou. Atualize a lista antes de tentar novamente.':['22023','23514','22P02'].includes(code)?'Revise os campos do cadastro.':'Não foi possível concluir. Atualize a lista antes de tentar novamente.'},{status:code==='42501'?403:code==='40001'?409:['22023','23514','22P02'].includes(code)?400:503,headers})}
  if(!write){const page=cellPage(data);if(page.unitId!==unitId)throw Error();return NextResponse.json(page,{headers})}
  if(!data||typeof data.id!=='string'||!cellUuid.test(data.id)||!Number.isSafeInteger(data.version)||data.version<1)throw Error();
