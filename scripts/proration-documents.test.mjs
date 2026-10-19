@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {summarizeProrationDocument} from '../app/lib/proration-documents.ts';
+const row={id:'test',kind:'credit',amount_cents:'1500',created_at:'2026-10-18',saas_proration_credit_uses:[{amount_cents:'1000'}]};
+test('credit report preserves exact cents and consumed credit',()=>{assert.equal(summarizeProrationDocument(row).remainingCents,'500');assert.equal(summarizeProrationDocument({...row,amount_cents:'9007199254740993'}).amountCents,'9007199254740993')});
+test('additional internal document is never presented as a provider charge',()=>{const result=summarizeProrationDocument({...row,kind:'additional_invoice',saas_proration_credit_uses:[]});assert.equal(result.remainingCents,null);assert.equal(result.externalChargeCreated,false)});
+test('invalid or overconsumed balances are rejected rather than silently clipped',()=>{for(const patch of [{amount_cents:9007199254740992},{amount_cents:'-1'},{amount_cents:'1'},{kind:'unknown'}])assert.throws(()=>summarizeProrationDocument({...row,...patch}))});
+test('cancelled invoice returns credit without rewriting original consumption',()=>{assert.equal(summarizeProrationDocument({...row,saas_proration_credit_uses:[{amount_cents:'1000',saas_proration_credit_returns:[{amount_cents:'1000'}]}]}).remainingCents,'1500');assert.throws(()=>summarizeProrationDocument({...row,saas_proration_credit_uses:[{amount_cents:'1000',saas_proration_credit_returns:[{amount_cents:'1001'}]}]}))});
+test('one-to-one REST credit return shape is accepted without losing the balance',()=>assert.equal(summarizeProrationDocument({...row,saas_proration_credit_uses:[{amount_cents:'1000',saas_proration_credit_returns:{amount_cents:'1000'}}]}).remainingCents,'1500'));
+test('truncated or duplicate credit histories cannot imply a confirmed balance',()=>{assert.throws(()=>summarizeProrationDocument({...row,saas_proration_credit_uses:Array(1000).fill({amount_cents:'1'})}));assert.throws(()=>summarizeProrationDocument({...row,saas_proration_credit_uses:[{amount_cents:'1000',saas_proration_credit_returns:[{amount_cents:'1'},{amount_cents:'1'}]}]}))});

@@ -1,0 +1,6 @@
+{
+ "extends":"./tsconfig.core.json",
+ "files":["app/api/platform/contracts/change-payer/route.ts","app/api/platform/contracts/cancel-invoice/route.ts","app/api/platform/contracts/plan-preview/route.ts","app/api/platform/contracts/documents/route.ts","app/api/platform/contracts/route.ts","app/admin-vinha/contratos/documentos/page.tsx","app/admin-vinha/contratos/documentos/Documents.tsx"],
+ "compilerOptions":{"incremental":false},
+ "include":["next-env.d.ts","env.d.ts","db/env.d.ts","app/lib/ledger-pilot.ts","app/api/church-ledger/route.ts","app/financeiro-piloto/page.tsx","app/api/platform/contracts/plan-change/route.ts","app/api/platform/contracts/cycle-invoice/route.ts","app/api/platform/contracts/cycle-rollover/route.ts","app/lib/plan-proration.ts"]
+}

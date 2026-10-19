@@ -6,6 +6,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "test:l4:local": "node scripts/local-l4-batch.mjs --local-synthetic",
     "dev": "vinext dev",
     "build": "vinext build",
     "build:vercel": "vite build",
@@ -13,9 +14,11 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "check:buttons": "node scripts/check-interactive-buttons.mjs",
     "test:release": "node --experimental-strip-types --test scripts/release-containment.test.mjs",
-    "test:security": "node --experimental-strip-types --test scripts/access-security.test.mjs scripts/unit-integrity.test.mjs scripts/member-write.test.mjs scripts/operator-security.test.mjs scripts/organization-invite.test.mjs scripts/trial-identity.test.mjs",
+    "test:security": "node --experimental-strip-types --test scripts/access-security.test.mjs scripts/unit-integrity.test.mjs scripts/member-write.test.mjs scripts/operator-security.test.mjs scripts/organization-invite.test.mjs scripts/trial-identity.test.mjs scripts/hierarchy-governance.test.mjs scripts/member-import.test.mjs scripts/private-files.test.mjs scripts/staff-session.test.mjs",
+    "check:types:core": "tsc --noEmit -p tsconfig.core.json",
     "test:central": "node --experimental-strip-types --test scripts/central-billing.test.mjs scripts/financial-integrations.test.mjs",
-    "test:governance-concurrency": "node scripts/membership-governance-concurrency.mjs",
+    "test:governance-concurrency": "node scripts/membership-governance-concurrency.mjs && node scripts/hierarchy-governance-concurrency.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
     "db:generate": "drizzle-kit generate",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
@@ -29,10 +32,10 @@
     "@supabase/supabase-js": "2.117.2",
     "@types/qrcode": "^1.5.6",
     "drizzle-orm": "0.45.2",
-    "next": "16.2.6",
+    "next": "16.3.8",
     "qrcode": "^1.5.4",
-    "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
@@ -47,14 +50,14 @@
     "@vitejs/plugin-rsc": "0.5.26",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.3.8",
     "nitro": "3.0.260903-beta",
-    "react-server-dom-webpack": "19.2.6",
+    "react-server-dom-webpack": "19.2.8",
     "supabase": "2.120.0",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vinext": "1.0.0-beta.3",
-    "vite": "8.0.13",
+    "vite": "8.0.16",
     "wrangler": "4.92.0"
   },
   "type": "module"

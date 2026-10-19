@@ -1,0 +1,30 @@
+.ledger-pilot { line-height: 1.55; overflow-wrap: anywhere; }
+.ledger-pilot h1 { font: 700 30px/1.2 Georgia,serif; margin: 22px 0 12px; }
+.ledger-pilot h2 { font-size: 18px; line-height: 1.3; font-weight: 700; margin: 0 0 18px; }
+.ledger-pilot p { margin: 0 0 14px; }
+.ledger-pilot a { color: #245b47; text-decoration: underline; text-underline-offset: 3px; }
+.ledger-pilot label { font-size: 13px; font-weight: 600; color: #3e5d50; }
+.ledger-pilot input:not([type=checkbox]),.ledger-pilot select {
+ box-sizing: border-box; min-width: 0; width: 100%; min-height: 44px;
+ border: 1px solid #bdcfc3; border-radius: 8px; padding: 9px 12px;
+ background: #fff; color: #173d30; font: inherit; font-weight: 400;
+}
+.ledger-pilot input[type=checkbox] { width: 18px; height: 18px; accent-color: #245b47; vertical-align: middle; margin-right: 8px; }
+.ledger-pilot button {
+ min-height: 42px; padding: 10px 16px; border-radius: 8px; border: 1px solid #245b47;
+ background: #245b47; color: #fff; font: inherit; font-size: 13px; font-weight: 700;
+ cursor: pointer; transition: background .15s;
+}
+.ledger-pilot button:hover:not(:disabled) { background: #173d30; }
+.ledger-pilot button:disabled { background: #edf2ee; color: #68796e; border-color: #d7e0da; cursor: not-allowed; }
+.ledger-pilot :is(input,select,button,a,summary):focus-visible { outline: 3px solid #c29b42; outline-offset: 3px; }
+.ledger-pilot :is(input,select):disabled { background: #f3f6f3; color: #68796e; }
+.ledger-pilot ul { list-style: none; margin: 16px 0; padding: 0; }
+.ledger-pilot li { padding: 10px 12px; background: #f2f7f3; border-radius: 8px; margin-bottom: 8px; }
+.ledger-pilot details { margin-top: 14px; }
+.ledger-pilot summary { color: #245b47; font-weight: 600; cursor: pointer; padding: 8px 0; }
+.ledger-pilot details form { margin-top: 12px; }
+.ledger-pilot article small { font-size: 12px; color: #64766b; }
+.ledger-pilot nav { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+.ledger-pilot [role=status] { border-left: 4px solid #c29b42 !important; }
+@media(max-width:600px) { .ledger-pilot h1 { font-size: 26px; } .ledger-pilot button { max-width: 100%; } }

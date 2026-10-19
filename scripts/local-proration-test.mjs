@@ -1,0 +1,11 @@
+import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+if(process.argv[2]!=='--local-synthetic')throw Error('Explicit local synthetic opt-in required.');
+const migration=readFileSync(new URL('../supabase/migrations/20261018151747_unit_contract_proration_pilot.sql',import.meta.url),'utf8');
+const documents=readFileSync(new URL('../supabase/migrations/20261018152708_proration_documents_credit_application_pilot.sql',import.meta.url),'utf8');
+const rollover=readFileSync(new URL('../supabase/migrations/20261018161147_proration_cycle_rollover_pilot.sql',import.meta.url),'utf8');
+const finalMigrations=['20261018181106_proration_confirmation_catalog_guard.sql','20261018203432_proration_monthly_generator_isolation.sql','20261018203612_proration_invoice_cancellation_credit_return.sql','20261018204356_proration_payer_governance_and_catchup.sql'].map(file=>readFileSync(new URL('../supabase/migrations/'+file,import.meta.url),'utf8')).join('\n');
+const tests=readFileSync(new URL('../supabase/tests/unit_contract_proration.sql',import.meta.url),'utf8').replace(/^begin;$/m,'');
+const result=spawnSync('docker',['exec','-i','supabase_db_vinha','psql','-X','-q','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{input:'begin;\n'+migration+'\n'+documents+'\n'+rollover+'\n'+finalMigrations+'\n'+tests,encoding:'utf8'});
+process.stdout.write(result.stdout||'');process.stderr.write(result.stderr||'');
+process.exitCode=result.status===0&&!/^\s*not ok/m.test(result.stdout||'')&&!/Looks like you failed/.test(result.stdout||'')?0:1;
