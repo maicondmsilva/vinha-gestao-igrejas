@@ -68,6 +68,7 @@ jobs:
           node --experimental-strip-types --test scripts/cell-operations-language.test.mjs
           node --experimental-strip-types --test scripts/cell-overview-member.test.mjs
           node --experimental-strip-types --test scripts/cell-visits.test.mjs
+          node --experimental-strip-types --test scripts/cell-networks.test.mjs
           pnpm run test:central
           node --experimental-strip-types --test scripts/operations-foundation.test.mjs
           node --experimental-strip-types --test scripts/ledger-pilot.test.mjs
@@ -99,6 +100,7 @@ jobs:
           node scripts/cell-directory-concurrency.mjs
           node scripts/cell-operations-concurrency.mjs
           node scripts/cell-visits-concurrency.mjs
+          node scripts/cell-networks-concurrency.mjs
 
       - name: Parar banco local preservando volumes
         if: always()
