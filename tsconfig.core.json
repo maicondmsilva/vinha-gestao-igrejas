@@ -19,7 +19,9 @@
     "app/api/onboarding/members-import/route.ts",
     "app/api/people/route.ts",
     "app/api/reports/people/route.ts",
-    "app/PeopleSummaryReport.tsx"
+    "app/PeopleSummaryReport.tsx",
+    "app/CellDirectory.tsx",
+    "app/api/cell-directory/route.ts"
   ],
   "exclude": [
     "node_modules"

@@ -18,6 +18,8 @@ Sequência proposta após esta primeira entrega:
 
 Cada liberação limita-se ao escopo comprovado. Não liberar telas legadas ou prometer um módulo completo pela entrega parcial.
 
+Atualização de Células: primeira fatia cadastral implementada (criar, consultar, editar, arquivar e reativar por unidade), com RLS, auditoria e conflito de versões. Líder é informativo nesta etapa; vínculo com Pessoas, encontros e presenças permanecem pendentes. Ver CELULAS-PRIMEIRA-ENTREGA-2026-10-19.md. Nenhum módulo contratual é incluído automaticamente pela publicação.
+
 Estado: candidata local. A tentativa de instalar a função read-only em produção foi recusada pela revisão automática por falta de autorização específica para este relatório. A função não foi criada no principal; não promover o catálogo/tela antes da aplicação autorizada e verificação da função. A migração não altera registros de pessoas, mas cria uma RPC autenticada de agregação com RLS e controles de módulo/unidade. A validação visual autenticada permanece pendente.
 
 Atualização após autorização específica: função instalada no projeto Vinha Igrejas, versão efetiva `20261019092730`. Verificado acesso anônimo negado, execução autenticada concedida e `security invoker` (sem bypass de RLS). O registro anterior descreve o bloqueio inicial, agora resolvido. A publicação da interface será registrada no PR 35 após implantação.
