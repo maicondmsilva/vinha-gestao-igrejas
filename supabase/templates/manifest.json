@@ -1,0 +1,84 @@
+{
+  "brand": "Vinha",
+  "version": "2026-10-14",
+  "templates": [
+    {
+      "key": "confirmation",
+      "subject": "Confirme seu e-mail na Vinha",
+      "file": "confirmation.html",
+      "securityNotification": false
+    },
+    {
+      "key": "invite",
+      "subject": "Você recebeu um convite da Vinha",
+      "file": "invite.html",
+      "securityNotification": false
+    },
+    {
+      "key": "magic_link",
+      "subject": "Seu link de acesso à Vinha",
+      "file": "magic_link.html",
+      "securityNotification": false
+    },
+    {
+      "key": "recovery",
+      "subject": "Recupere seu acesso à Vinha",
+      "file": "recovery.html",
+      "securityNotification": false
+    },
+    {
+      "key": "email_change",
+      "subject": "Confirme a alteração do seu e-mail na Vinha",
+      "file": "email_change.html",
+      "securityNotification": false
+    },
+    {
+      "key": "reauthentication",
+      "subject": "Seu código de verificação da Vinha",
+      "file": "reauthentication.html",
+      "securityNotification": false
+    },
+    {
+      "key": "password_changed_notification",
+      "subject": "Sua senha da Vinha foi alterada",
+      "file": "password_changed_notification.html",
+      "securityNotification": true
+    },
+    {
+      "key": "email_changed_notification",
+      "subject": "Seu e-mail da Vinha foi alterado",
+      "file": "email_changed_notification.html",
+      "securityNotification": true
+    },
+    {
+      "key": "phone_changed_notification",
+      "subject": "Seu telefone da Vinha foi alterado",
+      "file": "phone_changed_notification.html",
+      "securityNotification": true
+    },
+    {
+      "key": "identity_linked_notification",
+      "subject": "Um método de acesso foi vinculado à Vinha",
+      "file": "identity_linked_notification.html",
+      "securityNotification": true
+    },
+    {
+      "key": "identity_unlinked_notification",
+      "subject": "Um método de acesso foi removido da Vinha",
+      "file": "identity_unlinked_notification.html",
+      "securityNotification": true
+    },
+    {
+      "key": "mfa_factor_enrolled_notification",
+      "subject": "Nova verificação de segurança na Vinha",
+      "file": "mfa_factor_enrolled_notification.html",
+      "securityNotification": true
+    },
+    {
+      "key": "mfa_factor_unenrolled_notification",
+      "subject": "Verificação de segurança removida da Vinha",
+      "file": "mfa_factor_unenrolled_notification.html",
+      "securityNotification": true
+    }
+  ]
+}

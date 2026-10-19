@@ -1,0 +1,45 @@
+import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+if(process.argv[2]!=='--local-synthetic')throw Error('Local synthetic opt-in required.');
+const files=['20261018151747_unit_contract_proration_pilot.sql','20261018152708_proration_documents_credit_application_pilot.sql','20261018161147_proration_cycle_rollover_pilot.sql','20261018181106_proration_confirmation_catalog_guard.sql','20261018203432_proration_monthly_generator_isolation.sql','20261018203612_proration_invoice_cancellation_credit_return.sql','20261018204356_proration_payer_governance_and_catchup.sql'];
+const migration=files.map(file=>readFileSync(new URL('../supabase/migrations/'+file,import.meta.url),'utf8')).join('\n');
+const source=readFileSync(new URL('../supabase/tests/unit_contract_proration.sql',import.meta.url),'utf8');
+const initial=source.split("select ok(not has_table_privilege")[0].replace(/^begin;$/m,'').replace(/^select no_plan\(\);$/m,'');
+const historical=source.split('-- BEGIN ROLLOVER FIXTURE')[1].split('-- END ROLLOVER FIXTURE')[0].replace("interval '31 days'","interval '121 days'").replace("interval '1 day'","interval '91 days'").replace("interval '2 months'","interval '5 months'");
+const tests=`
+select no_plan();
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"ad000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}',true);
+select set_config('qa.late',jsonb_build_object('requestId','fd000000-0000-4000-8000-000000000081','contractId','dd000000-0000-4000-8000-000000000002','invoiceId','ed000000-0000-4000-8000-000000000003','expectedUpdatedAt',(select updated_at from public.saas_unit_contracts where id='dd000000-0000-4000-8000-000000000002'))::text,true);
+select lives_ok($$select public.rollover_proration_cycle_pilot(current_setting('qa.late')::jsonb)$$,'overdue cycle advances exactly one verified period');
+select ok((select cycle_end<floor(extract(epoch from now())*1000)::bigint from public.saas_proration_cycles where contract_id='dd000000-0000-4000-8000-000000000002'),'first catch-up does not skip all missing months');
+select lives_ok($test$do $$declare cy public.saas_proration_cycles;answer jsonb;n integer:=0;begin
+ loop
+  select * into cy from public.saas_proration_cycles where contract_id='dd000000-0000-4000-8000-000000000002';
+  exit when cy.cycle_end>floor(extract(epoch from now())*1000)::bigint;
+  n:=n+1;if n>6 then raise exception 'catchup_bound';end if;
+  answer:=public.issue_proration_cycle_invoice_pilot(jsonb_build_object('requestId',extensions.gen_random_uuid(),'contractId',cy.contract_id,'referenceMonth',to_char(to_timestamp(cy.cycle_end/1000.0) at time zone 'America/Sao_Paulo','YYYY-MM')));
+  perform public.rollover_proration_cycle_pilot(jsonb_build_object('requestId',extensions.gen_random_uuid(),'contractId',cy.contract_id,'invoiceId',answer->>'invoiceId','expectedUpdatedAt',cy.contract_updated_at));
+ end loop;
+end$$;$test$,'catch-up issues each missing competence and advances until current cycle');
+select is((select count(*) from public.saas_proration_rollovers),3::bigint,'three missing boundaries preserved');
+select is((select count(*) from public.saas_invoices where unit_contract_id='dd000000-0000-4000-8000-000000000002'),4::bigint,'base plus three monthly invoices retained');
+select is((select sum(amount_cents)::bigint from public.saas_proration_credit_uses),1500::bigint,'old credit consumed once across catch-up months');
+select ok(not exists(select 1 from (select cycle_start,lag((snapshot->>'cycleEnd')::bigint) over(order by cycle_start) previous_end from public.saas_proration_rollovers) x where previous_end is not null and previous_end<>cycle_start),'no gap in catch-up history');
+select throws_ok($$select public.rollover_proration_cycle_pilot(current_setting('qa.late')::jsonb||'{"requestId":"fd000000-0000-4000-8000-000000000082"}')$$,'40001',null,'old version cannot replay under another ID');
+reset role;
+insert into public.organization_units(id,organization_id,name,slug,unit_type) values('cd000000-0000-4000-8000-000000000003','bd000000-0000-4000-8000-000000000001','Pagador sintético','payer','congregation');
+insert into public.saas_unit_contracts(id,organization_id,unit_id,payer_unit_id,plan_id,status) values('dd000000-0000-4000-8000-000000000003','bd000000-0000-4000-8000-000000000001','cd000000-0000-4000-8000-000000000003','cd000000-0000-4000-8000-000000000003','qa-proration-a','active');
+set local role authenticated;
+select set_config('qa.payer',jsonb_build_object('requestId','fd000000-0000-4000-8000-000000000083','contractId','dd000000-0000-4000-8000-000000000002','payerUnitId','cd000000-0000-4000-8000-000000000003','reason','Troca de pagador sintética','expectedUpdatedAt',(select updated_at from public.saas_unit_contracts where id='dd000000-0000-4000-8000-000000000002'))::text,true);
+select lives_ok($$select public.change_proration_payer_pilot(current_setting('qa.payer')::jsonb)$$,'payer change is explicit and audited');
+select lives_ok($$select public.change_proration_payer_pilot(current_setting('qa.payer')::jsonb)$$,'payer replay returns original result');
+select is((select count(*) from public.saas_proration_payer_changes),1::bigint,'one payer change on retry');
+select is((select count(*) from public.saas_invoices where unit_contract_id='dd000000-0000-4000-8000-000000000002' and payer_unit_id='cd000000-0000-4000-8000-000000000002'),4::bigint,'all old invoices retain their payer');
+select is((select count(*) from public.saas_proration_documents where snapshot->>'payerUnitId'='cd000000-0000-4000-8000-000000000002'),1::bigint,'old credit remains with old payer');
+select throws_ok($$select public.change_proration_payer_pilot(current_setting('qa.payer')::jsonb||'{"requestId":"fd000000-0000-4000-8000-000000000084"}')$$,'40001',null,'stale payer version refused');
+select throws_ok($$select public.change_proration_payer_pilot(current_setting('qa.payer')::jsonb||'{"reason":"Different reason"}')$$,'22023',null,'payer request cannot change content');
+select ok(not has_table_privilege('authenticated','public.saas_proration_payer_changes','INSERT'),'payer history cannot be fabricated');
+select * from finish();rollback;`;
+const result=spawnSync('docker',['exec','-i','supabase_db_vinha','psql','-X','-q','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{input:'begin;\n'+migration+'\n'+initial+'\n'+historical+'\n'+tests,encoding:'utf8',maxBuffer:16*1024*1024});
+process.stdout.write(result.stdout||'');process.stderr.write(result.stderr||'');process.exitCode=result.status===0&&!/^\s*not ok/m.test(result.stdout||'')?0:1;
