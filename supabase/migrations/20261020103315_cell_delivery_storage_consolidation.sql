@@ -6,6 +6,7 @@ language plpgsql stable security definer set search_path='' as $$
 declare parts text[]=string_to_array(p_name,'/');m private.cell_study_materials; actor uuid=auth.uid();
 begin
  if actor is null or cardinality(parts)<>4 or exists(select 1 from unnest(parts[1:3])p where p!~'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') or parts[4]!~'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(pdf|png|jpg)$' then return false;end if;
+ if not exists(select 1 from auth.users where id=actor and email_confirmed_at is not null and not coalesce(is_anonymous,false) and deleted_at is null and(banned_until is null or banned_until<now())) then return false;end if;
  select * into m from private.cell_study_materials where id=parts[3]::uuid and organization_id=parts[1]::uuid and unit_id=parts[2]::uuid;
  if m.id is null or not private.cell_plus_active(m.organization_id,m.unit_id,actor) or not private.can_access_unit(m.organization_id,m.unit_id) then return false;end if;
  if private.cell_flow_manager(m.organization_id,m.unit_id,actor) then return true;end if;
