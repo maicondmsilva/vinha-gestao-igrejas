@@ -3,6 +3,7 @@ import {useEffect,useRef,useState,type FormEvent,type ReactNode} from 'react';
 import CellDirectory from './CellDirectory';
 import CellOverview from './CellOverview';
 import CellVisits from './CellVisits';
+import CellNetworks from './CellNetworks';
 import {useMinistryLanguage} from './MinistryLanguage';
 import {cellPage,cellUuid,type CellRecord} from './lib/cell-directory';
 import {cellOperationsPage,type Category,type Participant,type Meeting,type Roster,type PersonChoice,type CellReport,type CellReadKind} from './lib/cell-operations';
@@ -58,6 +59,7 @@ export default function CellModule({unitId,section}:{unitId:string;section:CellS
  }
  const run=(command:unknown)=>{void save(command).catch(()=>{})};
  if(section==='geral')return <CellOverview unitId={unitId}/>;
+ if(section==='redes')return <CellNetworks key={unitId} unitId={unitId}/>;
  if(section==='visitantes')return <CellVisits key={unitId} unitId={unitId} cells={cells} cellId={selected} selectCell={setSelected} moreCells={()=>void moreCells()} hasMoreCells={Boolean(cellCursor)} cellsLoading={cellLoading} cellsError={cellError}/>;
  if(section==='cadastro')return <CellDirectory unitId={unitId} onSaved={()=>setCellsRevision(v=>v+1)}/>;
  const title=t(('celulas.'+section) as LanguageKey),categories=(page?.items||[]) as Category[],participants=(page?.items||[]) as Participant[],meetings=(page?.items||[]) as Meeting[],reports=(page?.items||[]) as CellReport[];

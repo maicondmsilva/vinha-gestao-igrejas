@@ -12,7 +12,7 @@ export const releaseCatalog = [
   { id: 'kids', title: 'Área Kids', status: 'development', detail: 'Responsáveis, salas e retirada segura aguardam validação ponta a ponta.' },
   { id: 'usuarios', title: 'Usuários e permissões da igreja', status: 'pilot', detail: 'Equipe e convites no Supabase, sujeitos à governança de papéis; envio por e-mail ainda não homologado.' },
   { id: 'eventos', title: 'Cultos e eventos', status: 'development', detail: 'Inscrições, ingressos e recebimentos ainda não liberados para operação real.' },
-  { id: 'celulas', title: 'Células', status: 'pilot', detail: 'Visão geral, cadastro, categorias, participantes, visitas com nome manual ou membro vinculado, encontros com chamada e relatórios por unidade. Nomes compartilhados pelo ministério; sem mensagens automáticas ou consolidação entre unidades.' },
+  { id: 'celulas', title: 'Células', status: 'pilot', detail: 'Visão geral, redes com responsável informativo, cadastro, categorias, participantes, visitas, encontros com chamada e relatórios por unidade. Nomes compartilhados pelo ministério; sem concessão automática de acesso, mensagens ou consolidação entre unidades.' },
   { id: 'escalas', title: 'Escalas', status: 'development', detail: 'Publicação e confirmações aguardam migração.' },
   { id: 'louvor', title: 'Louvor', status: 'development', detail: 'Busca musical, cifras e integrações licenciadas ainda não disponíveis.' },
   { id: 'comunicacao', title: 'Comunicação entre membros', status: 'development', detail: 'Chat e notificações dos membros aguardam migração. O atendimento à Vinha é separado.' },
