@@ -20,6 +20,7 @@ create table private.finance_account_links (
  foreign key(ledger_id,organization_id,unit_id) references public.church_ledger_accounts(id,organization_id,unit_id)
 );
 create index finance_account_links_ledger on private.finance_account_links(ledger_id,organization_id,unit_id);
+create index finance_account_links_catalog on private.finance_account_links(catalog_id,organization_id);
 create table private.finance_entries (
  id uuid primary key,organization_id uuid not null references public.organizations(id),unit_id uuid not null,
  kind text not null check(kind in('income','expense','transfer','opening')),amount_cents bigint not null check(amount_cents between 1 and 999999999999),
@@ -41,6 +42,8 @@ create table private.finance_entries (
 );
 create index finance_entries_unit on private.finance_entries(organization_id,unit_id,due_date,id);
 create index finance_entries_paid on private.finance_entries(organization_id,unit_id,paid_date);
+create index finance_entries_competence on private.finance_entries(organization_id,unit_id,competence_date);
+create index finance_entries_reversed on private.finance_entries(organization_id,unit_id,reversed_date) where reversed_date is not null;
 create index finance_entries_account on private.finance_entries(account_id,organization_id);
 create index finance_entries_destination on private.finance_entries(destination_id,organization_id);
 create index finance_entries_category on private.finance_entries(category_id,organization_id);
@@ -70,6 +73,7 @@ begin
  uid:=p_units[1];
  if p_action in('snapshot','choices') then
   perform 1 from public.organizations where id=p_org for share;
+  perform private.require_confirmed_self_service_email();
   foreach u in array p_units loop if not private.church_ledger_allowed(p_org,u) then raise exception 'finance_access_denied' using errcode='42501';end if;end loop;
  end if;
  if p_action='choices' then
@@ -92,6 +96,7 @@ begin
    join private.finance_catalog a on a.id=e.account_id
    left join private.finance_catalog c on c.id=e.category_id left join private.finance_catalog s on s.id=e.center_id left join private.finance_catalog d on d.id=e.destination_id
    where e.organization_id=p_org and e.unit_id=any(p_units)
+   and (e.due_date between v_from and v_to or e.paid_date between v_from and v_to or e.reversed_date between v_from and v_to or e.competence_date between v_from and v_to)
    and (nullif(p_data->>'category','') is null or e.category_id=(p_data->>'category')::uuid)
    and (nullif(p_data->>'center','') is null or e.center_id=(p_data->>'center')::uuid)
    and (nullif(p_data->>'account','') is null or e.account_id=(p_data->>'account')::uuid or e.destination_id=(p_data->>'account')::uuid)
@@ -127,6 +132,7 @@ begin
  -- Serialize catalog changes and posting; recheck authority after waiting.
  perform 1 from public.organizations where id=p_org for update;
  perform 1 from public.organization_units where id=uid and organization_id=p_org for update;
+ perform private.require_confirmed_self_service_email();
  if not private.church_ledger_allowed(p_org,uid) then raise exception 'finance_access_denied' using errcode='42501';end if;
  v_id:=(p_data->>'id')::uuid;
  if v_id is null then raise exception 'missing_id' using errcode='22023';end if;
@@ -230,6 +236,7 @@ begin
  perform private.require_confirmed_self_service_email();
  perform 1 from public.organizations where id=p_org for update;
  perform 1 from public.organization_units where id=p_unit and organization_id=p_org for update;
+ perform private.require_confirmed_self_service_email();
  if not private.church_ledger_allowed(p_org,p_unit) then raise exception 'ledger_access_denied' using errcode='42501';end if;
  if exists(select 1 from private.finance_account_links l where l.organization_id=p_org and l.unit_id=p_unit and exists(select 1 from jsonb_array_elements(p_lines)x where (x->>'accountId')::uuid=l.ledger_id))
  or exists(select 1 from private.finance_entries where organization_id=p_org and unit_id=p_unit and (id=p_request or journal_id=p_reversal or reversal_id=p_reversal)) then raise exception 'use_finance_operational_command' using errcode='42501';end if;
