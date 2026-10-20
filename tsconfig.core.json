@@ -24,6 +24,8 @@
     "app/api/cell-directory/route.ts",
     "app/CellModule.tsx",
     "app/CellNetworks.tsx",
+    "app/CellFlows.tsx",
+    "app/api/cell-flows/route.ts",
     "app/api/cell-networks/route.ts",
     "app/CellVisits.tsx",
     "app/api/cell-visits/route.ts",
