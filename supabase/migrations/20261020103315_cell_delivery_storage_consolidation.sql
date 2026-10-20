@@ -97,7 +97,8 @@ begin
   if p_email is null or p_whatsapp is null or p_version<>coalesce(old.version,0) then raise exception 'cell_version_conflict' using errcode='40001';end if;
   if p_whatsapp and not exists(select 1 from auth.users where id=auth.uid() and phone_confirmed_at is not null and auth.users.phone ~ '^\+?[1-9][0-9]{9,14}$') then raise exception 'verified_phone_required' using errcode='22023';end if;
   insert into private.cell_delivery_preferences(organization_id,unit_id,user_id,email_enabled,whatsapp_enabled) values(p_org,p_unit,auth.uid(),p_email,p_whatsapp)
-  on conflict(organization_id,unit_id,user_id) do update set email_enabled=excluded.email_enabled,whatsapp_enabled=excluded.whatsapp_enabled,consented_at=clock_timestamp(),version=cell_delivery_preferences.version+1 returning * into old;
+  on conflict(organization_id,unit_id,user_id) do update set email_enabled=excluded.email_enabled,whatsapp_enabled=excluded.whatsapp_enabled,consented_at=clock_timestamp(),version=cell_delivery_preferences.version+1 where cell_delivery_preferences.version=p_version returning * into old;
+  if not found then raise exception 'cell_version_conflict' using errcode='40001';end if;
   insert into public.audit_logs(organization_id,actor_user_id,action,entity_type,entity_id,metadata) values(p_org,auth.uid(),'cell.notification_preferences','organization_unit',p_unit::text,jsonb_build_object('email',p_email,'whatsapp',p_whatsapp));
  end if;
  return jsonb_build_object('version',coalesce(old.version,0),'emailEnabled',coalesce(old.email_enabled,false),'whatsappEnabled',coalesce(old.whatsapp_enabled,false),'email',mail,'verifiedPhone',exists(select 1 from auth.users where id=auth.uid() and phone_confirmed_at is not null and auth.users.phone ~ '^\+?[1-9][0-9]{9,14}$'),
