@@ -4,6 +4,7 @@ import CellDirectory from './CellDirectory';
 import CellOverview from './CellOverview';
 import CellVisits from './CellVisits';
 import CellNetworks from './CellNetworks';
+import CellIntegrated from './CellIntegrated';
 import {useMinistryLanguage} from './MinistryLanguage';
 import {cellPage,cellUuid,type CellRecord} from './lib/cell-directory';
 import {cellOperationsPage,type Category,type Participant,type Meeting,type Roster,type PersonChoice,type CellReport,type CellReadKind} from './lib/cell-operations';
@@ -41,9 +42,10 @@ export default function CellModule({unitId,section}:{unitId:string;section:CellS
  const refresh=()=>{setCursor('');setRevision(v=>v+1)};
  useEffect(()=>{operation.current?.abort();setBusy(false);setCategory(null);setAddParticipant(false);setMeeting(false);setNotice('');setCursor('');return()=>operation.current?.abort()},[scope]);
  useEffect(()=>{if(previousUnit.current!==unitId){previousUnit.current=unitId;setSelected('')}setCells([]);setCellCursor(null);setCellError('');if(!unitId)return;
+  if(['indicacoes','materiais','consolidado','pendencias','supervisao'].includes(section)){setCellLoading(false);return}
   const controller=new AbortController();cellOperation.current=controller;setCellLoading(true);
   fetch('/api/cell-directory?'+url(unitId),{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])}).then(responseData).then(data=>{const next=cellPage(data);if(next.unitId!==unitId)throw Error('Unidade divergente.');if(!controller.signal.aborted){setCells(next.items);setCellCursor(next.nextCursor)}}).catch(e=>{if(!controller.signal.aborted)setCellError(failure(e))}).finally(()=>{if(!controller.signal.aborted)setCellLoading(false)});return()=>controller.abort();
- },[unitId,cellsRevision]);
+ },[unitId,cellsRevision,section]);
  useEffect(()=>{setResult(null);setError('');if(!kind||!unitId||(kind==='participants'&&!selected)){setLoading(false);return}if((kind==='meetings'||kind==='report')&&(!from||!to||to<from)){setLoading(false);setError('Informe um período válido.');return}
   const controller=new AbortController();setLoading(true);read(unitId,kind,filters,controller.signal).then(next=>{if(!controller.signal.aborted)setResult({key,page:next})}).catch(e=>{if(!controller.signal.aborted)setError(failure(e))}).finally(()=>{if(!controller.signal.aborted)setLoading(false)});return()=>controller.abort();
  },[key]);
@@ -59,6 +61,7 @@ export default function CellModule({unitId,section}:{unitId:string;section:CellS
  }
  const run=(command:unknown)=>{void save(command).catch(()=>{})};
  if(section==='geral')return <CellOverview unitId={unitId}/>;
+ if(['indicacoes','materiais','consolidado','pendencias','supervisao'].includes(section))return <CellIntegrated key={unitId+'|'+section} unitId={unitId} section={section}/>;
  if(section==='redes')return <CellNetworks key={unitId} unitId={unitId}/>;
  if(section==='visitantes')return <CellVisits key={unitId} unitId={unitId} cells={cells} cellId={selected} selectCell={setSelected} moreCells={()=>void moreCells()} hasMoreCells={Boolean(cellCursor)} cellsLoading={cellLoading} cellsError={cellError}/>;
  if(section==='cadastro')return <CellDirectory unitId={unitId} onSaved={()=>setCellsRevision(v=>v+1)}/>;

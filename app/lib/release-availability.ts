@@ -12,7 +12,7 @@ export const releaseCatalog = [
   { id: 'kids', title: 'Área Kids', status: 'development', detail: 'Responsáveis, salas e retirada segura aguardam validação ponta a ponta.' },
   { id: 'usuarios', title: 'Usuários e permissões da igreja', status: 'pilot', detail: 'Equipe e convites no Supabase, sujeitos à governança de papéis; envio por e-mail ainda não homologado.' },
   { id: 'eventos', title: 'Cultos e eventos', status: 'development', detail: 'Inscrições, ingressos e recebimentos ainda não liberados para operação real.' },
-  { id: 'celulas', title: 'Células', status: 'pilot', detail: 'Visão geral, redes em vários níveis com responsável informativo, transferências com aceite, cadastro, categorias, participantes, visitas, encontros com chamada e relatórios por unidade. Nomes compartilhados pelo ministério; sem concessão automática de acesso, mensagens ou consolidação entre unidades.' },
+  { id: 'celulas', title: 'Células', status: 'ready', detail: 'Escopo interno por unidade: cadastro, redes e hierarquia, participantes, visitantes, indicações, transferências com aceite, estudos em texto/links, encontros com chamada, indicadores por ramo, supervisão explícita e avisos internos. E-mail/WhatsApp, arquivos hospedados e consolidação entre unidades não estão incluídos nesta liberação.' },
   { id: 'escalas', title: 'Escalas', status: 'development', detail: 'Publicação e confirmações aguardam migração.' },
   { id: 'louvor', title: 'Louvor', status: 'development', detail: 'Busca musical, cifras e integrações licenciadas ainda não disponíveis.' },
   { id: 'comunicacao', title: 'Comunicação entre membros', status: 'development', detail: 'Chat e notificações dos membros aguardam migração. O atendimento à Vinha é separado.' },
@@ -22,7 +22,7 @@ export const releaseCatalog = [
 ] as const;
 
 export function pilotViewAllowed(id: string) {
-  return releaseCatalog.some(item => item.id === id && item.status === 'pilot');
+  return releaseCatalog.some(item => item.id === id && (item.status === 'pilot' || item.status === 'ready'));
 }
 
 export const unavailableMessage = 'Este recurso está em desenvolvimento e não está liberado para operações reais. Consulte a equipe Vinha.';
