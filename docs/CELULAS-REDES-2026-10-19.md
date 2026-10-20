@@ -10,6 +10,8 @@ Redes e grupos têm paginação independente por chave, até cem registros. As o
 
 ## Limites explícitos
 
+Atualização posterior: hierarquia em vários níveis e transferências na mesma unidade foram implementadas em `CELULAS-HIERARQUIA-TRANSFERENCIAS-2026-10-19.md`. O parágrafo abaixo registra os limites da primeira entrega, não o estado atualizado desses dois recursos.
+
 Supervisão nesta entrega significa indicar o responsável pela rede, não conceder poderes. A rede é plana e limitada à unidade; não há níveis pai/filho, acesso herdado, supervisão por usuário/conta, múltiplos supervisores, consolidação entre unidades, transferência de participantes ou alteração de chamada. Indicadores e relatórios existentes não foram reclassificados por rede. Esses fluxos continuam pendentes, assim como indicações, materiais e referências de membros nos outros módulos.
 
 ## Segurança e consistência
