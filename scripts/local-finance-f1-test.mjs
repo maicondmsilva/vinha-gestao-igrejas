@@ -1,0 +1,10 @@
+import {spawnSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+if(process.argv[2]!=='--local-synthetic')throw Error('Local synthetic opt-in required.');
+const migration=readFileSync('supabase/migrations/20261020204514_finance_f1_operations.sql','utf8');
+const test=readFileSync('supabase/tests/finance_f1.sql','utf8');
+const exists=spawnSync('docker',['exec','supabase_db_vinha','psql','-X','-At','-U','postgres','-d','postgres','-c',"select to_regclass('private.finance_entries') is not null"],{encoding:'utf8'});
+assert.equal(exists.status,0);
+const result=spawnSync('docker',['exec','-i','supabase_db_vinha','psql','-X','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{input:'begin;\n'+(exists.stdout.trim()==='t'?'':migration)+'\n'+test.replace(/^begin;/,'').replace(/rollback;\s*$/,'')+'\nrollback;',encoding:'utf8',timeout:60000,maxBuffer:4*1024*1024});
+console.log(result.stdout);console.error(result.stderr);assert.equal(result.status,0);assert.doesNotMatch(result.stdout,/not ok \d/);console.log('F1 SQL transaction rolled back; local customer fixtures preserved.');
