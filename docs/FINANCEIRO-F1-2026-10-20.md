@@ -26,6 +26,7 @@ Filtros de igreja, período, descrição/pessoa, tipo, situação, tipo de data,
 
 - Conta confirmada, papéis owner/admin/finance e permissão financeira de gestão da unidade, módulo, estado comercial e operacional revalidados no banco; organização vem da sessão na API.
 - Tabelas internas privadas com RLS e sem acesso direto de clientes ou service_role. Escrita somente por comandos validados, sem SQL do navegador. Arquivos revalidam acesso atual.
+- Revisão pós-implantação: índice na ordem exata da FK de unidade e políticas restritivas `false` explícitas nas três tabelas privadas. Não concede leitura/escrita, não altera lançamentos nem desativa RLS; o proprietário técnico das funções continua executando os comandos já validados.
 - Valores em centavos inteiros; totais textuais/BigInt, sem arredondamento por ponto flutuante.
 - Comando com UUID preservado antes do envio em sessionStorage segregado por usuário/ministério. Reexecução de lançamento/estorno não duplica. Resultado incerto bloqueia novos pedidos e oferece reenvio do mesmo comando. Fechar a aba pode perder sessionStorage: verificar histórico antes de recriar. O armazenamento local não é um backup nem recuperação entre dispositivos.
 - Edição cadastral usa versão exata. Os comandos do F1 serializam por ministério; leitura segura mantém consistência do catálogo/saldo/fluxo contra escritas do F1. Essa serialização privilegia correção e poderá exigir ajuste medido de desempenho para ministérios grandes.
