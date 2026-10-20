@@ -44,7 +44,10 @@
     "app/api/member-choices/route.ts",
     "app/MinistryLanguage.tsx",
     "app/api/ministry-language/route.ts",
-    "app/api/cell-operations/route.ts"
+    "app/api/cell-operations/route.ts",
+    "app/FinanceModule.tsx",
+    "app/api/finance-f1/route.ts",
+    "app/api/finance-f1/files/route.ts"
   ],
   "exclude": [
     "node_modules"
