@@ -1,4 +1,5 @@
 export const languageDefaults={
+ 'celulas.indicacoes':'Indicações','celulas.materiais':'Materiais e estudos','celulas.consolidado':'Indicadores por rede','celulas.pendencias':'Pendências e avisos','celulas.supervisao':'Supervisão e acesso',
  'celulas.redes':'Redes e supervisão','celulas.supervisor':'Responsável pela rede',
  'celulas.visitantes':'Visitantes',
  inicio:'Visão geral',pessoas:'Pessoas',familias:'Famílias e termos',aplicativo:'Aplicativo do membro',kids:'Área Kids',igrejas:'Igrejas e unidades',usuarios:'Usuários e permissões',eventos:'Cultos e eventos',celulas:'Células',escalas:'Escalas',louvor:'Louvor',comunicacao:'Comunicação',transmissoes:'Transmissões',financeiro:'Financeiro',relatorios:'Relatórios',configuracoes:'Configurações',
@@ -20,6 +21,6 @@ export function languageState(value:unknown){
  if(!v||typeof v.organizationId!=='string'||!/^[a-f0-9-]{36}$/i.test(v.organizationId)||!Number.isSafeInteger(v.version)||v.version<0||typeof v.canManage!=='boolean')throw Error('invalid_language');
  return {organizationId:v.organizationId,labels:languageLabels(v.labels),version:v.version,canManage:v.canManage};
 }
-export const cellSections=['geral','redes','cadastro','encontros','participantes','visitantes','relatorios','categorias'] as const;
+export const cellSections=['geral','redes','cadastro','encontros','participantes','visitantes','indicacoes','materiais','consolidado','pendencias','supervisao','relatorios','categorias'] as const;
 export type CellSection=typeof cellSections[number];
 export function cellSection(value:string|null):CellSection{return cellSections.includes(value as CellSection)?value as CellSection:'geral'}

@@ -35,7 +35,7 @@ export default function ConfigurationCenter({church}:{church:Church;setChurch:(c
   <section className="config-panel"><h2>Disponibilidade operacional</h2>
    <p>Este catálogo é independente dos módulos contratados e não substitui as permissões da sua conta.</p>
    <ul>{releaseCatalog.map(feature=><li key={feature.id} style={{marginBottom:16}}>
-    <strong>{feature.title} — {feature.status==='pilot'?'núcleo em validação':'em desenvolvimento'}</strong>
+    <strong>{feature.title} — {feature.status==='ready'?'escopo interno disponível':feature.status==='pilot'?'núcleo em validação':'em desenvolvimento'}</strong>
     <p>{feature.detail}</p>
    </li>)}</ul>
   </section>

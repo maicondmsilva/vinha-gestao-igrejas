@@ -17,7 +17,8 @@ test('catalog fails closed for unknown views and distinguishes pilot from comple
   assert.equal(new Set(releaseCatalog.map(x => x.id)).size, releaseCatalog.length);
   for (const id of ['inicio', 'pessoas', 'igrejas', 'configuracoes','usuarios']) assert.equal(pilotViewAllowed(id), true);
   for (const id of ['financeiro', 'kids', 'eventos', 'louvor', 'missing', '']) assert.equal(pilotViewAllowed(id), false);
-  assert.equal(releaseCatalog.some(x => x.status === 'ready'), false);
+  assert.deepEqual(releaseCatalog.filter(x => x.status === 'ready').map(x=>x.id), ['celulas']);
+  assert.equal(pilotViewAllowed('celulas'),true);
 });
 
 test('containment never executes legacy code, parses a body or requires credentials', async () => {
