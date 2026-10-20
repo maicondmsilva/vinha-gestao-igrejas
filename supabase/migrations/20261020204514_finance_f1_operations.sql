@@ -91,7 +91,7 @@ begin
   select coalesce(jsonb_agg(to_jsonb(c) order by c.kind,c.name),'[]') into catalogs from private.finance_catalog c where organization_id=p_org and (unit_id=any(p_units) or unit_id is null);
   -- A single SQL statement snapshot for all rows, summaries and charts. Cash uses payment dates; forecasts use due dates.
   with filtered as (
-   select e.*,c.name category_name,s.name center_name,a.name account_name,d.name destination_name,un.name unit_name from private.finance_entries e
+   select e.*,c.name || case when c.unit_id is not null then ' · '||un.name else '' end category_name,s.name || case when s.unit_id is not null then ' · '||un.name else '' end center_name,a.name account_name,d.name destination_name,un.name unit_name from private.finance_entries e
    join public.organization_units un on un.id=e.unit_id
    join private.finance_catalog a on a.id=e.account_id
    left join private.finance_catalog c on c.id=e.category_id left join private.finance_catalog s on s.id=e.center_id left join private.finance_catalog d on d.id=e.destination_id
@@ -106,26 +106,26 @@ begin
   ), visible as (
    select * from filtered where (case when p_data->>'dateBy'='competence' then competence_date when p_data->>'dateBy'='paid' then paid_date else due_date end) between v_from and v_to
   ), flow as (
-   select kind,paid_date as day,amount_cents::numeric as cents,category_name,center_name from filtered where status='posted' and kind in('income','expense')
-   union all select kind,reversed_date,-amount_cents::numeric,category_name,center_name from filtered where reversal_id is not null and kind in('income','expense')
+   select kind,paid_date as day,amount_cents::numeric as cents,category_id,center_id,category_name,center_name from filtered where status='posted' and kind in('income','expense')
+   union all select kind,reversed_date,-amount_cents::numeric,category_id,center_id,category_name,center_name from filtered where reversal_id is not null and kind in('income','expense')
   ), monthly_flow as (
    select to_char(day,'YYYY-MM') as month,case when kind='income' then cents else 0 end income,case when kind='expense' then cents else 0 end expense,0::numeric receivable,0::numeric payable from flow where day between v_from and v_to
    union all select to_char(due_date,'YYYY-MM'),0,0,case when kind='income' then amount_cents else 0 end,case when kind='expense' then amount_cents else 0 end from filtered where status='pending' and kind in('income','expense') and due_date between v_from and v_to
   ) select
    (select count(*) from visible),
-   coalesce((select jsonb_agg(to_jsonb(x) - 'fingerprint' - 'created_by' - 'amount_cents' || jsonb_build_object('amountCents',x.amount_cents::text) order by x.due_date desc,x.id desc) from (select * from visible order by due_date desc,id desc limit 30 offset (page-1)*30)x),'[]'),
+   coalesce((select jsonb_agg(to_jsonb(x) - 'fingerprint' - 'void_fingerprint' - 'void_request' - 'created_by' - 'amount_cents' || jsonb_build_object('amountCents',x.amount_cents::text) order by x.due_date desc,x.id desc) from (select * from visible order by due_date desc,id desc limit 30 offset (page-1)*30)x),'[]'),
    jsonb_build_object('income',coalesce((select sum(cents) from flow where kind='income' and day between v_from and v_to),0)::text,'expense',coalesce((select sum(cents) from flow where kind='expense' and day between v_from and v_to),0)::text,
     'receivable',coalesce((select sum(amount_cents) from filtered where status='pending' and kind='income' and due_date between v_from and v_to),0)::text,
     'payable',coalesce((select sum(amount_cents) from filtered where status='pending' and kind='expense' and due_date between v_from and v_to),0)::text,
     'overdue',coalesce((select sum(amount_cents) from filtered where status='pending' and due_date<current_date and due_date between v_from and v_to),0)::text),
    coalesce((select jsonb_agg(x order by x.month) from (select month,sum(income)::text income,sum(expense)::text expense,sum(receivable)::text receivable,sum(payable)::text payable from monthly_flow group by month)x),'[]'),
-   coalesce((select jsonb_agg(x order by x.name,x.kind) from(select coalesce(category_name,'Sem categoria') name,kind,sum(cents)::text amount from flow where day between v_from and v_to group by category_name,kind)x),'[]'),
-   coalesce((select jsonb_agg(x order by x.name,x.kind) from(select coalesce(center_name,'Sem centro de custo') name,kind,sum(cents)::text amount from flow where day between v_from and v_to group by center_name,kind)x),'[]')
+   coalesce((select jsonb_agg(x order by x.name,x.kind) from(select category_id as id,coalesce(category_name,'Sem categoria') name,kind,sum(cents)::text amount from flow where day between v_from and v_to group by category_id,category_name,kind)x),'[]'),
+   coalesce((select jsonb_agg(x order by x.name,x.kind) from(select center_id as id,coalesce(center_name,'Sem centro de custo') name,kind,sum(cents)::text amount from flow where day between v_from and v_to group by center_id,center_name,kind)x),'[]')
    into total_count,records,totals,chart,category_stats,center_stats;
   select coalesce(jsonb_agg(jsonb_build_object('id',c.id,'name',c.name,'unitId',c.unit_id,'active',c.active,'balanceCents',coalesce(b.balance,0)::text) order by c.name),'[]') into accounts
   from private.finance_catalog c join private.finance_account_links m on m.catalog_id=c.id and m.unit_id=c.unit_id
   left join lateral(select sum(l.delta_cents) balance from public.church_ledger_lines l join public.church_ledger_journals j on j.id=l.journal_id where l.account_id=m.ledger_id and j.effective_date<=least(v_to,current_date))b on true
-  where c.organization_id=p_org and c.unit_id=any(p_units) and c.kind='account';
+  where c.organization_id=p_org and c.unit_id=any(p_units) and c.kind='account' and (nullif(p_data->>'account','') is null or c.id=(p_data->>'account')::uuid);
   return jsonb_build_object('catalog',catalogs,'entries',records,'summary',totals,'monthly',chart,'categories',category_stats,'centers',center_stats,'accounts',accounts,'total',total_count,'page',page,'units',p_units,'from',v_from,'to',v_to,'currency','BRL');
  end if;
  if cardinality(p_units)<>1 then raise exception 'select_one_unit' using errcode='22023';end if;
