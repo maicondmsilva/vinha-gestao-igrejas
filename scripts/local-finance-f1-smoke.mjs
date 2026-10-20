@@ -49,5 +49,21 @@ const unauth=await fetch(origin+'/api/finance-f1?'+new URLSearchParams(query));a
 const campus=await call({name:'Campus fictício F1 HTTP',type:'campus',parentUnitId:unitId},{},201,'/api/units');
 const consolidated=await call(null,{...query,units:unitId+','+campus.id});assert.equal(consolidated.summary.expense,'2345');assert.equal(consolidated.units.length,2);
 assert.equal((await call(null,{...query,units:campus.id})).total,0);
+// Separate finance role, not an owner: explicit management of just one unit.
+const financeEmail='f1-finance-'+randomUUID()+'@example.invalid',financePassword=randomBytes(32).toString('base64url');
+const financeUser=await admin.auth.admin.createUser({email:financeEmail,password:financePassword,email_confirm:true});assert.equal(financeUser.error,null);
+const membership=await client.from('organization_memberships').insert({organization_id:boot.data,user_id:financeUser.data.user.id,role:'finance',status:'active',default_unit_id:unitId}).select('id').single();assert.equal(membership.error,null);
+const grant=await client.from('membership_unit_access').insert({organization_id:boot.data,membership_id:membership.data.id,unit_id:unitId,access_level:'manage',include_children:false}).select('id').single();assert.equal(grant.error,null);
+const financeCookies=new Map(),financeClient=createServerClient(config.API_URL,config.PUBLISHABLE_KEY||config.ANON_KEY,{cookies:{getAll:()=>[...financeCookies].map(([name,value])=>({name,value})),setAll:values=>{for(const v of values)financeCookies.set(v.name,v.value)}}});
+assert.equal((await financeClient.auth.signInWithPassword({email:financeEmail,password:financePassword})).error,null);
+const financeHeaders=()=>({origin,cookie:[...financeCookies].map(([k,v])=>k+'='+encodeURIComponent(v)).join('; ')});
+const financeQueryUrl=origin+'/api/finance-f1?'+new URLSearchParams({tenant:slug,...query});
+assert.equal((await fetch(financeQueryUrl,{headers:financeHeaders()})).status,200);
+assert.equal((await fetch(financeQueryUrl.replace(unitId,campus.id),{headers:financeHeaders()})).status,403);
+const sharedAttempt=await fetch(origin+'/api/finance-f1?tenant='+slug,{method:'POST',headers:{...financeHeaders(),'content-type':'application/json'},body:JSON.stringify(cat(randomUUID(),'center','Compartilhamento negado'))});assert.equal(sharedAttempt.status,403);
+assert.equal((await client.from('membership_unit_access').update({access_level:'read'}).eq('id',grant.data.id)).error,null);
+assert.equal((await fetch(financeQueryUrl,{headers:financeHeaders()})).status,403,'revogação de gestão interrompe consulta');
+assert.equal((await fetch(filesUrl+'&file='+uploaded.name,{headers:financeHeaders()})).status,404,'revogação interrompe download');
+await financeClient.auth.signOut();
 await client.auth.signOut();
 console.log('F1 HTTP: cadastros, reenvio, despesas, fornecedor, previsões, gráficos, anexos privados, estorno, arquivo e contenção do livro antigo aprovados. Fixtures fictícias preservadas somente no Docker local.');

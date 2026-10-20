@@ -10,7 +10,7 @@ async function run(request:Request,write:boolean){
  try{
   const client=access.client as unknown as OperationsClient;
   if(!write&&new URL(request.url).searchParams.get('action')==='bootstrap'){
-   const units=[];for(const u of access.membership.units){const check=await client.rpc('finance_f1',{p_org:access.membership.organization_id,p_units:[u.id],p_action:'choices',p_data:{search:'__'}});if(!check.error)units.push(u)}
+   const units=[];for(const u of access.membership.units){const check=await client.rpc('finance_f1',{p_org:access.membership.organization_id,p_units:[u.id],p_action:'choices',p_data:{search:'__'}});if(check.error&&check.error.code!=='42501')return failure(check.error.code);if(!check.error)units.push(u)}
    return json({units,scope:access.userId+':'+access.membership.organization_id,canShare:['owner','admin'].includes(access.membership.role)});
   }
   let action:string,units:string[],data:unknown;
