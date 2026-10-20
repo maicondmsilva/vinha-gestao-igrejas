@@ -10,10 +10,11 @@ export function CellStudyFiles({unitId,materialId,manager}:{unitId:string;materi
  return <section aria-label="Arquivos privados do estudo"><h3>Arquivos privados</h3><p>PDF, PNG ou JPEG, até 4 MB. Downloads verificam o acesso atual; não há link público. Lista dos 100 arquivos mais recentes.</p>{error&&<p role="alert">{error}</p>}<ul>{items.map(f=><li key={f.name}><a href={endpoint+'&file='+encodeURIComponent(f.name)} download>{f.name} · {Math.ceil(f.size/1024)} KB</a></li>)}</ul>{manager&&<label>Adicionar arquivo ao estudo<input ref={input} disabled={busy} type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={e=>{const f=e.target.files?.[0];if(f)void upload(f)}}/></label>}{busy&&<p role="status">Enviando arquivo privado…</p>}</section>
 }
 type Totals=Record<'groups'|'participants'|'meetings'|'expected'|'present',number>;
-type Consolidated={units:{unitId:string;name:string;summary:Totals}[];summary:Totals};
+type Consolidated={units:{unitId:string;name:string;summary:Totals}[];summary:Totals;from:string;to:string};
 type DeliveryPrefs={version:number;emailEnabled:boolean;whatsappEnabled:boolean;email:string;verifiedPhone:boolean;channels:{email:boolean;whatsapp:boolean}};
 export function CellMultiUnitReport({unitId,from,to}:{unitId:string;from:string;to:string}){
- const [units,setUnits]=useState<{id:string;name:string}[]>([]),[selected,setSelected]=useState([unitId]),[data,setData]=useState<{units:{unitId:string;name:string;summary:Totals}[];summary:Totals}|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const [units,setUnits]=useState<{id:string;name:string}[]>([]),[selected,setSelected]=useState([unitId]),[result,setData]=useState<Consolidated|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const data=result&&result.from===from&&result.to===to&&result.units.length===selected.length&&result.units.every(u=>selected.includes(u.unitId))?result:null;
  useEffect(()=>{const c=new AbortController();fetch(url('/api/cell-consolidated'),{signal:c.signal,cache:'no-store'}).then(r=>checked<{units:{id:string;name:string}[]}>(r)).then(d=>setUnits(d.units)).catch(e=>{if(!c.signal.aborted)setError(e.message)});return()=>c.abort()},[]);
  useEffect(()=>setData(null),[from,to,selected]);
  async function load(){setBusy(true);setError('');setData(null);try{setData(await checked<Consolidated>(await fetch(url('/api/cell-consolidated'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({units:selected,from,to})})))}catch(e){setError(e instanceof Error?e.message:'Consulta indisponível.')}finally{setBusy(false)}}
