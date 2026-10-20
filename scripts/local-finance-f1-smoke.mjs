@@ -53,7 +53,7 @@ assert.equal((await call(null,{...query,units:campus.id})).total,0);
 const financeEmail='f1-finance-'+randomUUID()+'@example.invalid',financePassword=randomBytes(32).toString('base64url');
 const financeUser=await admin.auth.admin.createUser({email:financeEmail,password:financePassword,email_confirm:true});assert.equal(financeUser.error,null);
 const membership=await client.from('organization_memberships').insert({organization_id:boot.data,user_id:financeUser.data.user.id,role:'finance',status:'active',default_unit_id:unitId}).select('id').single();assert.equal(membership.error,null);
-const grant=await client.from('membership_unit_access').insert({organization_id:boot.data,membership_id:membership.data.id,unit_id:unitId,access_level:'manage',include_children:false}).select('id').single();assert.equal(grant.error,null);
+const grant=await client.from('membership_unit_access').insert({organization_id:boot.data,membership_id:membership.data.id,unit_id:unitId,access_level:'manage',include_children:false}).select('membership_id,unit_id').single();assert.equal(grant.error,null);
 const financeCookies=new Map(),financeClient=createServerClient(config.API_URL,config.PUBLISHABLE_KEY||config.ANON_KEY,{cookies:{getAll:()=>[...financeCookies].map(([name,value])=>({name,value})),setAll:values=>{for(const v of values)financeCookies.set(v.name,v.value)}}});
 assert.equal((await financeClient.auth.signInWithPassword({email:financeEmail,password:financePassword})).error,null);
 const financeHeaders=()=>({origin,cookie:[...financeCookies].map(([k,v])=>k+'='+encodeURIComponent(v)).join('; ')});
@@ -61,7 +61,7 @@ const financeQueryUrl=origin+'/api/finance-f1?'+new URLSearchParams({tenant:slug
 assert.equal((await fetch(financeQueryUrl,{headers:financeHeaders()})).status,200);
 assert.equal((await fetch(financeQueryUrl.replace(unitId,campus.id),{headers:financeHeaders()})).status,403);
 const sharedAttempt=await fetch(origin+'/api/finance-f1?tenant='+slug,{method:'POST',headers:{...financeHeaders(),'content-type':'application/json'},body:JSON.stringify(cat(randomUUID(),'center','Compartilhamento negado'))});assert.equal(sharedAttempt.status,403);
-assert.equal((await client.from('membership_unit_access').update({access_level:'read'}).eq('id',grant.data.id)).error,null);
+assert.equal((await client.from('membership_unit_access').update({access_level:'read'}).eq('membership_id',grant.data.membership_id).eq('unit_id',grant.data.unit_id)).error,null);
 assert.equal((await fetch(financeQueryUrl,{headers:financeHeaders()})).status,403,'revogação de gestão interrompe consulta');
 assert.equal((await fetch(filesUrl+'&file='+uploaded.name,{headers:financeHeaders()})).status,404,'revogação interrompe download');
 await financeClient.auth.signOut();
