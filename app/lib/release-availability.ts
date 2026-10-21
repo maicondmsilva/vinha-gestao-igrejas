@@ -17,7 +17,7 @@ export const releaseCatalog = [
   { id: 'louvor', title: 'Louvor', status: 'development', detail: 'Busca musical, cifras e integrações licenciadas ainda não disponíveis.' },
   { id: 'comunicacao', title: 'Comunicação entre membros', status: 'development', detail: 'Chat e notificações dos membros aguardam migração. O atendimento à Vinha é separado.' },
   { id: 'transmissoes', title: 'Transmissões', status: 'development', detail: 'Agendamento e distribuição ainda não disponíveis para operação real.' },
-  { id: 'financeiro', title: 'Financeiro da igreja', status: 'pilot', detail: 'F1: dashboard por igreja, contas, categorias, centros de custo, fornecedores e lançamentos manuais. Provedores, cobranças, conciliação e rotinas avançadas continuam indisponíveis; a assinatura da Vinha é separada.' },
+  { id: 'financeiro', title: 'Financeiro da igreja', status: 'pilot', detail: 'F1/F2: dashboard por igreja, contas, classificação em categoria e subcategoria, contas a pagar/receber, baixas manuais parciais, taxas, séries e histórico protegido. Provedores, cobranças, conciliação e rotinas avançadas continuam indisponíveis; a assinatura da Vinha é separada.' },
   { id: 'relatorios', title: 'Relatórios cadastrais', status: 'pilot', detail: 'Primeira entrega: contagens cadastrais por unidade e situação. Financeiro, exportações nominais e consolidação continuam em desenvolvimento.' },
 ] as const;
 

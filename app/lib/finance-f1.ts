@@ -1,5 +1,5 @@
 import {uuidPattern} from './private-files.ts';
-export const financeSections=[['geral','Visão geral'],['lancamentos','Lançamentos'],['contas','Contas e saldos'],['categorias','Categorias e subcategorias'],['centros','Centros de custo'],['fornecedores','Fornecedores']] as const;
+export const financeSections=[['geral','Visão geral'],['lancamentos','Lançamentos'],['receber','Contas a receber'],['pagar','Contas a pagar'],['contas','Contas e saldos'],['categorias','Categorias e subcategorias'],['centros','Centros de custo'],['fornecedores','Fornecedores']] as const;
 export type FinanceSection=typeof financeSections[number][0];
 export function financeSection(value:string|null):FinanceSection{return financeSections.find(([id])=>id===value)?.[0]||'geral'}
 export function financeMoney(cents:string|bigint){const n=BigInt(cents),abs=(n<BigInt(0)?-n:n).toString().padStart(3,'0');return `${n<BigInt(0)?'− ':''}R$ ${abs.slice(0,-2).replace(/\B(?=(\d{3})+(?!\d))/g,'.')},${abs.slice(-2)}`}
@@ -18,18 +18,18 @@ export function financeCommand(input:unknown){
   if(kind!=='category'&&(d.parent||d.direction)||kind==='account'&&d.shared)throw Error('Escopo inválido.');
   if(!d.details||typeof d.details!=='object'||Array.isArray(d.details))throw Error('Detalhes inválidos.');const detail=d.details as Record<string,unknown>;
   exact(detail,['document','email','phone','bank','number','description']);for(const value of Object.values(detail))text(value,200);
-  return{action:'catalog',unitId,data:{id:id(d.id),kind,name:text(d.name,120,2),direction,parent:id(d.parent,true),shared:d.shared,version:d.version,active:d.active,details:detail}};
+  return{action:'catalog' as const,unitId,data:{id:id(d.id),kind,name:text(d.name,120,2),direction,parent:id(d.parent,true),shared:d.shared,version:d.version,active:d.active,details:detail}};
  }
  if(raw.action==='entry'){
   exact(d,['id','kind','amount','description','account','destination','category','center','supplier','person','party','method','notes','competence','due','paid']);
   if(!['income','expense','transfer','opening'].includes(String(d.kind))||!['cash','pix','card','boleto','bank','other'].includes(String(d.method)))throw Error('Tipo inválido.');
   const data={id:id(d.id),kind:String(d.kind),amountCents:financeCents(d.amount),description:text(d.description,300,2),account:id(d.account),destination:id(d.destination,true),category:id(d.category,true),center:id(d.center,true),supplier:id(d.supplier,true),person:id(d.person,true),party:text(d.party??'',160),method:String(d.method),notes:text(d.notes??'',2000),competence:financeDate(d.competence),due:financeDate(d.due),paid:d.paid?financeDate(d.paid):''};
   if(data.person&&data.supplier||['income','expense'].includes(data.kind)&&!data.category||data.kind==='transfer'&&(!data.destination||data.account===data.destination)||['opening','transfer'].includes(data.kind)&&!data.paid)throw Error('Revise a classificação e as contas.');
-  return{action:'entry',unitId,data};
+  return{action:'entry' as const,unitId,data};
  }
  if(raw.action==='void'){
   exact(d,['id','version','reason','date','requestId']);if(!Number.isInteger(d.version)||Number(d.version)<1)throw Error('Versão inválida.');
-  return{action:'void',unitId,data:{id:id(d.id),version:d.version,reason:text(d.reason,300,2),date:financeDate(d.date),requestId:id(d.requestId)}};
+  return{action:'void' as const,unitId,data:{id:id(d.id),version:d.version,reason:text(d.reason,300,2),date:financeDate(d.date),requestId:id(d.requestId)}};
  }
  throw Error('Ação inválida.');
 }
@@ -40,6 +40,6 @@ export function financeQuery(request:Request){
  const from=financeDate(p.get('from')),to=financeDate(p.get('to'));if(to<from||(Date.parse(to)-Date.parse(from))/86400000>366)throw Error('Selecione um período de até 366 dias.');
  const page=Number(p.get('page')||1);if(!Number.isInteger(page)||page<1||page>10000)throw Error('Página inválida.');
  const kind=p.get('kind')||'',status=p.get('status')||'',dateBy=p.get('dateBy')||'due';
- if(kind&&!['income','expense','transfer','opening'].includes(kind)||status&&!['pending','posted','cancelled','reversed'].includes(status)||!['due','paid','competence'].includes(dateBy))throw Error('Filtro inválido.');
- return{units,action:'snapshot',data:{from,to,page,kind,status,dateBy,account:id(p.get('account'),true),category:id(p.get('category'),true),center:id(p.get('center'),true),search:text(p.get('search')||'',80)}};
+ const scope=p.get('scope')||'';if(scope&&!['titles'].includes(scope)||kind&&!['income','expense','transfer','opening'].includes(kind)||status&&!['pending','posted','settled','cancelled','reversed'].includes(status)||!['due','paid','competence'].includes(dateBy))throw Error('Filtro inválido.');
+ return{units,action:'snapshot',data:{from,to,page,kind,status,dateBy,scope,subcategory:id(p.get('subcategory'),true),account:id(p.get('account'),true),category:id(p.get('category'),true),center:id(p.get('center'),true),search:text(p.get('search')||'',80)}};
 }
