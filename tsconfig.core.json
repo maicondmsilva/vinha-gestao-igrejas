@@ -46,6 +46,8 @@
     "app/api/ministry-language/route.ts",
     "app/api/cell-operations/route.ts",
     "app/FinanceModule.tsx",
+    "app/FinanceReconciliation.tsx",
+    "app/api/finance-f5/route.ts",
     "app/FinanceReceivables.tsx",
     "app/FinanceClassification.tsx",
     "app/FinanceHistory.tsx",

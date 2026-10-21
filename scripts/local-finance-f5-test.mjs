@@ -1,0 +1,6 @@
+import {spawnSync} from 'node:child_process';import{readFileSync}from'node:fs';import assert from'node:assert/strict';
+if(process.argv[2]!=='--local-synthetic')throw Error('Local isolated opt-in required.');
+let ddl=readFileSync('supabase/migrations/20261021213202_finance_f5_reconciliation.sql','utf8').replace(/^begin;/,'').replace(/commit;\s*$/,'');
+const exists=spawnSync('docker',['exec','supabase_db_vinha','psql','-X','-U','postgres','-d','postgres','-At','-c',"select to_regclass('private.finance_bank_imports') is not null"],{encoding:'utf8'});assert.equal(exists.status,0,exists.stderr);if(exists.stdout.trim()==='t')ddl=ddl.match(/create function[\s\S]*?\$\$;/g).map(s=>s.replace('create function','create or replace function')).join('\n');
+const test=readFileSync('supabase/tests/finance_f5.sql','utf8').replace(/^begin;/,'');
+const r=spawnSync('docker',['exec','-i','supabase_db_vinha','psql','-X','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{input:'begin;\n'+ddl+'\n'+test,encoding:'utf8',timeout:90000,maxBuffer:6*1024*1024});console.log(r.stdout.split('\n').filter(x=>/^\s*(?:not )?ok \d|^\s*#|^\s*1\.\./.test(x)).join('\n'));console.error(r.stderr);assert.equal(r.status,0);assert.equal(/not ok \d/.test(r.stdout),false);console.log('F5 SQL verificada com dados fictícios e rollback integral.');
