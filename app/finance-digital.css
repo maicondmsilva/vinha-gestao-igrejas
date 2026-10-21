@@ -1,0 +1,2 @@
+.f1-form-grid .f4-active{display:flex;align-items:center;gap:10px;align-self:end;min-height:44px;flex-direction:row}
+.f1-form-grid .f4-active input[type=checkbox]{width:18px;height:18px;min-height:18px;flex:0 0 18px;margin:0;accent-color:#245c48}
