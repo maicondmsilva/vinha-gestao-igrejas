@@ -1,0 +1,20 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import ts from 'typescript';
+import {financeDate} from '../app/lib/finance-f1.ts';
+import {boundedBody} from '../app/lib/private-files.ts';import {receiverId} from '../app/lib/finance-receivers.ts';import {digitalCommand} from '../app/lib/finance-f4.ts';
+const unit='af400000-0000-4000-8000-000000000001';
+function route(config={}){
+ const calls=[],client={rpc:async(name,args)=>{calls.push({name,args});return{data:{ok:true,items:[],purposes:[],receivers:[]},error:config.error||null}}};
+ const auth=async()=>config.denied?{response:Response.json({}, {status:401})}:{access:{userId:'trusted-user',membership:{organization_id:'trusted-org',role:config.role||'owner',units:config.units||[{id:unit}]},client}};
+ const src=ts.transpileModule(readFileSync(new URL('../app/api/finance-digital/route.ts',import.meta.url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/^import .*;\r?\n/gm,'').replaceAll('export const ','const ');
+ const deps={authorizeSupabaseChurch:auth,supabaseAdminClient:()=>client,boundedBody,receiverId,financeDate,digitalCommand,digitalConnection:async()=>config.connection||{org:'trusted-org',beneficiaries:[unit],environment:'sandbox'},digitalSync:async()=>{calls.push({provider:true});return{ok:true}}};
+ return{...new Function(...Object.keys(deps),src+';return{GET,POST}')( ...Object.values(deps)),calls};
+}
+const cmd={unit,action:'sync',data:{receiver:unit,environment:'sandbox',externalId:'123'}};
+const req=d=>new Request('https://local/api/finance-digital',{method:'POST',body:JSON.stringify(d)});
+test('F4 sessão, papel e unidade antecedem consulta ao provedor',async()=>{for(const [c,status]of [[{denied:true},401],[{role:'member'},403],[{units:[]},403]]){const r=route(c);assert.equal((await r.POST(req(cmd))).status,status);assert.equal(r.calls.length,0)}});
+test('F4 usa ministério da sessão e revalida banco antes da consulta externa',async()=>{const r=route(),res=await r.POST(req(cmd));assert.equal(res.status,200);assert.equal(r.calls[0].name,'finance_digital');assert.equal(r.calls[0].args.p_org,'trusted-org');assert.equal(r.calls[0].args.p_action,'list');assert.equal(r.calls[1].provider,true);assert.match(res.headers.get('cache-control'),/no-store/)});
+test('F4 conexão fora do ministério ou ambiente nunca é consultada',async()=>{for(const connection of [{org:'other',beneficiaries:[unit],environment:'sandbox'},{org:'trusted-org',beneficiaries:[],environment:'sandbox'},{org:'trusted-org',beneficiaries:[unit],environment:'production'}]){const r=route({connection});assert.equal((await r.POST(req(cmd))).status,403);assert.equal(r.calls.filter(x=>x.provider).length,0)}});
+test('F4 bloqueio do banco interrompe processamento e não expõe erro interno',async()=>{const r=route({error:{code:'42501',message:'internal-secret'}}),res=await r.POST(req(cmd));assert.equal(res.status,403);assert.doesNotMatch(JSON.stringify(await res.json()),/internal-secret/);assert.equal(r.calls.length,1)});
+test('F4 prova e organização extras são recusadas antes do banco',async()=>{for(const d of [{...cmd,org:unit},{...cmd,data:{...cmd.data,gross:'1000'}},{...cmd,data:{...cmd.data,snapshot:{}}}]){const r=route();assert.equal((await r.POST(req(d))).status,400);assert.equal(r.calls.length,0)}});
+test('F4 GET recusa filtros repetidos ou escopo vazio',async()=>{for(const q of ['?unit='+unit+'&unit='+unit,'?unit='+unit+'&org='+unit,'']){const r=route();assert.equal((await r.GET(new Request('https://local/'+q))).status,400);assert.equal(r.calls.length,0)}});
+test('F4 webhook busca estado atual e nunca aplica diretamente o corpo',()=>{const src=readFileSync(new URL('../app/api/finance-digital/webhook/[receiver]/route.ts',import.meta.url),'utf8');assert.match(src,/verifyDigitalMercadoSignature/);assert.match(src,/await digitalSync\(server,receiver,c,id\)/);assert.doesNotMatch(src,/p_snapshot:.*d|console\./)});

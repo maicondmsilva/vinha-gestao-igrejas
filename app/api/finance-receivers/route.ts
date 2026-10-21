@@ -26,7 +26,15 @@ export async function POST(r:Request){
  try{
   if(c.action==='key'){
    if(!receiverVaultConfigured())return json({error:'O cofre de contas recebedoras ainda não foi configurado pela equipe Vinha.'},503);
-   const credential=String(c.data.credential),identity=await asaasReceiverIdentity(credential,c.environment),server=supabaseAdminClient();
+   const access=await(a.client as unknown as OperationsClient).rpc('finance_receiver_settings',{p_org:org,p_unit:c.unit,p_action:'list',p_data:{}});
+   if(access.error)return failure(access.error.code);
+   if(access.data?.canManage!==true)return failure('42501');
+   const credential=String(c.data.credential),server=supabaseAdminClient();
+   if(c.provider!=='asaas'){
+    const result=await server.rpc('finance_receiver_manual_key',{p_actor:a.userId,p_org:org,p_unit:c.unit,p_data:{provider:c.provider,environment:c.environment,version:c.data.version,sealed:sealReceiver({credential},context)}});
+    return result.error?failure(result.error.code):json({ok:true,pendingValidation:true});
+   }
+   const identity=await asaasReceiverIdentity(credential,c.environment);
    const result=await server.rpc('finance_receiver_server',{p_actor:a.userId,p_org:org,p_unit:c.unit,p_action:'key_complete',p_data:{provider:c.provider,environment:c.environment,version:c.data.version,...identity,sealed:sealReceiver({credential},context)}});return result.error?failure(result.error.code):json({ok:true});
   }
   if(c.action==='connect'){

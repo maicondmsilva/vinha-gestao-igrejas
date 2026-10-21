@@ -16,7 +16,7 @@ export function receiverCommand(v:unknown){
   const units=d.units.map(receiverId),methods=d.methods.map(String);if(new Set(units).size!==units.length||new Set(methods).size!==methods.length||methods.some(m=>!receiverMethods.some(([k])=>k===m)))throw Error('Seleção inválida.');
   data={...data,version:d.version,account:receiverId(d.account),units,methods,holderConfirmed:true};
  }else if(action==='key'){
-  common.push('version','credential');if(provider!=='asaas'||!Number.isSafeInteger(d.version)||Number(d.version)<0||typeof d.credential!=='string'||d.credential.length<20||d.credential.length>2000||/[\s\r\n]/.test(d.credential))throw Error('Informe a chave oficial do Asaas e atualize a configuração.');data={...data,version:d.version,credential:d.credential};
+  common.push('version','credential');if(!Number.isSafeInteger(d.version)||Number(d.version)<0||typeof d.credential!=='string'||d.credential.length<20||d.credential.length>2000||/[\s\r\n]/.test(d.credential))throw Error('Informe a chave oficial do provedor e atualize a configuração.');data={...data,version:d.version,credential:d.credential};
  }else if(['revoke','refresh','connect','open'].includes(action)){
   if(action==='revoke'||action==='refresh'){common.push('version');if(!Number.isSafeInteger(d.version)||Number(d.version)<1)throw Error('Atualize a conexão.');data.version=d.version}
  }else throw Error('Ação inválida.');
