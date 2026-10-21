@@ -8,6 +8,8 @@ insert into public.organization_memberships(organization_id,user_id,role,status,
 select set_config('f4.org','bf400000-0000-4000-8000-000000000001',true);select set_config('f4.unit','cf400000-0000-4000-8000-000000000001',true);
 select ok(not has_function_privilege('authenticated','public.finance_digital_ingest(uuid,jsonb)','execute'),'cliente não pode fabricar prova de pagamento');
 select ok(not has_function_privilege('anon','public.finance_digital(uuid,uuid,text,jsonb)','execute'),'visitante sem acesso financeiro');
+select ok(not has_function_privilege('authenticated','public.finance_digital_connection(uuid)','execute'),'cliente não lê credenciais pela rotina técnica');
+select ok(not has_function_privilege('authenticated','private.digital_post(private.finance_digital_orders,uuid,text,bigint,date)','execute'),'cliente não chama primitiva contábil interna');
 select ok(not has_table_privilege('authenticated','private.finance_digital_receipts','update'),'cliente sem alteração direta');
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"af400000-0000-4000-8000-000000000001","role":"authenticated"}',true);
@@ -71,5 +73,8 @@ select is((select review_reason from private.finance_digital_receipts where exte
 select is((select posted_gross::text from private.finance_digital_receipts where external_id='458'),'0','falha de fechamento não gera lançamento parcial');
 update private.finance_receivers set status='revoked' where id='ff400000-0000-4000-8000-000000000001';
 select throws_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||jsonb_build_object('occurredAt',now()))$$,'42501',null,'revogação interrompe nova ingestão');
+select lives_ok($$select public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'detail',jsonb_build_object('id',(select id from private.finance_digital_receipts where external_id='456')))$$,'histórico permanece consultável após revogação da conexão');
+select is(jsonb_array_length(public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'list',jsonb_build_object('from',(current_date-1)::text,'to',current_date::text))->'items'),3,'período consultado inclui os pedidos corretos');
+select is(jsonb_array_length(public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'list',jsonb_build_object('from',(current_date+1)::text,'to',(current_date+1)::text))->'items'),0,'filtro por período não retorna pedidos de outra data');
 select * from finish();
 rollback;

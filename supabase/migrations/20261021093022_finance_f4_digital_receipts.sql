@@ -137,15 +137,20 @@ declare x private.finance_purposes;r private.finance_receivers;o private.finance
 begin
  perform private.require_confirmed_self_service_email();
  if not private.church_ledger_allowed(p_org,p_unit) then raise exception 'digital_denied' using errcode='42501';end if;
- perform 1 from public.organizations where id=p_org for update;
+ perform 1 from public.organizations where id=p_org for no key update;
  perform 1 from public.organization_units where id=p_unit and organization_id=p_org for update;
  perform private.require_confirmed_self_service_email();
  if not private.church_ledger_allowed(p_org,p_unit) then raise exception 'digital_denied' using errcode='42501';end if;
  if jsonb_typeof(p_data) is distinct from 'object' or octet_length(p_data::text)>16384 then raise exception 'invalid_input' using errcode='22023';end if;
+ if p_action='detail' then
+  if not exists(select 1 from private.finance_digital_receipts rec join private.finance_digital_orders ord on ord.id=rec.order_id where rec.id=(p_data->>'id')::uuid and ord.organization_id=p_org and ord.unit_id=p_unit) then raise exception 'receipt_denied' using errcode='42501';end if;
+  return jsonb_build_object('events',coalesce((select jsonb_agg(to_jsonb(q) order by q.id desc)from(select id::text,actor_id,event,details,created_at from private.finance_digital_events where receipt_id=(p_data->>'id')::uuid order by id desc limit 100)q),'[]'),
+   'entries',coalesce((select jsonb_agg(jsonb_build_object('id',entry_id,'kind',kind))from private.finance_digital_links where receipt_id=(p_data->>'id')::uuid),'[]'));
+ end if;
  if p_action='list' then
   return jsonb_build_object('purposes',coalesce((select jsonb_agg(to_jsonb(p) order by name,id) from private.finance_purposes p where organization_id=p_org and unit_id=p_unit),'[]'),
   'receivers',coalesce((select jsonb_agg(jsonb_build_object('id',c.id,'provider',c.provider,'environment',c.environment,'holder',c.holder,'status',c.status))from private.finance_receivers c where c.organization_id=p_org and p_unit=any(c.beneficiary_units) and c.status='configured'),'[]'),
-  'items',coalesce((select jsonb_agg(to_jsonb(q) order by q.created_at desc,q.id) from(select ord.id,ord.gross::text,ord.environment,ord.party_name,ord.source_reference,ord.created_at,ord.classification->>'name' purpose,ord.classification->>'origin' origin,rec.id receipt_id,rec.snapshot,rec.review_reason,rec.version,rec.posted_gross::text,rec.posted_fee::text,rec.posted_refund::text from private.finance_digital_orders ord left join private.finance_digital_receipts rec on rec.order_id=ord.id where ord.organization_id=p_org and ord.unit_id=p_unit and (nullif(p_data->>'from','') is null or (ord.created_at at time zone 'America/Sao_Paulo')::date>=(p_data->>'from')::date) and (nullif(p_data->>'to','') is null or (ord.created_at at time zone 'America/Sao_Paulo')::date<=(p_data->>'to')::date) and (nullif(p_data->>'before','') is null or ord.created_at<(p_data->>'before')::timestamptz) order by ord.created_at desc,ord.id limit 100)q),'[]'));
+  'items',coalesce((select jsonb_agg(to_jsonb(q) order by q.created_at desc,q.id) from(select ord.id,ord.gross::text,ord.environment,ord.party_name,ord.source_reference,ord.created_at,ord.classification->>'name' purpose,ord.classification->>'origin' origin,rec.id receipt_id,rec.snapshot,rec.review_reason,rec.version,rec.posted_gross::text,rec.posted_fee::text,rec.posted_refund::text from private.finance_digital_orders ord left join private.finance_digital_receipts rec on rec.order_id=ord.id where ord.organization_id=p_org and ord.unit_id=p_unit and (nullif(p_data->>'from','') is null or (ord.created_at at time zone 'America/Sao_Paulo')::date>=(p_data->>'from')::date) and (nullif(p_data->>'to','') is null or (ord.created_at at time zone 'America/Sao_Paulo')::date<=(p_data->>'to')::date) and (nullif(p_data->>'before','') is null or (ord.created_at,ord.id)<(split_part(p_data->>'before','|',1)::timestamptz,split_part(p_data->>'before','|',2)::uuid)) order by ord.created_at desc,ord.id limit 100)q),'[]'));
  end if;
  uid:=(p_data->>'id')::uuid;
  if p_action='purpose' then
@@ -200,7 +205,7 @@ begin
  if not found then raise exception 'receiver_unavailable' using errcode='42501';end if;
  select * into o from private.finance_digital_orders where id=(p_snapshot->>'reference')::uuid and receiver_id=c.id;
  if not found then raise exception 'order_unavailable' using errcode='42501';end if;
- perform 1 from public.organizations where id=o.organization_id for update;
+ perform 1 from public.organizations where id=o.organization_id for no key update;
  perform 1 from public.organization_units where id=o.unit_id and organization_id=o.organization_id for update;
  select * into c from private.finance_receivers where id=p_receiver for share;
  if c.status<>'configured' or not c.holder_confirmed or c.expires_at is null or c.expires_at<=clock_timestamp() or not o.unit_id=any(c.beneficiary_units) or not private.receiver_actor_allowed(c.created_by,c.organization_id,c.unit_id) then raise exception 'receiver_unavailable' using errcode='42501';end if;
