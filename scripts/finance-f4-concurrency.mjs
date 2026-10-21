@@ -17,8 +17,9 @@ console.log('F4 concorrência real: quatro eventos simultâneos, uma receita e u
 // allow its audit FK KEY SHARE lock, otherwise unit -> org creates a deadlock.
 const closer=spawn('docker',db,{stdio:['pipe','pipe','pipe']});let closeError='',closeOut='';closer.stderr.on('data',x=>closeError+=x);closer.stdout.on('data',x=>closeOut+=x);
 const held=new Promise((resolve,reject)=>{closer.stdout.on('data',()=>{if(closeOut.includes('unit_locked'))resolve()});closer.on('error',reject)});
-const closed=new Promise((resolve,reject)=>{closer.on('close',code=>code?reject(Error(closeError)):resolve())});
+const closed=new Promise(resolve=>{closer.on('close',code=>resolve({code,error:closeError}))});
 closer.stdin.end(`begin;set local lock_timeout='5s';set local statement_timeout='10s';select set_config('request.jwt.claims','${JSON.stringify({sub:actor,role:'authenticated'})}',true);select 1 from public.organization_units where id='${unit}' for update;select 'unit_locked';select pg_sleep(0.5);select public.close_church_ledger_period('${org}','${unit}',current_date-1);commit;`);
 await held;const after={...proof,occurredAt:new Date().toISOString()};
 const importing=new Promise((resolve,reject)=>{const p=spawn('docker',db,{stdio:['pipe','pipe','pipe']});let err='';p.stderr.on('data',b=>err+=b);p.stdout.resume();p.on('error',reject);p.on('close',code=>code?reject(Error(err)):resolve());p.stdin.end(`set lock_timeout='5s';set statement_timeout='10s';select public.finance_digital_ingest('${receiver}','${JSON.stringify(after)}');`)});
-await Promise.all([closed,importing]);console.log('F4 fechamento concorrente: sem deadlock, sem contornar período e sem duplicar movimentos.');
+const [closure]=await Promise.all([closed,importing]);assert.notEqual(closure.code,0);assert.match(closure.error,/use_finance_closing_checklist/);assert.doesNotMatch(closure.error,/deadlock/i);
+console.log('F4/F5 fechamento concorrente: checklist recusa fechamento legado sem evidências, sem deadlock e sem duplicar recebimentos.');
