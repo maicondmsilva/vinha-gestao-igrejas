@@ -82,7 +82,7 @@ select ok(not exists(select 1 from private.cell_report_notifications where sourc
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"a1100000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 select is(pg_temp.plus('supervisor','fe110000-0000-4000-8000-000000000001',3,'{"network_id":"fa110000-0000-4000-8000-000000000001","person_id":"d1100000-0000-4000-8000-000000000001","capability":"report","status":"active"}')->>'version','4','reativa concessão explícita');
-select lives_ok($$select public.cell_operations_save('b1100000-0000-4000-8000-000000000001','c1100000-0000-4000-8000-000000000001','meeting','f1100000-0000-4000-8000-000000000001','fc110000-0000-4000-8000-000000000002',0,jsonb_build_object('topic','Rotina pendente fictícia','meeting_date',current_date-2,'meeting_time','19:30','status','scheduled','present','[]'::jsonb))$$,'agendamento para rotina automática');
+select lives_ok($$select public.cell_operations_save('b1100000-0000-4000-8000-000000000001','c1100000-0000-4000-8000-000000000001','meeting','f1100000-0000-4000-8000-000000000001','fc110000-0000-4000-8000-000000000002',0,jsonb_build_object('topic','Rotina pendente fictícia','meeting_date',(now() at time zone 'America/Sao_Paulo')::date-2,'meeting_time','19:30','status','scheduled','present','[]'::jsonb))$$,'agendamento para rotina automática');
 set local role service_role;
 select lives_ok($$select public.cell_report_reminder_batch()$$,'serviço executa lote sem autenticação de cliente');
 reset role;
