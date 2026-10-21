@@ -15,6 +15,7 @@ create table private.finance_bank_transactions(
  unique(account_id,fitid),foreign key(unit_id,organization_id) references public.organization_units(id,organization_id)
 );
 create index finance_bank_transactions_scope on private.finance_bank_transactions(organization_id,unit_id,account_id,effective_date,id);
+create index finance_bank_transactions_duplicate_hint on private.finance_bank_transactions(account_id,effective_date,amount_cents);
 create index finance_bank_transactions_import on private.finance_bank_transactions(import_id);
 create table private.finance_reconciliation_groups(
  id uuid primary key,organization_id uuid not null references public.organizations(id),unit_id uuid not null,account_id uuid not null references private.finance_catalog(id),reason text not null,
