@@ -2,7 +2,7 @@ import {spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 if(process.argv[2]!=='--local-synthetic')throw Error('Local isolated opt-in required.');
-const migration=readFileSync('supabase/migrations/20261021180832_record_numbers_and_finance_revision.sql','utf8');
+const migration=readFileSync('supabase/migrations/20261021180832_record_numbers_and_finance_revision.sql','utf8').replace(/^begin;/,'').replace(/commit;\s*$/,'');
 const exists=spawnSync('docker',['exec','supabase_db_vinha','psql','-X','-U','postgres','-d','postgres','-At','-c',"select to_regclass('private.record_counters') is not null"],{encoding:'utf8'});assert.equal(exists.status,0,exists.stderr);
 const setup=exists.stdout.trim()==='t'?migration.match(/create function[\s\S]*?\$\$;/g).map(x=>x.replace('create function','create or replace function')).join('\n'):migration;
 const baseline=readFileSync('supabase/tests/finance_f4.sql','utf8').replace(/^begin;/,'').replace('select * from finish();','').replace(/rollback;\s*$/,'');

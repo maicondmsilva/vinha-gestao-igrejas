@@ -1,3 +1,4 @@
+begin;
 set local lock_timeout='5s';
 -- Private, transactional counters. Public UUIDs remain identities, never human registration numbers.
 create table private.record_counters(organization_id uuid not null references public.organizations(id),scope text not null,last_number bigint not null check(last_number>0),primary key(organization_id,scope));
@@ -147,3 +148,4 @@ begin
 end$$;
 revoke all on function private.ensure_provider_account() from public,anon,authenticated,service_role;
 create trigger ensure_finance_provider_account after insert or update of status,account_id on private.finance_receivers for each row execute function private.ensure_provider_account();
+commit;
