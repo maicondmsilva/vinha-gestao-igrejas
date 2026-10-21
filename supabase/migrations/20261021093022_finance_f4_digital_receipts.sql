@@ -97,7 +97,7 @@ begin
 end $$;
 revoke all on function private.digital_post(private.finance_digital_orders,uuid,text,bigint,date) from public,anon,authenticated,service_role;
 create function private.digital_entry_guard() returns trigger language plpgsql set search_path='' as $$begin
- if exists(select 1 from private.finance_digital_links where entry_id=old.id) then raise exception 'digital_adjustment_required' using errcode='42501';end if;return new;
+ if exists(select 1 from private.finance_digital_links where entry_id=old.id) then raise exception 'digital_adjustment_required' using errcode='42501';end if;return case when tg_op='DELETE' then old else new end;
 end $$;
 revoke all on function private.digital_entry_guard() from public,anon,authenticated,service_role;
 create trigger digital_entry_guard before update or delete on private.finance_entries for each row execute function private.digital_entry_guard();
@@ -164,7 +164,7 @@ begin
  elsif p_action='order' then
   select * into o from private.finance_digital_orders where id=uid;
   if found then
-   if o.organization_id<>p_org or o.unit_id<>p_unit or o.purpose_id is distinct from (p_data->>'purpose')::uuid or o.receiver_id is distinct from (p_data->>'receiver')::uuid or o.gross is distinct from (p_data->>'gross')::bigint or o.person_id is distinct from nullif(p_data->>'person','')::uuid or o.source_reference is distinct from coalesce(p_data->>'sourceReference','') then raise exception 'order_conflict' using errcode='40001';end if;
+   if o.organization_id<>p_org or o.unit_id<>p_unit or o.purpose_id is distinct from (p_data->>'purpose')::uuid or o.receiver_id is distinct from (p_data->>'receiver')::uuid or o.gross is distinct from (p_data->>'gross')::bigint or o.person_id is distinct from nullif(p_data->>'person','')::uuid or o.source_reference is distinct from coalesce(p_data->>'sourceReference','') or (o.person_id is null and o.party_name is distinct from coalesce(p_data->>'party','')) then raise exception 'order_conflict' using errcode='40001';end if;
    return jsonb_build_object('ok',true,'id',o.id);
   end if;
   select * into x from private.finance_purposes where id=(p_data->>'purpose')::uuid and organization_id=p_org and unit_id=p_unit and active;
@@ -206,6 +206,7 @@ begin
  if c.status<>'configured' or not c.holder_confirmed or c.expires_at is null or c.expires_at<=clock_timestamp() or not o.unit_id=any(c.beneficiary_units) or not private.receiver_actor_allowed(c.created_by,c.organization_id,c.unit_id) then raise exception 'receiver_unavailable' using errcode='42501';end if;
  if jsonb_typeof(p_snapshot) is distinct from 'object' or octet_length(p_snapshot::text)>32768 or p_snapshot->>'environment' is distinct from c.environment or p_snapshot->>'receiverExternalId' is distinct from c.external_id or p_snapshot->>'currency' is distinct from 'BRL' then raise exception 'proof_divergence' using errcode='22023';end if;
  gross:=(p_snapshot->>'gross')::bigint;refund:=(p_snapshot->>'refunded')::bigint;at:=(p_snapshot->>'occurredAt')::timestamptz;ext:=p_snapshot->>'externalId';
+ if (p_snapshot->>'state'='refunded' and refund is distinct from gross) or (p_snapshot->>'state'='partially_refunded' and (refund is null or refund<=0 or refund>=gross)) then raise exception 'refund_state_divergence' using errcode='22023';end if;
  if gross is distinct from o.gross or refund is null or refund<0 or refund>gross or at is null or at>clock_timestamp()+interval '5 minutes' or ext is null or ext !~ '^[A-Za-z0-9_-]{1,100}$' or coalesce(p_snapshot->>'state','') not in('pending','processing','approved','rejected','expired','cancelled','partially_refunded','refunded','disputed') or coalesce(p_snapshot->>'settlement','') not in('expected','available','settled') then raise exception 'invalid_proof' using errcode='22023';end if;
  if jsonb_typeof(p_snapshot->'fees') not in('null','array') or not p_snapshot ? 'fees' then raise exception 'invalid_fees' using errcode='22023';end if;
  if jsonb_typeof(p_snapshot->'fees')='array' then
