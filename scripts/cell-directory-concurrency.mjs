@@ -24,5 +24,5 @@ try{
  }
  assert.equal(Number(await good(`select count(*) from public.audit_logs where entity_type='church_cell' and entity_id=${q(id)}`)),4,'criação e três edições aceitas auditadas, nenhuma edição rejeitada');
 }finally{
- if(initialized)await good(`begin;delete from public.audit_logs where organization_id=${q(org)} and entity_type='church_cell' and entity_id=${q(id)};delete from public.church_cells where id=${q(id)} and organization_id=${q(org)};delete from public.organizations where id=${q(org)} and slug=${q(slug)};delete from auth.users where id=${q(user)} and email=${q('cells-'+user+'@example.invalid')};commit;`);
+ if(initialized)await good(`begin;delete from private.member_record_numbers where organization_id=${q(org)};delete from private.member_numbering_preferences where organization_id=${q(org)};delete from private.record_counters where organization_id=${q(org)};delete from public.audit_logs where organization_id=${q(org)} and entity_type='church_cell' and entity_id=${q(id)};delete from public.church_cells where id=${q(id)} and organization_id=${q(org)};delete from public.organizations where id=${q(org)} and slug=${q(slug)};delete from auth.users where id=${q(user)} and email=${q('cells-'+user+'@example.invalid')};commit;`);
 }
