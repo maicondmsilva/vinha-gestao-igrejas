@@ -1,2 +1,7 @@
 .f1-form-grid .f4-active{display:flex;align-items:center;gap:10px;align-self:end;min-height:44px;flex-direction:row}
+.f1-dialog .f1-dialog-foot{display:flex;justify-content:flex-end;gap:12px;border-top:1px solid #e0e9e2;padding-top:20px;margin-top:24px}
+.f1-dialog .f1-actions>a{display:inline-flex;align-items:center;background:var(--tenant,#285c45);color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-size:14px}
+.f1-entry-receipt{margin-top:18px;padding:16px;background:#f3f7f4;border:1px dashed #becfc3;border-radius:12px}
+.f1-entry-receipt small{font-weight:400;line-height:1.6;color:#61766a}
+@media(max-width:600px){.f1-dialog .f1-dialog-foot{flex-direction:column-reverse}.f1-dialog .f1-dialog-foot button{width:100%}}
 .f1-form-grid .f4-active input[type=checkbox]{width:18px;height:18px;min-height:18px;flex:0 0 18px;margin:0;accent-color:#245c48}

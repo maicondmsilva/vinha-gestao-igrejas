@@ -20,7 +20,7 @@ Implementação em revisão na branch `feat/financeiro-f4-2026-10-21`. Não repr
 
 ## O que esta revisão NÃO entrega (não chamar F4 completa)
 
-1. Criação de checkout no aplicativo/site, autorização recorrente, emissão de Pix/boleto ou execução de cartão. O botão “Registrar pedido” somente registra a referência e declara isso na tela. Nenhuma cobrança é executada.
+1. Checkout público integrado no aplicativo/site de eventos, autorização recorrente e conclusão externa de Pix/boleto/cartão. O botão “Registrar pedido” somente registra a referência. O checkout de validação descrito abaixo já possui código, mas não foi homologado externamente nem publicado.
 2. Migração das inscrições/pagamentos de eventos e do aplicativo do membro para o banco principal. Seus endpoints antigos permanecem contidos; não foram religados ao banco antigo. A referência textual de evento/campanha não é apresentada como uma inscrição validada.
 3. Sincronização real Asaas/Safe2Pay, aprovação de métodos ou homologação financeira externa. Consulta de transação atualmente aceita Mercado Pago apenas. Não inferir identidade, conta ou ambiente de um prefixo de chave.
 4. Detalhamento externo de taxas de antecipação não fornecidas pelo endpoint, comprovantes, ajustes de juros/multa/desconto e débito de chargeback com evidência. A fila não transforma falta de prova em pagamento ou devolução automática.
@@ -32,6 +32,20 @@ Implementação em revisão na branch `feat/financeiro-f4-2026-10-21`. Não repr
 - Cofre e OAuth F3 separados por ambiente, além de `FINANCE_MP_TEST_WEBHOOK_SECRET` e `FINANCE_MP_LIVE_WEBHOOK_SECRET` no servidor. Nunca usar nomes NEXT_PUBLIC para segredos.
 - Concluir homologação F3, cadastrar destino correto no provedor e configurar a URL oficial do webhook. Não habilitar métodos por uma opção visual nem fazer transação real sem autorização específica do titular.
 - Enviar `external_reference` igual ao UUID do pedido registrado quando a criação de checkout estiver implementada. Webhooks de transações desconhecidas são recusados, não classificados por heurística.
+
+## Complemento de checkout e destinação — 21/10, ainda em revisão
+
+- Modal “Preparar checkout” no pedido sem transação observada; rota autenticada `/api/finance-digital/checkout`, restrita a proprietário/administrador nesta validação. Preço e recebedor vêm do pedido imutável; e-mail vem da conta confirmada, não do navegador. Não constitui checkout público do aplicativo/eventos.
+- Reserva durável por pedido antes da chamada externa. Somente uma reivindicação permite um POST de preferência. Timeout, queda do processo e falha de persistência não permitem outro POST automático. Uma preferência incerta exige conferência; não existe botão que apaga o bloqueio e cria cobrança duplicada.
+- POST oficial de preferências usa o token específico do recebedor e referência interna. Resposta valida collector, referência, item, moeda, quantidade, preço e domínio do link. Usa `init_point`, não fallback legado `sandbox_init_point`. Transporte simulado nos testes: nenhuma chamada de criação real foi executada.
+- Origem fixa `FINANCE_CHECKOUT_ORIGIN`, restrita a `app.vinhaigrejas.com.br` ou `teste.vinhaigrejas.com.br`; não aceita Host/Forwarded nem URLs arbitrárias do cliente. Checkout real permanece bloqueado por `FINANCE_MP_LIVE_CHECKOUT_ENABLED=false`, além de depender do cofre/OAuth/webhook.
+- Página `/pagamento/retorno` não declara pagamento aprovado a partir dos parâmetros de retorno. Recebimentos continuam dependendo da consulta independente ao provedor e das regras contábeis existentes.
+- Nova destinação interna permite vincular o líquido integral de um recebimento confirmado a uma beneficiária autorizada na mesma organização. Exige responsável com acesso às duas unidades, versão otimista e auditoria da alteração. Visão das últimas 100 destinações, sem filtro de período, declarada na interface. Devoluções/taxas contabilizadas ajustam o líquido consultado.
+- A destinação não executa split, repasse, quitação ou transferência bancária; não lança receita/saída duplicada nem cria saldo na filial. Ainda não há rateio percentual, baixa de repasses ou recepção direta de pedido do aplicativo/evento pela filial usando conta bancária da sede. A finalidade/pedido continua pertencendo à unidade recebedora.
+- Migrações `20261021103532_finance_f4_checkout_reservations.sql` e `20261021104459_finance_f4_beneficiary_destinations.sql`: preparadas e testadas localmente, não aplicadas ao Supabase principal.
+- Mercado Pago exige revalidação pelo aplicativo do titular. Em 21/10 o responsável escolheu **configurar mais tarde**. Asaas e Safe2Pay continuam sem contas de teste informadas. Não registrar esses testes como homologação externa concluída.
+
+Contrato oficial de checkout: [Criar preferência Mercado Pago](https://www.mercadopago.com.br/developers/pt/reference/online-payments/checkout-pro-preferences/create-preference/post).
 
 ## Evidências
 
