@@ -95,5 +95,13 @@ update public.organization_memberships set status='suspended' where id='af790000
 set local role authenticated;
 select throws_ok($$select public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'snapshot',current_setting('f5.snapshot')::jsonb)$$,'42501',null,'suspensão é revalidada sem confiar no token antigo');
 reset role;
+select set_config('request.jwt.claims','{"sub":"af700000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+set local role authenticated;
+select public.finance_f1(current_setting('f4.org')::uuid,array['cf700000-0000-4000-8000-000000000002']::uuid[],'catalog','{"id":"df700000-0000-4000-8000-000000000004","kind":"account","name":"Banco anterior fictício"}');
+select public.finance_f1(current_setting('f4.org')::uuid,array['cf700000-0000-4000-8000-000000000002']::uuid[],'catalog','{"id":"df700000-0000-4000-8000-000000000005","kind":"category","name":"Recebimento anterior fictício","direction":"income"}');
+select public.finance_f1(current_setting('f4.org')::uuid,array['cf700000-0000-4000-8000-000000000002']::uuid[],'entry',jsonb_build_object('id','ab710000-0000-4000-8000-000000000003','kind','income','amountCents','1000','description','Pendência de mês anterior fictícia','account','df700000-0000-4000-8000-000000000004','category','df700000-0000-4000-8000-000000000005','competence',current_setting('f5.previous'),'due',current_setting('f5.previous'),'paid',current_setting('f5.previous'),'method','pix'));
+select is(public.finance_f5(current_setting('f4.org')::uuid,'cf700000-0000-4000-8000-000000000002','snapshot',current_setting('f5.snapshot')::jsonb||'{"account":""}')->'checklist'->>'bookPending','1','checklist acumula pendência anterior ao mês selecionado');
+select throws_ok($$select public.finance_f5(current_setting('f4.org')::uuid,'cf700000-0000-4000-8000-000000000002','close',jsonb_build_object('id','ab750000-0000-4000-8000-000000000010','through',current_setting('f5.end'),'expectedClosed','','reason','Tentativa fictícia de ignorar pendência antiga','allowPending',false))$$,'22023',null,'fechar primeiro mês não oculta movimentos de meses anteriores');
+reset role;
 select * from finish();
 rollback;

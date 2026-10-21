@@ -79,7 +79,7 @@ declare checks jsonb;begin
  perform private.require_confirmed_self_service_email();
  -- Legacy callers may already hold the unit. Do not invert unit -> org locks.
  perform 1 from public.organization_units where id=p_unit and organization_id=p_org for update;
- checks:=private.finance_f5_checklist(p_org,p_unit,date_trunc('month',p_through)::date,p_through);
+ checks:=private.finance_f5_checklist(p_org,p_unit,coalesce((select closed_through+1 from public.church_ledger_periods where organization_id=p_org and unit_id=p_unit),'-infinity'::date),p_through);
  if not(checks->>'reconciled')::boolean then raise exception 'use_finance_closing_checklist' using errcode='22023';end if;
  perform private.close_church_ledger_period(p_org,p_unit,p_through);
 end$$;
@@ -125,7 +125,7 @@ begin
    where l.organization_id=p_org and l.unit_id=p_unit and l.account_id=ledger and j.effective_date between v_from and v_to order by j.effective_date,j.id limit 101)x;
   select coalesce(jsonb_agg(x),'[]') into groups from(select g.id,g.reason,g.created_at,g.undone_at,g.undo_reason,u.email as actor from private.finance_reconciliation_groups g left join auth.users u on u.id=g.created_by where g.organization_id=p_org and g.unit_id=p_unit and (acc is null or g.account_id=acc) order by g.created_at desc,g.id desc limit 30)x;
   select coalesce(jsonb_agg(x),'[]') into imports from(select id,filename,date_from,date_to,balance_date,balance_cents::text as balance,created_at,account_tail from private.finance_bank_imports where organization_id=p_org and unit_id=p_unit and (acc is null or account_id=acc) order by created_at desc,id desc limit 30)x;
-  checks:=private.finance_f5_checklist(p_org,p_unit,v_from,v_to);
+  checks:=private.finance_f5_checklist(p_org,p_unit,case when closed<v_to then case when isfinite(closed) then least(v_from,closed+1) else '-infinity'::date end else v_from end,v_to);
   return jsonb_build_object('bank',rows,'book',books,'groups',groups,'imports',imports,'checklist',checks,'closedThrough',case when isfinite(closed) then closed::text end,'canReopen',private.has_organization_role(p_org,array['owner','admin']::public.membership_role[]),'history',(select coalesce(jsonb_agg(x),'[]') from(select c.action,c.result,c.created_at from private.finance_f5_commands c where c.organization_id=p_org and c.unit_id=p_unit and c.action in('close','reopen') order by c.created_at desc,c.id desc limit 20)x));
  end if;
  req:=(p_data->>'id')::uuid;hash:=encode(extensions.digest(p_data::text,'sha256'),'hex');if req is null then raise exception 'missing_request' using errcode='22023';end if;
@@ -188,7 +188,7 @@ begin
   if nullif(p_data->>'expectedClosed','')::date is distinct from (case when isfinite(closed) then closed end) then raise exception 'period_changed' using errcode='40001';end if;
   if p_action='close' then
    if v_to<=closed then raise exception 'period_already_closed' using errcode='22023';end if;
-   checks:=private.finance_f5_checklist(p_org,p_unit,case when isfinite(closed) then closed+1 else date_trunc('month',v_to)::date end,v_to);
+   checks:=private.finance_f5_checklist(p_org,p_unit,case when isfinite(closed) then closed+1 else '-infinity'::date end,v_to);
    if not(checks->>'reconciled')::boolean and (coalesce((p_data->>'allowPending')::boolean,false) is not true or not private.has_organization_role(p_org,array['owner','admin']::public.membership_role[])) then raise exception 'closing_pending_review' using errcode='22023';end if;
    perform private.close_church_ledger_period(p_org,p_unit,v_to);
    result:=result||jsonb_build_object('through',v_to,'checklist',checks,'reconciled',(checks->>'reconciled')::boolean,'reason',reason);
