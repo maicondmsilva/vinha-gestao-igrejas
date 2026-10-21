@@ -18,6 +18,7 @@ async function run(request:Request,write:boolean){
   if(units.some(id=>!access.membership.units.some(u=>u.id===id)))return failure('42501');
   const result=await client.rpc('finance_f1',{p_org:access.membership.organization_id,p_units:units,p_action:action,p_data:data});if(result.error)return failure(result.error.code);
   if(write&&(!result.data?.ok||result.data.id!==(data as {id:string}).id))return failure();
+  if(!write&&Array.isArray(result.data?.entries)&&result.data.entries.length){const numbers=await client.rpc('record_numbering',{p_org:access.membership.organization_id,p_action:'finance',p_data:{ids:result.data.entries.map((e:{id:string})=>e.id)}});if(numbers.error)return failure();result.data.entries=result.data.entries.map((e:{id:string})=>({...e,code:numbers.data?.codes?.[e.id]||null}))}
   return json(result.data);
  }catch{return failure()}
 }
