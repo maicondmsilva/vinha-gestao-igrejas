@@ -6,6 +6,7 @@ create table private.finance_f2_commands (
  foreign key(unit_id,organization_id) references public.organization_units(id,organization_id)
 );
 create index finance_f2_commands_unit on private.finance_f2_commands(unit_id,organization_id);
+create index finance_f2_commands_org on private.finance_f2_commands(organization_id);
 create table private.finance_settlements (
  id uuid primary key,organization_id uuid not null,unit_id uuid not null,title_id uuid not null,
  principal_cents bigint not null check(principal_cents>0),interest_cents bigint not null check(interest_cents>=0),fine_cents bigint not null check(fine_cents>=0),discount_cents bigint not null check(discount_cents>=0 and discount_cents<=principal_cents),fee_cents bigint not null check(fee_cents>=0),
