@@ -106,6 +106,7 @@ jobs:
           node scripts/cell-networks-concurrency.mjs
           node scripts/cell-flows-concurrency.mjs
           node scripts/cell-plus-concurrency.mjs
+          node scripts/finance-f3-concurrency.mjs --local-synthetic
 
       - name: Parar banco local preservando volumes
         if: always()
