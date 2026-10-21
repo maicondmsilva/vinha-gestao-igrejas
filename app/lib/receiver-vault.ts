@@ -1,0 +1,7 @@
+import {createCipheriv,createDecipheriv,randomBytes} from 'node:crypto';
+function key(){const raw=process.env.FINANCE_RECEIVER_ENCRYPTION_KEY||'';if(!/^[A-Za-z0-9+/]{43}=$/.test(raw)||Buffer.from(raw,'base64').length!==32)throw Error('Cofre de contas recebedoras não configurado.');return Buffer.from(raw,'base64')}
+/** AAD prevents moving a ciphertext to another tenant, unit, environment or purpose. */
+export function sealReceiver(value:unknown,context:string){const nonce=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key(),nonce);cipher.setAAD(Buffer.from(context));const bytes=Buffer.concat([cipher.update(JSON.stringify(value),'utf8'),cipher.final()]);return ['v1',nonce.toString('base64url'),cipher.getAuthTag().toString('base64url'),bytes.toString('base64url')].join('.')}
+export function openReceiver<T>(value:string,context:string):T{const [v,iv,tag,body,...rest]=value.split('.');if(v!=='v1'||!iv||!tag||!body||rest.length)throw Error('Credencial protegida inválida.');const cipher=createDecipheriv('aes-256-gcm',key(),Buffer.from(iv,'base64url'));cipher.setAAD(Buffer.from(context));cipher.setAuthTag(Buffer.from(tag,'base64url'));return JSON.parse(Buffer.concat([cipher.update(Buffer.from(body,'base64url')),cipher.final()]).toString('utf8')) as T}
+export const receiverContext=(org:string,unit:string,provider:string,environment:string)=>[org,unit,provider,environment].join(':');
+export function receiverVaultConfigured(){try{key();return true}catch{return false}}

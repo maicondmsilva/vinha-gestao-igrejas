@@ -49,6 +49,11 @@
     "app/FinanceReceivables.tsx",
     "app/FinanceClassification.tsx",
     "app/FinanceHistory.tsx",
+    "app/FinanceReceiving.tsx",
+    "app/api/finance-receivers/route.ts",
+    "app/api/finance-receivers/callback/route.ts",
+    "app/admin-vinha/contas-recebedoras/page.tsx",
+    "app/api/platform/receiving-accounts/route.ts",
     "app/api/finance-f2/route.ts",
     "app/api/finance-f1/route.ts",
     "app/api/finance-f1/files/route.ts"

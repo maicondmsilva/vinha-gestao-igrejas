@@ -22,9 +22,10 @@ const sections=[
 export default function ConfigurationCenter({church}:{church:Church;setChurch:(church:Church)=>void}){
  const {t}=useMinistryLanguage();
  return <div className="content config-center">
-  <div className="page-head"><div><p className="section-over">PRÉ-LANÇAMENTO</p><h1>{t('configuracoes')}</h1><p>{church.name}</p></div></div>
+  <div className="page-head"><div><p className="section-over">CONFIGURAÇÕES DO MINISTÉRIO</p><h1>{t('configuracoes')}</h1><p>{church.name}</p></div></div>
   <section className="config-panel"><h2>Configurações disponíveis nesta etapa</h2>
    <p><a href="/minha-assinatura">Consultar contratos e solicitar alterações de módulos ou vencimento →</a></p>
+   <p><a href={typeof location==='undefined'?'/painel?pagina=financeiro&secao=recebimentos':(()=>{const u=new URL(location.href);u.searchParams.set('pagina','financeiro');u.searchParams.set('secao','recebimentos');return u.pathname+u.search})()}>Financeiro → Recebimentos: conectar ou abrir conta recebedora →</a></p>
    <p><a href="/conta/seguranca">Acessar a segurança da minha conta →</a></p>
    <p><a href="/suporte">Falar com a equipe Vinha →</a></p>
   </section>
@@ -35,7 +36,7 @@ export default function ConfigurationCenter({church}:{church:Church;setChurch:(c
   <section className="config-panel"><h2>Disponibilidade operacional</h2>
    <p>Este catálogo é independente dos módulos contratados e não substitui as permissões da sua conta.</p>
    <ul>{releaseCatalog.map(feature=><li key={feature.id} style={{marginBottom:16}}>
-    <strong>{feature.title} — {feature.status==='ready'?'escopo interno disponível':feature.status==='pilot'?'núcleo em validação':'em desenvolvimento'}</strong>
+    <strong>{feature.title} — {feature.status==='ready'?'escopo interno disponível':feature.status==='validation'?'núcleo em validação':'em desenvolvimento'}</strong>
     <p>{feature.detail}</p>
    </li>)}</ul>
   </section>
