@@ -3,26 +3,26 @@
  * Changing this catalog is a reviewed release decision, not a client setting.
  */
 export const releaseCatalog = [
-  { id: 'inicio', title: 'Visão geral', status: 'pilot', detail: 'Resumo do núcleo cadastral. Piloto ainda em preparação.' },
-  { id: 'pessoas', title: 'Pessoas', status: 'pilot', detail: 'Cadastro básico no Supabase; importações, documentos e jornadas ainda não liberados.' },
-  { id: 'igrejas', title: 'Igrejas e unidades', status: 'pilot', detail: 'Estrutura cadastral no Supabase; consolidação e autonomia dependem de validação adicional.' },
-  { id: 'configuracoes', title: 'Configurações', status: 'pilot', detail: 'Somente os acessos indicados como disponíveis nesta etapa.' },
+  { id: 'inicio', title: 'Visão geral', status: 'validation', detail: 'Resumo do núcleo cadastral em validação por módulo.' },
+  { id: 'pessoas', title: 'Pessoas', status: 'validation', detail: 'Cadastro básico no Supabase; importações, documentos e jornadas ainda não liberados.' },
+  { id: 'igrejas', title: 'Igrejas e unidades', status: 'validation', detail: 'Estrutura cadastral no Supabase; consolidação e autonomia dependem de validação adicional.' },
+  { id: 'configuracoes', title: 'Configurações', status: 'validation', detail: 'Somente os acessos indicados como disponíveis nesta etapa.' },
   { id: 'familias', title: 'Famílias e termos', status: 'development', detail: 'Vínculos, consentimentos e PDFs aguardam migração e validação de acesso.' },
   { id: 'aplicativo', title: 'Aplicativo do membro', status: 'development', detail: 'Aplicativos personalizados ainda não estão publicados nas lojas.' },
   { id: 'kids', title: 'Área Kids', status: 'development', detail: 'Responsáveis, salas e retirada segura aguardam validação ponta a ponta.' },
-  { id: 'usuarios', title: 'Usuários e permissões da igreja', status: 'pilot', detail: 'Equipe e convites no Supabase, sujeitos à governança de papéis; envio por e-mail ainda não homologado.' },
+  { id: 'usuarios', title: 'Usuários e permissões da igreja', status: 'validation', detail: 'Equipe e convites no Supabase, sujeitos à governança de papéis; envio por e-mail ainda não homologado.' },
   { id: 'eventos', title: 'Cultos e eventos', status: 'development', detail: 'Inscrições, ingressos e recebimentos ainda não liberados para operação real.' },
   { id: 'celulas', title: 'Células', status: 'ready', detail: 'Cadastro, redes e hierarquia, participantes, visitantes, indicações, transferências, estudos com arquivos privados, chamada, indicadores por rede e consolidação das unidades autorizadas do mesmo ministério. Avisos internos com rotina própria. E-mail e WhatsApp dependem de consentimento, configuração do canal e homologação de entrega; não são declarados ativos sem essa validação.' },
   { id: 'escalas', title: 'Escalas', status: 'development', detail: 'Publicação e confirmações aguardam migração.' },
   { id: 'louvor', title: 'Louvor', status: 'development', detail: 'Busca musical, cifras e integrações licenciadas ainda não disponíveis.' },
   { id: 'comunicacao', title: 'Comunicação entre membros', status: 'development', detail: 'Chat e notificações dos membros aguardam migração. O atendimento à Vinha é separado.' },
   { id: 'transmissoes', title: 'Transmissões', status: 'development', detail: 'Agendamento e distribuição ainda não disponíveis para operação real.' },
-  { id: 'financeiro', title: 'Financeiro da igreja', status: 'pilot', detail: 'F1/F2: dashboard por igreja, contas, classificação em categoria e subcategoria, contas a pagar/receber, baixas manuais parciais, taxas, séries e histórico protegido. Provedores, cobranças, conciliação e rotinas avançadas continuam indisponíveis; a assinatura da Vinha é separada.' },
-  { id: 'relatorios', title: 'Relatórios cadastrais', status: 'pilot', detail: 'Primeira entrega: contagens cadastrais por unidade e situação. Financeiro, exportações nominais e consolidação continuam em desenvolvimento.' },
+  { id: 'financeiro', title: 'Financeiro da igreja', status: 'validation', detail: 'F1/F2 e configuração F3: dashboard por igreja, contas, classificação em categoria e subcategoria, contas a pagar/receber, baixas manuais parciais, taxas, séries e histórico protegido. Conexão de provedores depende de configuração e homologação externa. Cobranças automáticas, conciliação e rotinas avançadas continuam indisponíveis; a assinatura da Vinha é separada.' },
+  { id: 'relatorios', title: 'Relatórios cadastrais', status: 'validation', detail: 'Primeira entrega: contagens cadastrais por unidade e situação. Financeiro, exportações nominais e consolidação continuam em desenvolvimento.' },
 ] as const;
 
 export function pilotViewAllowed(id: string) {
-  return releaseCatalog.some(item => item.id === id && (item.status === 'pilot' || item.status === 'ready'));
+  return releaseCatalog.some(item => item.id === id && (item.status === 'validation' || item.status === 'ready'));
 }
 
 export const unavailableMessage = 'Este recurso está em desenvolvimento e não está liberado para operações reais. Consulte a equipe Vinha.';

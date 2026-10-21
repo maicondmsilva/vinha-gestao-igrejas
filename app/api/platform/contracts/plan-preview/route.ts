@@ -26,6 +26,6 @@ const preview=centralRoute(async(request,client,session)=>{
  return{pilot:true,estimate,expectedCatalog:catalog,contractId,nextPlanId:p.id,nextPlanName:p.name,payerUnitId:c.payer_unit_id,expectedUpdatedAt:c.updated_at,baseInvoiceId:cy.invoice_id,confirmationAvailable:false,notice:'Estimativa sem reserva de preço. A confirmação deverá revalidar permissões, catálogo e ciclo na transação.'};
 });
 export async function GET(request:Request){
- if(process.env.VINHA_PLAN_PRORATION_PILOT!=='true'||!ledgerPilotEnabled(process.env))return NextResponse.json({error:'Prévia disponível somente no piloto isolado.'},{status:503,headers:{'Cache-Control':'private, no-store'}});
+ if(process.env.VINHA_PLAN_PRORATION_PILOT!=='true'||!ledgerPilotEnabled(process.env))return NextResponse.json({error:'Prévia disponível somente no ambiente de homologação isolado.'},{status:503,headers:{'Cache-Control':'private, no-store'}});
  return preview(request);
 }

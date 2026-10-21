@@ -1,0 +1,50 @@
+import {createHash,randomUUID} from 'node:crypto';
+import {authorizeSupabaseChurch} from '../../lib/supabase/church-access';
+import {supabaseAdminClient} from '../../lib/supabase/server-admin';
+import type {OperationsClient} from '../../lib/supabase/operations';
+import {boundedBody} from '../../lib/private-files';
+import {receiverCommand,receiverId,receiverOpeningUrl} from '../../lib/finance-receivers';
+import {mercadoReceiverConfigured,mercadoReceiverStart,mercadoReceiverExchange,mercadoReceiverIdentity,type MercadoReceiverToken} from '../../lib/receiver-mercado';
+import {receiverContext,sealReceiver,openReceiver,receiverVaultConfigured} from '../../lib/receiver-vault';
+import {asaasReceiverIdentity} from '../../lib/receiver-asaas';
+const json=(d:unknown,status=200)=>Response.json(d,{status,headers:{'Cache-Control':'private, no-store'}});
+export async function GET(r:Request){
+ const auth=await authorizeSupabaseChurch(r,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Acesso indisponível.'},503);const a=auth.access!;
+ try{const p=new URL(r.url).searchParams;if([...p.keys()].some(k=>!['unit','tenant'].includes(k)||p.getAll(k).length!==1))return json({error:'Filtro inválido.'},400);const unit=receiverId(p.get('unit'));if(!a.membership.units.some(u=>u.id===unit))return json({error:'Igreja não autorizada.'},403);
+ const result=await (a.client as unknown as OperationsClient).rpc('finance_receiver_settings',{p_org:a.membership.organization_id,p_unit:unit,p_action:'list',p_data:{}});if(result.error)return failure(result.error.code);
+ return json({...result.data,connections:{sandbox:ready('sandbox'),production:ready('production'),asaas:receiverVaultConfigured()&&Boolean(process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY)},paymentMethodsEnabled:[],openingMode:'official'});
+ }catch{return json({error:'Não foi possível carregar as contas recebedoras.'},503)}
+}
+function ready(e:'sandbox'|'production'){return receiverVaultConfigured()&&Boolean(process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY)&&mercadoReceiverConfigured(e)}
+function failure(code?:string){return json({error:code==='42501'?'Sem autorização para administrar esta conta recebedora.':code==='40001'?'A conexão mudou. Atualize e confira o histórico antes de repetir.':code==='22023'?'Revise a titularidade, a conta financeira e as igrejas selecionadas.':'Não foi possível confirmar. Atualize a página e confira o histórico.'},code==='42501'?403:code==='40001'?409:code==='22023'?400:503)}
+export async function POST(r:Request){
+ const auth=await authorizeSupabaseChurch(r,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Acesso indisponível.'},503);const a=auth.access!;
+ if(!['owner','admin'].includes(a.membership.role))return json({error:'Somente proprietário ou administrador pode autorizar contas recebedoras.'},403);
+ let c:ReturnType<typeof receiverCommand>;try{c=receiverCommand(JSON.parse(new TextDecoder().decode(await boundedBody(r,16384))))}catch(e){return json({error:e instanceof Error?e.message:'Dados inválidos.'},400)}
+ if(!a.membership.units.some(u=>u.id===c.unit))return json({error:'Igreja não autorizada.'},403);
+ const org=a.membership.organization_id,context=receiverContext(org,c.unit,c.provider,c.environment);
+ try{
+  if(c.action==='key'){
+   if(!receiverVaultConfigured())return json({error:'O cofre de contas recebedoras ainda não foi configurado pela equipe Vinha.'},503);
+   const credential=String(c.data.credential),identity=await asaasReceiverIdentity(credential,c.environment),server=supabaseAdminClient();
+   const result=await server.rpc('finance_receiver_server',{p_actor:a.userId,p_org:org,p_unit:c.unit,p_action:'key_complete',p_data:{provider:c.provider,environment:c.environment,version:c.data.version,...identity,sealed:sealReceiver({credential},context)}});return result.error?failure(result.error.code):json({ok:true});
+  }
+  if(c.action==='connect'){
+   if(c.provider!=='mercado_pago')return json({error:'Conector deste provedor aguarda homologação própria. Abra a conta no ambiente oficial; a Vinha não solicitará sua senha.'},409);
+   if(!ready(c.environment))return json({error:'A equipe Vinha precisa configurar o aplicativo OAuth e o cofre neste ambiente antes da conexão.'},503);
+   const start=mercadoReceiverStart(c.environment);if(new URL(start.redirect).origin!==new URL(r.url).origin)return json({error:'Conecte pelo domínio configurado para este ambiente.'},409);
+   const hash=createHash('sha256').update(start.state).digest('hex'),server=supabaseAdminClient(),id=randomUUID();
+   const result=await server.rpc('finance_receiver_server',{p_actor:a.userId,p_org:org,p_unit:c.unit,p_action:'begin',p_data:{id,environment:c.environment,stateHash:hash,verifier:sealReceiver({verifier:start.verifier},context+':verifier')}});if(result.error)return failure(result.error.code);
+   const cookie=sealReceiver({actor:a.userId,org,unit:c.unit,environment:c.environment,state:start.state,tenant:a.membership.organization_slug||'',expires:Date.now()+600000},'receiver-oauth-cookie');
+   const response=json({url:start.url});response.headers.append('Set-Cookie',`vinha_receiver_${hash.slice(0,16)}=${cookie}; Path=/api/finance-receivers/callback; HttpOnly; SameSite=Lax; Max-Age=600${new URL(r.url).protocol==='https:'?'; Secure':''}`);return response;
+  }
+  if(c.action==='refresh'){
+   if(c.provider!=='mercado_pago'||!ready(c.environment))return json({error:'Renovação não configurada para este provedor e ambiente.'},503);
+   const server=supabaseAdminClient(),args={p_actor:a.userId,p_org:org,p_unit:c.unit,p_data:c.data};const result=await server.rpc('finance_receiver_server',{...args,p_action:'secret'});if(result.error)return failure(result.error.code);
+   const old=openReceiver<MercadoReceiverToken>(result.data.sealed,context),token=await mercadoReceiverExchange(c.environment,{refresh:old.refresh_token}),identity=await mercadoReceiverIdentity(token,c.environment);
+   const done=await server.rpc('finance_receiver_server',{...args,p_action:'refreshed',p_data:{...c.data,...identity,sealed:sealReceiver(token,context)}});return done.error?failure(done.error.code):json({ok:true});
+  }
+  const result=await (a.client as unknown as OperationsClient).rpc('finance_receiver_settings',{p_org:org,p_unit:c.unit,p_action:c.action,p_data:c.data});if(result.error)return failure(result.error.code);
+  return json({...result.data,...(c.action==='open'?{url:receiverOpeningUrl(c.provider,c.environment)}:{})});
+ }catch{return json({error:'Conexão não confirmada. Verifique o histórico; se necessário, autorize novamente no provedor. Nenhuma cobrança foi criada.'},503)}
+}

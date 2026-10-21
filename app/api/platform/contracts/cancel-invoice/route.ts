@@ -13,6 +13,6 @@ const cancel=centralRoute(async(request,client)=>{
  return{ok:true,cancellation:result.data,providerCancellationCreated:false};
 });
 export async function POST(request:Request){
- if(process.env.VINHA_PLAN_PRORATION_PILOT!=='true'||!ledgerPilotEnabled(process.env))return NextResponse.json({error:'Cancelamento disponível somente no piloto isolado.'},{status:503,headers:{'Cache-Control':'private, no-store'}});
+ if(process.env.VINHA_PLAN_PRORATION_PILOT!=='true'||!ledgerPilotEnabled(process.env))return NextResponse.json({error:'Cancelamento disponível somente no ambiente de homologação isolado.'},{status:503,headers:{'Cache-Control':'private, no-store'}});
  return cancel(request);
 }

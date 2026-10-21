@@ -12,6 +12,6 @@ const list=centralRoute(async(request,client)=>{
  return{documents:(result.data||[]).map(summarizeProrationDocument),pilot:true};
 });
 export async function GET(request:Request){
- if(process.env.VINHA_PLAN_PRORATION_PILOT!=='true'||!ledgerPilotEnabled(process.env))return NextResponse.json({error:'Consulta disponível somente no piloto isolado.'},{status:503,headers:{'Cache-Control':'private, no-store'}});
+ if(process.env.VINHA_PLAN_PRORATION_PILOT!=='true'||!ledgerPilotEnabled(process.env))return NextResponse.json({error:'Consulta disponível somente no ambiente de homologação isolado.'},{status:503,headers:{'Cache-Control':'private, no-store'}});
  return list(request);
 }

@@ -10,7 +10,7 @@ export default function OperationalAvailability() {
    <p>Recorrência de cartão e emissão fiscal da Central continuam restritas à homologação. O financeiro da igreja é outro módulo e ainda não está liberado.</p>
   </article>
   {releaseCatalog.map(feature=><article className="sector-card" key={feature.id}>
-   <h2>{feature.title}</h2><strong>{feature.status==='ready'?'Escopo interno disponível':feature.status==='pilot'?'Núcleo em validação — piloto em preparação':'Em desenvolvimento — não liberado'}</strong>
+   <h2>{feature.title}</h2><strong>{feature.status==='ready'?'Escopo interno disponível':feature.status==='validation'?'Em validação':'Em desenvolvimento — não liberado'}</strong>
    <p>{feature.detail}</p>
   </article>)}
   <p>Próximos critérios: segurança do núcleo, isolamento entre organizações e unidades, migração restante, recuperação de dados e jornadas completas aprovadas.</p>

@@ -17,7 +17,7 @@ test('catalog fails closed for unknown views and distinguishes pilot from comple
   assert.equal(new Set(releaseCatalog.map(x => x.id)).size, releaseCatalog.length);
   for (const id of ['inicio', 'pessoas', 'igrejas', 'configuracoes','usuarios','financeiro']) assert.equal(pilotViewAllowed(id), true);
   for (const id of ['kids', 'eventos', 'louvor', 'missing', '']) assert.equal(pilotViewAllowed(id), false);
-  assert.equal(releaseCatalog.find(x=>x.id==='financeiro').status,'pilot');
+  assert.equal(releaseCatalog.find(x=>x.id==='financeiro').status,'validation');
   assert.deepEqual(releaseCatalog.filter(x => x.status === 'ready').map(x=>x.id), ['celulas']);
   assert.equal(pilotViewAllowed('celulas'),true);
 });
