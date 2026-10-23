@@ -17,7 +17,7 @@ export function checkoutCommand(value:unknown){
  return{unit:receiverId(d.unit),order:receiverId(d.order),name:d.name.trim()};
 }
 function enabled(c:DigitalConnection){
- if(c.provider!=='mercado_pago'||(c.environment==='production'&&process.env.FINANCE_MP_LIVE_CHECKOUT_ENABLED!=='true'))throw Error('Checkout não homologado para este ambiente.');
+ if(c.provider!=='mercado_pago'||(c.environment==='production'&&!(c.paymentsEnabled===true&&c.webhookConfigured===true&&Array.isArray(c.methods)&&c.methods.length>0&&c.methods.every(m=>['pix','boleto','card'].includes(m)))))throw Error('Checkout não habilitado para esta igreja e ambiente.');
 }
 /** Exactly one POST. The durable reservation must already be in dispatching state. */
 export async function createDigitalPreference(c:DigitalConnection,r:CheckoutReservation,origin:string,transport:typeof fetch=fetch){
@@ -26,7 +26,19 @@ export async function createDigitalPreference(c:DigitalConnection,r:CheckoutRese
  const secret=openReceiver<{access_token:string;user_id:string}>(c.sealed,receiverContext(c.org,c.unit,c.provider,c.environment));
  if(secret.user_id!==c.externalId||!secret.access_token)throw Error('Titular divergente.');
  const returns=origin+'/pagamento/retorno?pedido='+encodeURIComponent(r.order);
- const payload=mercadoPreferencePayload({orderId:r.order,title:r.title,amountCents:Number(r.gross),name:r.name,email:r.email,callback:origin+'/api/finance-digital/webhook/'+r.receiver+'?environment='+c.environment,success:returns,pending:returns,failure:returns,expiresAt:Date.parse(r.expiresAt)});
+ const base=mercadoPreferencePayload({orderId:r.order,title:r.title,amountCents:Number(r.gross),name:r.name,email:r.email,callback:origin+'/api/finance-digital/webhook/'+r.receiver+'?environment='+c.environment,success:returns,pending:returns,failure:returns,expiresAt:Date.parse(r.expiresAt)});
+ let restrictions:{excluded_payment_types:{id:string}[];excluded_payment_methods:{id:string}[]}|undefined;
+ if(c.methods){
+  const methodsResponse=await transport('https://api.mercadopago.com/v1/payment_methods',{method:'GET',headers:{Authorization:'Bearer '+secret.access_token,accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(15000)});
+  if(!methodsResponse.ok)throw Error('Métodos não confirmados pelo provedor.');
+  const raw=await methodsResponse.text();if(raw.length>262144)throw Error('Métodos inválidos.');const methods=JSON.parse(raw);
+  if(!Array.isArray(methods)||!methods.length||methods.length>500||methods.some(m=>!m||typeof m.id!=='string'||!/^[a-zA-Z0-9_-]{1,100}$/.test(m.id)||typeof m.payment_type_id!=='string'||typeof m.status!=='string'))throw Error('Métodos inválidos.');
+  const allowed=(m:{id:string;payment_type_id:string;status:string})=>m.status==='active'&&((c.methods!.includes('card')&&['credit_card','debit_card'].includes(m.payment_type_id))||(c.methods!.includes('pix')&&m.id==='pix')||(c.methods!.includes('boleto')&&m.payment_type_id==='ticket'));
+  if(!methods.some(allowed))throw Error('Nenhum método selecionado está disponível nesta conta.');
+  const allowedType=(type:string)=>(c.methods!.includes('card')&&['credit_card','debit_card'].includes(type))||(c.methods!.includes('pix')&&type==='bank_transfer')||(c.methods!.includes('boleto')&&type==='ticket');
+  restrictions={excluded_payment_types:[...new Set<string>(methods.map(m=>m.payment_type_id))].filter(type=>!allowedType(type)).map(id=>({id})),excluded_payment_methods:methods.filter(m=>allowedType(m.payment_type_id)&&!allowed(m)).map(m=>({id:m.id}))};
+ }
+ const payload={...base,...(restrictions?{payment_methods:restrictions}:{})};
  const response=await transport('https://api.mercadopago.com/checkout/preferences',{method:'POST',headers:{Authorization:'Bearer '+secret.access_token,'Content-Type':'application/json',accept:'application/json'},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(15000)});
  if(!response.ok)throw Error('Resultado externo não confirmado.');
  const raw=await response.text();if(raw.length>131072)throw Error('Resposta inválida.');const d=JSON.parse(raw);

@@ -1,7 +1,7 @@
 import {mercadoDigitalSnapshot,type DigitalSnapshot} from './finance-f4.ts';
 import {openReceiver,receiverContext} from './receiver-vault.ts';
 import type {OperationsClient} from './supabase/operations.ts';
-export type DigitalConnection={org:string;unit:string;provider:string;environment:'sandbox'|'production';externalId:string;beneficiaries:string[];sealed:string};
+export type DigitalConnection={org:string;unit:string;provider:string;environment:'sandbox'|'production';externalId:string;beneficiaries:string[];sealed:string;methods?:string[];paymentsEnabled?:boolean;webhookConfigured?:boolean};
 export async function digitalConnection(client:OperationsClient,receiver:string){const r=await client.rpc('finance_digital_connection',{p_receiver:receiver});if(r.error||!r.data?.sealed)throw Error('Conexão indisponível.');return r.data as DigitalConnection}
 /** Only a read-only lookup; the caller's payload is never a financial proof. */
 export async function digitalProviderRead(c:DigitalConnection,id:string,transport:typeof fetch=fetch):Promise<DigitalSnapshot>{
