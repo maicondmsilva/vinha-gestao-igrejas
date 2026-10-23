@@ -4,6 +4,7 @@ import {f6Table,financeReports,type F6Data,type ReportKey} from './finance-f6.ts
 export type ExportBrand={organization:string;churches:string[];logo?:string};
 const moneyHeaders=new Set(['Entradas','Saídas','Resultado','Entradas realizadas','Saídas realizadas','A receber em aberto','A pagar em aberto','Bruto','Taxas efetivas','Líquido informado','Devolvido','Orçado','Realizado','Realizado − orçado','Valor','Débito','Crédito','Valor assinado','Saldo anterior','Saldo final']);
 const day=(s:string)=>/^\d{4}-\d{2}-\d{2}$/.test(s)?s.split('-').reverse().join('/'):s;
+export const pdfCell=(header:string,value:string)=>/^(Data|Competência$|Vencimento$)/.test(header)?day(value):value;
 const clean=(s:unknown)=>String(s??'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'');
 export function reportLogo(value:unknown){
  if(value==null||value==='')return undefined;
@@ -83,7 +84,7 @@ export async function financePdf(d:F6Data,key:ReportKey,brand:ExportBrand){
    const heading=()=>{const lines=cols.map(c=>wrap(section.headers[c],cw-12,bold)),h=Math.max(...lines.map(l=>l.length))*12+14;if(y-h<50)newPage();page.drawRectangle({x:margin,y:y-h,width:usable,height:h,color:paper});lines.forEach((ls,j)=>ls.forEach((s,k)=>write(s,margin+j*cw+6,y-14-k*12,bold)));y-=h;};
    heading();
    if(!section.rows.length)block('Nenhum registro corresponde aos filtros.');
-   for(const row of section.rows){const lines=cols.map(c=>wrap(day(row[c]),cw-12));let offset=0;const max=Math.max(...lines.map(l=>l.length));while(offset<max){if(y<76){newPage();heading()}const count=Math.min(max-offset,Math.max(1,Math.floor((y-52)/12)-1));lines.forEach((ls,j)=>ls.slice(offset,offset+count).forEach((s,k)=>write(s,margin+j*cw+6,y-13-k*12)));y-=count*12+10;page.drawLine({start:{x:margin,y},end:{x:width-margin,y},thickness:.4,color:rgb(.85,.89,.86)});offset+=count;}}
+   for(const row of section.rows){const lines=cols.map(c=>wrap(pdfCell(section.headers[c],row[c]),cw-12));let offset=0;const max=Math.max(...lines.map(l=>l.length));while(offset<max){if(y<76){newPage();heading()}const count=Math.min(max-offset,Math.max(1,Math.floor((y-52)/12)-1));lines.forEach((ls,j)=>ls.slice(offset,offset+count).forEach((s,k)=>write(s,margin+j*cw+6,y-13-k*12)));y-=count*12+10;page.drawLine({start:{x:margin,y},end:{x:width-margin,y},thickness:.4,color:rgb(.85,.89,.86)});offset+=count;}}
    y-=18;
   }
  }
