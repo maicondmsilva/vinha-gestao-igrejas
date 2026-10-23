@@ -9,7 +9,7 @@ export async function POST(request:Request){
  const auth=await authorizeSupabaseChurch(request,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Acesso indisponível.'},503);const a=auth.access!;
  if(!['owner','admin'].includes(a.membership.role))return json({error:'Somente o responsável autorizado pode iniciar o checkout de validação.'},403);
  let command:ReturnType<typeof checkoutCommand>,origin:string;
- try{command=checkoutCommand(JSON.parse(new TextDecoder().decode(await boundedBody(request,2048))));origin=checkoutOrigin(process.env.FINANCE_CHECKOUT_ORIGIN||'')}catch{return json({error:'Revise os dados ou a configuração do domínio de checkout.'},400)}
+ try{command=checkoutCommand(JSON.parse(new TextDecoder().decode(await boundedBody(request,2048))));origin=checkoutOrigin(process.env.FINANCE_CHECKOUT_ORIGIN||'https://app.vinhaigrejas.com.br')}catch{return json({error:'Revise os dados ou a configuração do domínio de checkout.'},400)}
  if(!a.membership.units.some(u=>u.id===command.unit))return json({error:'Igreja não autorizada.'},403);
  try{
   const client=a.client as unknown as OperationsClient;

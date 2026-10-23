@@ -17,7 +17,7 @@ export function checkoutCommand(value:unknown){
  return{unit:receiverId(d.unit),order:receiverId(d.order),name:d.name.trim()};
 }
 function enabled(c:DigitalConnection){
- if(c.provider!=='mercado_pago'||(c.environment==='production'&&process.env.FINANCE_MP_LIVE_CHECKOUT_ENABLED!=='true'))throw Error('Checkout não homologado para este ambiente.');
+ if(c.provider!=='mercado_pago'||(c.environment==='production'&&!(c.paymentsEnabled===true&&c.webhookConfigured===true&&Array.isArray(c.methods)&&c.methods.length>0&&c.methods.every(m=>['pix','boleto','card'].includes(m)))))throw Error('Checkout não habilitado para esta igreja e ambiente.');
 }
 /** Exactly one POST. The durable reservation must already be in dispatching state. */
 export async function createDigitalPreference(c:DigitalConnection,r:CheckoutReservation,origin:string,transport:typeof fetch=fetch){
@@ -26,7 +26,9 @@ export async function createDigitalPreference(c:DigitalConnection,r:CheckoutRese
  const secret=openReceiver<{access_token:string;user_id:string}>(c.sealed,receiverContext(c.org,c.unit,c.provider,c.environment));
  if(secret.user_id!==c.externalId||!secret.access_token)throw Error('Titular divergente.');
  const returns=origin+'/pagamento/retorno?pedido='+encodeURIComponent(r.order);
- const payload=mercadoPreferencePayload({orderId:r.order,title:r.title,amountCents:Number(r.gross),name:r.name,email:r.email,callback:origin+'/api/finance-digital/webhook/'+r.receiver+'?environment='+c.environment,success:returns,pending:returns,failure:returns,expiresAt:Date.parse(r.expiresAt)});
+ const base=mercadoPreferencePayload({orderId:r.order,title:r.title,amountCents:Number(r.gross),name:r.name,email:r.email,callback:origin+'/api/finance-digital/webhook/'+r.receiver+'?environment='+c.environment,success:returns,pending:returns,failure:returns,expiresAt:Date.parse(r.expiresAt)});
+ const excluded=c.methods?['account_money','credit_card','debit_card','prepaid_card','ticket','bank_transfer','atm','digital_currency'].filter(t=>!((c.methods!.includes('card')&&['credit_card','debit_card','prepaid_card'].includes(t))||(c.methods!.includes('pix')&&t==='bank_transfer')||(c.methods!.includes('boleto')&&t==='ticket'))):[];
+ const payload={...base,...(c.methods?{payment_methods:{excluded_payment_types:excluded.map(id=>({id}))}}:{})};
  const response=await transport('https://api.mercadopago.com/checkout/preferences',{method:'POST',headers:{Authorization:'Bearer '+secret.access_token,'Content-Type':'application/json',accept:'application/json'},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(15000)});
  if(!response.ok)throw Error('Resultado externo não confirmado.');
  const raw=await response.text();if(raw.length>131072)throw Error('Resposta inválida.');const d=JSON.parse(raw);

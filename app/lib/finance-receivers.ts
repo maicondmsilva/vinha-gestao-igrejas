@@ -16,7 +16,15 @@ export function receiverCommand(v:unknown){
   const units=d.units.map(receiverId),methods=d.methods.map(String);if(new Set(units).size!==units.length||new Set(methods).size!==methods.length||methods.some(m=>!receiverMethods.some(([k])=>k===m)))throw Error('Seleção inválida.');
   data={...data,version:d.version,account:receiverId(d.account),units,methods,holderConfirmed:true};
  }else if(action==='key'){
-  common.push('version','credential');if(!Number.isSafeInteger(d.version)||Number(d.version)<0||typeof d.credential!=='string'||d.credential.length<20||d.credential.length>2000||/[\s\r\n]/.test(d.credential))throw Error('Informe a chave oficial do provedor e atualize a configuração.');data={...data,version:d.version,credential:d.credential};
+  common.push('version','credential','publicKey','webhookSecret');if(!Number.isSafeInteger(d.version)||Number(d.version)<0||typeof d.credential!=='string'||d.credential.length<20||d.credential.length>2000||/[\s\r\n]/.test(d.credential))throw Error('Informe a chave oficial do provedor e atualize a configuração.');
+  for(const k of ['publicKey','webhookSecret'])if(d[k]!==undefined&&(typeof d[k]!=='string'||String(d[k]).length>2000||/\s/.test(String(d[k]))))throw Error('Revise as chaves adicionais.');
+  if(d.provider!=='mercado_pago'&&(d.publicKey||d.webhookSecret))throw Error('Campos adicionais disponíveis somente para Mercado Pago.');
+  if(d.webhookSecret&&String(d.webhookSecret).length<20)throw Error('Informe a assinatura secreta completa do webhook.');
+  if(d.webhookSecret===d.credential||d.publicKey===d.credential)throw Error('Access Token, Public Key e assinatura do webhook são credenciais diferentes.');
+  data={...data,version:d.version,credential:d.credential,publicKey:d.publicKey||'',webhookSecret:d.webhookSecret||''};
+ }else if(action==='validate'||action==='activate'){
+  common.push('version');if(!Number.isSafeInteger(d.version)||Number(d.version)<1||provider!=='mercado_pago')throw Error('Atualize a conexão Mercado Pago.');data.version=d.version;
+  if(action==='activate'){common.push('confirmed');if(d.confirmed!==true)throw Error('Confirme a ativação dos recebimentos.');data.confirmed=true;}
  }else if(['revoke','refresh','connect','open'].includes(action)){
   if(action==='revoke'||action==='refresh'){common.push('version');if(!Number.isSafeInteger(d.version)||Number(d.version)<1)throw Error('Atualize a conexão.');data.version=d.version}
  }else throw Error('Ação inválida.');
