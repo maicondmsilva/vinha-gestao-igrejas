@@ -54,6 +54,8 @@ export default defineConfig(async ({command}) => {
   const { cloudflare } = isVercelBuild ? { cloudflare: null } : await import('@cloudflare/vite-plugin');
 
   return {
+    // ExcelJS is Node-only; do not rewrite its CommonJS ZIP implementation in RSC dev.
+    ssr: localPreview ? { external: ['exceljs'] } : undefined,
     server: isCodexSeatbeltSandbox
       ? { watch: { useFsEvents: false, usePolling: true } }
       : undefined,
