@@ -27,8 +27,17 @@ export async function createDigitalPreference(c:DigitalConnection,r:CheckoutRese
  if(secret.user_id!==c.externalId||!secret.access_token)throw Error('Titular divergente.');
  const returns=origin+'/pagamento/retorno?pedido='+encodeURIComponent(r.order);
  const base=mercadoPreferencePayload({orderId:r.order,title:r.title,amountCents:Number(r.gross),name:r.name,email:r.email,callback:origin+'/api/finance-digital/webhook/'+r.receiver+'?environment='+c.environment,success:returns,pending:returns,failure:returns,expiresAt:Date.parse(r.expiresAt)});
- const excluded=c.methods?['account_money','credit_card','debit_card','prepaid_card','ticket','bank_transfer','atm','digital_currency'].filter(t=>!((c.methods!.includes('card')&&['credit_card','debit_card','prepaid_card'].includes(t))||(c.methods!.includes('pix')&&t==='bank_transfer')||(c.methods!.includes('boleto')&&t==='ticket'))):[];
- const payload={...base,...(c.methods?{payment_methods:{excluded_payment_types:excluded.map(id=>({id}))}}:{})};
+ let restrictions:{excluded_payment_methods:{id:string}[]}|undefined;
+ if(c.methods){
+  const methodsResponse=await transport('https://api.mercadopago.com/v1/payment_methods',{method:'GET',headers:{Authorization:'Bearer '+secret.access_token,accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(15000)});
+  if(!methodsResponse.ok)throw Error('Métodos não confirmados pelo provedor.');
+  const raw=await methodsResponse.text();if(raw.length>262144)throw Error('Métodos inválidos.');const methods=JSON.parse(raw);
+  if(!Array.isArray(methods)||!methods.length||methods.length>500||methods.some(m=>!m||typeof m.id!=='string'||!/^[a-zA-Z0-9_-]{1,100}$/.test(m.id)||typeof m.payment_type_id!=='string'||typeof m.status!=='string'))throw Error('Métodos inválidos.');
+  const allowed=(m:{id:string;payment_type_id:string;status:string})=>m.status==='active'&&((c.methods!.includes('card')&&['credit_card','debit_card'].includes(m.payment_type_id))||(c.methods!.includes('pix')&&m.id==='pix')||(c.methods!.includes('boleto')&&m.payment_type_id==='ticket'));
+  if(!methods.some(allowed))throw Error('Nenhum método selecionado está disponível nesta conta.');
+  restrictions={excluded_payment_methods:methods.filter(m=>!allowed(m)).map(m=>({id:m.id}))};
+ }
+ const payload={...base,...(restrictions?{payment_methods:restrictions}:{})};
  const response=await transport('https://api.mercadopago.com/checkout/preferences',{method:'POST',headers:{Authorization:'Bearer '+secret.access_token,'Content-Type':'application/json',accept:'application/json'},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(15000)});
  if(!response.ok)throw Error('Resultado externo não confirmado.');
  const raw=await response.text();if(raw.length>131072)throw Error('Resposta inválida.');const d=JSON.parse(raw);
