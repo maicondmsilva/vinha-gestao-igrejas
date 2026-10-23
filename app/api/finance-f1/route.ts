@@ -10,7 +10,7 @@ async function run(request:Request,write:boolean){
  try{
   const client=access.client as unknown as OperationsClient;
   if(!write&&new URL(request.url).searchParams.get('action')==='bootstrap'){
-   const units=[];for(const u of access.membership.units){const check=await client.rpc('finance_f1',{p_org:access.membership.organization_id,p_units:[u.id],p_action:'choices',p_data:{search:'__'}});if(check.error&&check.error.code!=='42501')return failure(check.error.code);if(!check.error)units.push(u)}
+   const units=[];for(let start=0;start<access.membership.units.length;start+=4){const batch=access.membership.units.slice(start,start+4);const results=await Promise.all(batch.map(u=>client.rpc('finance_f1',{p_org:access.membership.organization_id,p_units:[u.id],p_action:'choices',p_data:{search:'__'}})));for(let i=0;i<results.length;i++){const check=results[i];if(check.error&&check.error.code!=='42501')return failure(check.error.code);if(!check.error)units.push(batch[i])}}
    return json({units,scope:access.userId+':'+access.membership.organization_id,canShare:['owner','admin'].includes(access.membership.role)});
   }
   let action:string,units:string[],data:unknown;
@@ -22,5 +22,6 @@ async function run(request:Request,write:boolean){
   return json(result.data);
  }catch{return failure()}
 }
-export const GET=(r:Request)=>run(r,false);
-export const POST=(r:Request)=>run(r,true);
+async function timed(r:Request,write:boolean){const started=performance.now(),response=await run(r,write);response.headers.set('Server-Timing',`finance;dur=${Math.round(performance.now()-started)}`);return response}
+export const GET=(r:Request)=>timed(r,false);
+export const POST=(r:Request)=>timed(r,true);

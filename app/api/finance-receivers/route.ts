@@ -12,7 +12,7 @@ export async function GET(r:Request){
  const auth=await authorizeSupabaseChurch(r,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Acesso indisponível.'},503);const a=auth.access!;
  try{const p=new URL(r.url).searchParams;if([...p.keys()].some(k=>!['unit','tenant'].includes(k)||p.getAll(k).length!==1))return json({error:'Filtro inválido.'},400);const unit=receiverId(p.get('unit'));if(!a.membership.units.some(u=>u.id===unit))return json({error:'Igreja não autorizada.'},403);
  const result=await (a.client as unknown as OperationsClient).rpc('finance_receiver_settings',{p_org:a.membership.organization_id,p_unit:unit,p_action:'list',p_data:{}});if(result.error)return failure(result.error.code);
- return json({...result.data,connections:{sandbox:ready('sandbox'),production:ready('production'),asaas:receiverVaultConfigured()&&Boolean(process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY)},paymentMethodsEnabled:[],openingMode:'official'});
+ return json({...result.data,security:{vaultConfigured:receiverVaultConfigured(),serverConfigured:Boolean(process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY)},connections:{sandbox:ready('sandbox'),production:ready('production'),asaas:receiverVaultConfigured()&&Boolean(process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY)},paymentMethodsEnabled:[],openingMode:'official'});
  }catch{return json({error:'Não foi possível carregar as contas recebedoras.'},503)}
 }
 function ready(e:'sandbox'|'production'){return receiverVaultConfigured()&&Boolean(process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY)&&mercadoReceiverConfigured(e)}
@@ -26,6 +26,7 @@ export async function POST(r:Request){
  try{
   if(c.action==='key'){
    if(!receiverVaultConfigured())return json({error:'O cofre de contas recebedoras ainda não foi configurado pela equipe Vinha.'},503);
+   if(!process.env.SUPABASE_SECRET_KEY&&!process.env.SUPABASE_SERVICE_ROLE_KEY)return json({error:'O cofre está configurado, mas falta a credencial privada do servidor na Vercel. A equipe Vinha precisa concluir essa configuração antes de salvar tokens.'},503);
    const access=await(a.client as unknown as OperationsClient).rpc('finance_receiver_settings',{p_org:org,p_unit:c.unit,p_action:'list',p_data:{}});
    if(access.error)return failure(access.error.code);
    if(access.data?.canManage!==true)return failure('42501');
