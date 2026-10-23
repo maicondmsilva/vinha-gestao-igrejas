@@ -4,6 +4,7 @@
     "incremental": false
   },
   "include": [
+    "app/api/finance-f6/route.ts",
     "next-env.d.ts",
     "env.d.ts",
     "db/env.d.ts",
