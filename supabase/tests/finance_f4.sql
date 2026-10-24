@@ -1,4 +1,7 @@
 begin;
+-- Fixtures must use the same business date as digital postings, including
+-- the UTC/Brazil midnight boundary on CI. This changes no application rule.
+set local time zone 'America/Sao_Paulo';
 create extension if not exists pgtap with schema extensions;
 select no_plan();
 insert into auth.users(id,instance_id,aud,role,email,email_confirmed_at,created_at,updated_at) values('af400000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','f4-owner@example.test',now(),now(),now());
@@ -100,6 +103,8 @@ update private.finance_receivers set status='configured' where id='ff400000-0000
 update auth.users set email='changed-checkout@example.test' where id='af400000-0000-4000-8000-000000000001';
 select throws_ok($$select private.finance_checkout_delivery(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,current_setting('f4.attempt')::uuid,'claim','{}')$$,'42501',null,'troca de e-mail invalida autorização do checkout');
 -- Beneficiary earmarking must never fabricate bank cash at the campus.
+-- Independent scenario: do not inherit the deliberately closed test period.
+update public.church_ledger_periods set closed_through='-infinity' where organization_id=current_setting('f4.org')::uuid;
 insert into public.organization_units(id,organization_id,name,slug,unit_type,parent_unit_id) values('cf400000-0000-4000-8000-000000000002',current_setting('f4.org')::uuid,'Campus F4 fictício','campus-f4','campus',current_setting('f4.unit')::uuid);
 update private.finance_receivers set beneficiary_units=array_append(beneficiary_units,'cf400000-0000-4000-8000-000000000002'::uuid) where id='ff400000-0000-4000-8000-000000000001';
 set local role authenticated;
