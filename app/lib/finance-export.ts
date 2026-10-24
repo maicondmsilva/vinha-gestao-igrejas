@@ -1,5 +1,5 @@
 import {PDFDocument,StandardFonts,rgb,type PDFFont,type PDFPage} from 'pdf-lib';
-import {f6Table,financeReports,type F6Data,type ReportKey} from './finance-f6.ts';
+import {f6Table,selectReportColumns,financeReports,type F6Data,type ReportKey} from './finance-f6.ts';
 
 export type ExportBrand={organization:string;churches:string[];logo?:string};
 const moneyHeaders=new Set(['Entradas','Saídas','Resultado','Entradas realizadas','Saídas realizadas','A receber em aberto','A pagar em aberto','Bruto','Taxas efetivas','Líquido informado','Devolvido','Orçado','Realizado','Realizado − orçado','Valor','Débito','Crédito','Valor assinado','Saldo anterior','Saldo final']);
@@ -25,7 +25,7 @@ export function exportCell(header:string,value:string):string|number|Date{
  if(/^(Data|Competência$|Vencimento$)/.test(header)&&/^\d{4}-\d{2}-\d{2}$/.test(value))return new Date(value+'T12:00:00Z');
  return clean(value);
 }
-function sections(d:F6Data,key:ReportKey){const table=f6Table(d,key);return[
+function sections(d:F6Data,key:ReportKey,columns?:number[]){const table=selectReportColumns(f6Table(d,key),columns);return[
  ...(d.balances?.length&&['book','account','accountability'].includes(key)?[{title:'Saldos por conta (caixa, sem filtros de classificação)',headers:['Igreja','Conta','Saldo anterior','Saldo final'],rows:d.balances.map(b=>[b.unitName,b.name,decimal(b.opening),decimal(b.closing)])}]:[]),
  {title:financeReports.find(([id])=>id===key)![1],...table}
  ];}
@@ -45,10 +45,11 @@ export function reportContext(d:F6Data,brand:ExportBrand){
   'Emitido em: '+new Date(d.generatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' (Brasília)',
   'Registro de preparação: '+(d.exportId||'não informado')];
 }
-export async function financeXlsx(d:F6Data,key:ReportKey,brand:ExportBrand){
+export async function financeXlsx(d:F6Data,key:ReportKey,brand:ExportBrand,columns?:number[]){
  const {default:ExcelJS}=await import('exceljs');
  const wb=new ExcelJS.Workbook();wb.creator='Vinha';wb.created=new Date(d.generatedAt);wb.title=financeReports.find(([id])=>id===key)![1];
- for(const [i,section]of sections(d,key).entries()){
+ const reportSections=sections(d,key,columns);
+ for(const [i,section]of reportSections.entries()){
   const ws=wb.addWorksheet(i===0&&sections(d,key).length>1?'Saldos':'Relatório',{properties:{defaultRowHeight:22},pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0},headerFooter:{oddFooter:'Vinha | Página &P de &N'}});
   ws.columns=section.headers.map(h=>({width:moneyHeaders.has(h)?22:h.includes('Descrição')||h==='Histórico'?44:27}));
   const title=ws.addRow([section.title]);title.height=34;title.font={name:'Calibri',size:18,bold:true,color:{argb:'FF214F3C'}};ws.mergeCells(1,1,1,section.headers.length);
@@ -60,33 +61,41 @@ export async function financeXlsx(d:F6Data,key:ReportKey,brand:ExportBrand){
  }
  return new Uint8Array(await wb.xlsx.writeBuffer());
 }
-export async function financePdf(d:F6Data,key:ReportKey,brand:ExportBrand){
+// Keep every column together. Wider ledgers use larger landscape paper rather
+// than horizontal panels or an unreadably small font.
+export function financePdfLayout(headers:string[]){
+ const widths=headers.map(h=>h==='Número'||h==='Movimentos'?54:/^(Data|Competência$|Vencimento$)/.test(h)?70:moneyHeaders.has(h)?90:/Descrição|Histórico/.test(h)?160:/Igreja|Conta|Contribuinte|Referência|Metadados/.test(h)?105:76);
+ const required=widths.reduce((a,b)=>a+b,0)+60;
+ const [width,height]=[[842,595],[1191,842],[1684,1191],[2384,1684]].find(([w])=>w>=required)||[Math.ceil(required),1684];
+ return {width,height,fontSize:headers.length<=5?13:headers.length<=10?12:11,widths:widths.map(w=>w*(width-60)/(required-60))};
+}
+export async function financePdf(d:F6Data,key:ReportKey,brand:ExportBrand,columns?:number[]){
  const doc=await PDFDocument.create(),font=await doc.embedFont(StandardFonts.Helvetica),bold=await doc.embedFont(StandardFonts.HelveticaBold);
  const rawLogo=reportLogo(brand.logo),logo=rawLogo?await doc.embedPng(rawLogo):null;
- const ink=rgb(.12,.28,.21),muted=rgb(.35,.43,.38),paper=rgb(.94,.97,.95),width=842,height=595,margin=30,usable=width-margin*2;
+ const reportSections=sections(d,key,columns),layout=financePdfLayout(selectReportColumns(f6Table(d,key),columns).headers);
+ const ink=rgb(.12,.28,.21),muted=rgb(.35,.43,.38),paper=rgb(.94,.97,.95),{width,height,fontSize}=layout,lineHeight=fontSize+3,margin=30,usable=width-margin*2;
  // WinAnsi includes Portuguese. Explicitly refuse unsupported scripts, never erase names silently.
  const safe=(s:string)=>{const text=clean(s).replace(/[\u2010-\u2015]/g,'-').replaceAll('×','x').replaceAll('−','-');try{font.encodeText(text)}catch{throw Error('Este PDF contém caracteres não suportados. Exporte em Excel para preservar o texto integral.')}return text};
- const wrap=(text:string,max:number,f:PDFFont=font,size=9)=>{const lines:string[]=[];let line='';for(const char of safe(text)){if(char==='\n'||f.widthOfTextAtSize(line+char,size)>max){lines.push(line);line=char==='\n'?'':char}else line+=char}lines.push(line);return lines};
+ const wrap=(text:string,max:number,f:PDFFont=font,size=fontSize)=>{const lines:string[]=[];let line='';for(const char of safe(text)){if(char==='\n'){lines.push(line);line='';continue}if(f.widthOfTextAtSize(line+char,size)>max){const space=line.lastIndexOf(' ');if(space>0){lines.push(line.slice(0,space));line=line.slice(space+1)+char}else{lines.push(line);line=char}}else line+=char}lines.push(line);return lines};
  let page!:PDFPage,y=0;
- const write=(text:string,x:number,at:number,f=font,size=9,color=ink)=>page.drawText(safe(text),{x,y:at,font:f,size,color});
+ const write=(text:string,x:number,at:number,f=font,size=fontSize,color=ink)=>page.drawText(safe(text),{x,y:at,font:f,size,color});
  const newPage=()=>{if(doc.getPageCount()>=2000)throw Error('PDF muito extenso. Reduza o período ou exporte em Excel.');page=doc.addPage([width,height]);y=height-margin;if(logo){const scaled=logo.scale(Math.min(92/logo.width,42/logo.height));page.drawImage(logo,{x:margin,y:y-scaled.height,width:scaled.width,height:scaled.height})}else{page.drawRectangle({x:margin,y:y-38,width:34,height:34,color:ink});write('V',margin+9,y-29,bold,21,rgb(1,1,1));write('Vinha',margin+42,y-17,bold,15);write('Gestão que frutifica',margin+42,y-31,font,7)}const x=margin+145;const nameLines=wrap(brand.organization,usable-145,bold,14);for(const line of nameLines){write(line,x,y-14,bold,14);y-=17}y-=35;};
  newPage();
- const block=(text:string,size=9,f=font)=>{for(const line of wrap(text,usable,f,size)){if(y<55)newPage();write(line,margin,y,f,size);y-=size+5}y-=4};
+ const block=(text:string,size=fontSize,f=font)=>{for(const line of wrap(text,usable,f,size)){if(y<55)newPage();write(line,margin,y,f,size);y-=size+5}y-=4};
  block(financeReports.find(([id])=>id===key)![1],16,bold);
  for(const text of reportContext(d,brand).slice(1))block(text);
- block(f6Table(d,key).notice,8);
- for(const section of sections(d,key)){
-  // Wide ledger is split into column panels, repeating entry number and church.
-  const panels=section.headers.length>8?Array.from({length:Math.ceil((section.headers.length-2)/4)},(_,n)=>[0,1,...Array.from({length:4},(_,j)=>2+n*4+j).filter(j=>j<section.headers.length)]):[section.headers.map((_,j)=>j)];
-  for(const [panelIndex,cols]of panels.entries()){
-   if(y<130)newPage();block(section.title+(panels.length>1?` - parte ${panelIndex+1}/${panels.length}`:''),11,bold);
-   const cw=usable/cols.length;
-   const heading=()=>{const lines=cols.map(c=>wrap(section.headers[c],cw-12,bold)),h=Math.max(...lines.map(l=>l.length))*12+14;if(y-h<50)newPage();page.drawRectangle({x:margin,y:y-h,width:usable,height:h,color:paper});lines.forEach((ls,j)=>ls.forEach((s,k)=>write(s,margin+j*cw+6,y-14-k*12,bold)));y-=h;};
+ block(f6Table(d,key).notice,10);
+ for(const section of reportSections){
+   if(y<130)newPage();block(section.title,11,bold);
+   const preferred=financePdfLayout(section.headers).widths,total=preferred.reduce((a,b)=>a+b,0),widths=preferred.map(w=>w*usable/total),xs=widths.map((_,j)=>margin+widths.slice(0,j).reduce((a,b)=>a+b,0));
+   const heading=()=>{const lines=section.headers.map((h,j)=>wrap(h,widths[j]-12,bold)),h=Math.max(...lines.map(l=>l.length))*lineHeight+14;if(y-h<80)newPage();page.drawRectangle({x:margin,y:y-h,width:usable,height:h,color:paper});lines.forEach((ls,j)=>ls.forEach((s,k)=>write(s,xs[j]+6,y-16-k*lineHeight,bold)));y-=h;};
    heading();
    if(!section.rows.length)block('Nenhum registro corresponde aos filtros.');
-   for(const row of section.rows){const lines=cols.map(c=>wrap(pdfCell(section.headers[c],row[c]),cw-12));let offset=0;const max=Math.max(...lines.map(l=>l.length));while(offset<max){if(y<76){newPage();heading()}const count=Math.min(max-offset,Math.max(1,Math.floor((y-52)/12)-1));lines.forEach((ls,j)=>ls.slice(offset,offset+count).forEach((s,k)=>write(s,margin+j*cw+6,y-13-k*12)));y-=count*12+10;page.drawLine({start:{x:margin,y},end:{x:width-margin,y},thickness:.4,color:rgb(.85,.89,.86)});offset+=count;}}
+   for(const row of section.rows){const lines=section.headers.map((h,j)=>wrap(pdfCell(h,row[j]),widths[j]-12));let offset=0;const max=Math.max(...lines.map(l=>l.length));
+    // Move ordinary rows intact; only a cell taller than a full page continues.
+    if(y-(max*lineHeight+10)<52){newPage();heading()}
+    while(offset<max){if(y<80){newPage();heading()}const count=Math.min(max-offset,Math.max(1,Math.floor((y-62)/lineHeight)));lines.forEach((ls,j)=>ls.slice(offset,offset+count).forEach((s,k)=>{const x=moneyHeaders.has(section.headers[j])?xs[j]+widths[j]-6-font.widthOfTextAtSize(s,fontSize):xs[j]+6;write(s,x,y-15-k*lineHeight)}));y-=count*lineHeight+10;page.drawLine({start:{x:margin,y},end:{x:width-margin,y},thickness:.4,color:rgb(.85,.89,.86)});offset+=count;}}
    y-=18;
-  }
  }
  doc.getPages().forEach((p,i)=>{p.drawLine({start:{x:margin,y:35},end:{x:width-margin,y:35},thickness:.6,color:rgb(.76,.81,.77)});p.drawText('Vinha - Gestão que frutifica',{x:margin,y:20,font:bold,size:8,color:ink});p.drawText(`Página ${i+1} de ${doc.getPageCount()}`,{x:width-margin-85,y:20,font,size:8,color:muted})});doc.setTitle(financeReports.find(([id])=>id===key)![1]);doc.setAuthor(brand.organization);
  return doc.save();
