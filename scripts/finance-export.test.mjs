@@ -21,6 +21,14 @@ test('todos os relatórios geram PDF e Excel e mantêm restrições individuais'
 test('PDF repete páginas, conserva logo fornecida e recusa perda silenciosa de caracteres',async()=>{const logo='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aSioAAAAASUVORK5CYII=';const d={...fixture,rows:Array.from({length:100},(_,i)=>({...fixture.rows[0],code:String(i+1),description:'Encontro fictício com descrição completa '.repeat(8)}))};assert.ok((await PDFDocument.load(await financePdf(d,'book',{...brand,logo}))).getPageCount()>5);await assert.rejects(financePdf({...fixture,rows:[{...fixture.rows[0],description:'漢字'}]},'book',brand),/caracteres/);});
 test('contexto identifica igrejas e base sem expor UUID de filtros',()=>{const text=reportContext({...fixture,filters:{...fixture.filters,account:'a'}},brand).join(' ');assert.match(text,/Banco fictício/);assert.match(text,/Caixa/);assert.ok(!text.includes(unit));});
 
+test('PDF omite registro técnico sem remover identificação interna nem contexto útil',()=>{
+ const text=reportContext(fixture,brand,false).join(' ');
+ assert.ok(!text.includes('Registro de preparação'));assert.ok(!text.includes(fixture.exportId));
+ assert.match(text,/Sede fictícia/);assert.match(text,/Período:/);assert.match(text,/Emitido em:/);
+ assert.ok(reportContext(fixture,brand).join(' ').includes(fixture.exportId));assert.equal(fixture.exportId,'preparacao-ficticia');
+ const source=readFileSync(new URL('../app/lib/finance-export.ts',import.meta.url),'utf8');assert.match(source,/reportContext\(d,brand,false\)\.slice\(1\)/);
+});
+
 test('PDF mantém todas as colunas juntas em paisagem, sem painéis horizontais',async()=>{
  for(const [key]of financeReports){const {headers}=f6Table(fixture,key),layout=financePdfLayout(headers);
   assert.equal(layout.widths.length,headers.length);assert.ok(layout.width>layout.height);assert.ok(layout.fontSize>=11);
