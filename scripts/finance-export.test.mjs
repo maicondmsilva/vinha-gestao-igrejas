@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import ExcelJS from 'exceljs';
 import {PDFDocument} from 'pdf-lib';
 import {readFileSync} from 'node:fs';
-import {financeXlsx,financePdf,reportLogo,exportCell,reportContext,pdfCell} from '../app/lib/finance-export.ts';
-import {financeReports,f6Query} from '../app/lib/finance-f6.ts';
+import {financeXlsx,financePdf,financePdfLayout,reportLogo,exportCell,reportContext,pdfCell} from '../app/lib/finance-export.ts';
+import {financeReports,f6Query,f6Table} from '../app/lib/finance-f6.ts';
 const unit='cf600000-0000-4000-8000-000000000001';
 export const fixture={rows:[{code:'0001',unit,unitName:'Sede fictícia',date:'2026-09-15',cashDate:'2026-09-15',due:'2026-09-16',competence:'2026-09-01',amount:'10000',kind:'income',basis:'actual',status:'posted',description:'Oferta de gratidão',account:'a',accountName:'Banco fictício',category:'c',categoryName:'Doações',subcategoryName:null,centerName:null,party:'=HYPERLINK("https://invalid")',method:'pix',reconciled:false,metadataMissing:false}],digital:[],budgets:[],bankPending:[],balances:[{unit,unitName:'Sede fictícia',account:'a',name:'Banco fictício',opening:'-350',closing:'9650'}],accounting:[],purposes:[],responsibles:[],individualAccess:true,generatedAt:'2026-10-23T18:00:00Z',exportId:'preparacao-ficticia',filters:{from:'2026-09-01',to:'2026-09-30',dateBy:'cash'},units:[unit]};
 export const brand={organization:'Ministério fictício',churches:['Sede fictícia']};
@@ -17,3 +17,16 @@ test('Excel salvo mantém estilos, filtros, painéis, saldos e todos os registro
 test('todos os relatórios geram PDF e Excel e mantêm restrições individuais',async()=>{for(const[key]of financeReports){const pdf=await PDFDocument.load(await financePdf(fixture,key,brand));assert.ok(pdf.getPageCount()>0,key);assert.ok((await financeXlsx(fixture,key,brand)).length>1000,key)}await assert.rejects(financePdf({...fixture,individualAccess:false},'members',brand));await assert.rejects(financeXlsx({...fixture,individualAccess:false},'members',brand));});
 test('PDF repete páginas, conserva logo fornecida e recusa perda silenciosa de caracteres',async()=>{const logo='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aSioAAAAASUVORK5CYII=';const d={...fixture,rows:Array.from({length:100},(_,i)=>({...fixture.rows[0],code:String(i+1),description:'Encontro fictício com descrição completa '.repeat(8)}))};assert.ok((await PDFDocument.load(await financePdf(d,'book',{...brand,logo}))).getPageCount()>5);await assert.rejects(financePdf({...fixture,rows:[{...fixture.rows[0],description:'漢字'}]},'book',brand),/caracteres/);});
 test('contexto identifica igrejas e base sem expor UUID de filtros',()=>{const text=reportContext({...fixture,filters:{...fixture.filters,account:'a'}},brand).join(' ');assert.match(text,/Banco fictício/);assert.match(text,/Caixa/);assert.ok(!text.includes(unit));});
+
+test('PDF mantém todas as colunas juntas em paisagem, sem painéis horizontais',async()=>{
+ for(const [key]of financeReports){const {headers}=f6Table(fixture,key),layout=financePdfLayout(headers);
+  assert.equal(layout.widths.length,headers.length);assert.ok(layout.width>layout.height);
+  assert.ok(Math.abs(layout.widths.reduce((a,b)=>a+b,0)-(layout.width-60))<.001);
+  assert.ok(layout.widths.every(w=>w>=43));
+  const pdf=await PDFDocument.load(await financePdf(fixture,key,brand));
+  for(const page of pdf.getPages()){assert.equal(page.getWidth(),layout.width);assert.equal(page.getHeight(),layout.height)}
+ }
+ const pdf=await PDFDocument.load(await financePdf(fixture,'book',brand));assert.equal(pdf.getPageCount(),1);
+ const source=readFileSync(new URL('../app/lib/finance-export.ts',import.meta.url),'utf8');
+ assert.ok(!source.includes('panelIndex'));assert.ok(!source.includes(' - parte '));
+});
