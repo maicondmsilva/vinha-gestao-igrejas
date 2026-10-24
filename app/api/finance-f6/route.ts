@@ -13,6 +13,10 @@ async function run(r:Request,write:boolean){const auth=await authorizeSupabaseCh
  if(!Array.isArray(d?.rows))return json({error:'Relatório indisponível.'},503);
  let logo:string|undefined;
  try{if(r.method==='POST'){const body=JSON.parse(new TextDecoder().decode(await boundedBody(r,410000)));if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(k=>k!=='logo'))throw Error('Revise o padrão de exportação.');reportLogo(body.logo);logo=body.logo||undefined;}}catch(e){return json({error:e instanceof Error?e.message:'Logo inválida.'},400)}
+ const branding=await(a.client as unknown as OperationsClient).rpc('church_branding_read',{p_org:a.membership.organization_id});
+ if(branding.error)return json({error:'Não foi possível confirmar a identidade do relatório. Tente novamente.'},503);
+ const canonical=branding.data as Record<string,string|null>;
+ logo=(c.units.length===1?canonical[c.units[0]]:null)||canonical[a.membership.organization_id]||undefined;
  const brand={organization:a.membership.organization_name,churches:c.units.map(id=>a.membership.units.find(u=>u.id===id)!.name),logo};
  try{selectReportColumns(f6Table(d,c.report),c.columns)}catch{return json({error:'Seleção de colunas inválida.'},400)}
  try{const bytes=c.format==='pdf'?await financePdf(d,c.report,brand,c.columns):await financeXlsx(d,c.report,brand,c.columns);return new Response(bytes as BodyInit,{headers:{'Content-Type':c.format==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':`attachment; filename="vinha-${c.report}-${c.data.from}-${c.data.to}.${c.format}"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}})}catch(e){return json({error:e instanceof Error&&/PDF|logo|Logo/.test(e.message)?e.message:'Não foi possível gerar o arquivo. Nenhum arquivo parcial foi emitido.'},422)}

@@ -5,6 +5,7 @@ import PaymentSettings from './PaymentSettings';
 import SecurityAccessCenter from './SecurityAccessCenter';
 import './configuration.css';
 import { releaseCatalog } from './lib/release-availability';
+import OrganizationSettings from './OrganizationSettings';
 
 type Church={name:string;app:string;primary:string;accent:string};
 type Section='overview'|'subscription'|'brand'|'payments'|'documents'|'integrations'|'notifications'|'security';
@@ -19,7 +20,10 @@ const sections=[
  {id:'security',icon:'⌾',title:'Segurança e privacidade',copy:'Sessões, retenção, consentimentos e auditoria.'},
 ] as const;
 
-export default function ConfigurationCenter({church}:{church:Church;setChurch:(church:Church)=>void}){
+export default function ConfigurationCenter(_props:{church:Church;setChurch:(church:Church)=>void}){
+ return <OrganizationSettings/>;
+}
+function PreviousConfigurationOverview({church}:{church:Church;setChurch:(church:Church)=>void}){
  const {t}=useMinistryLanguage();
  return <div className="content config-center">
   <div className="page-head"><div><p className="section-over">CONFIGURAÇÕES DO MINISTÉRIO</p><h1>{t('configuracoes')}</h1><p>{church.name}</p></div></div>
