@@ -20,7 +20,7 @@ test('contexto identifica igrejas e base sem expor UUID de filtros',()=>{const t
 
 test('PDF mantém todas as colunas juntas em paisagem, sem painéis horizontais',async()=>{
  for(const [key]of financeReports){const {headers}=f6Table(fixture,key),layout=financePdfLayout(headers);
-  assert.equal(layout.widths.length,headers.length);assert.ok(layout.width>layout.height);
+  assert.equal(layout.widths.length,headers.length);assert.ok(layout.width>layout.height);assert.ok(layout.fontSize>=11);
   assert.ok(Math.abs(layout.widths.reduce((a,b)=>a+b,0)-(layout.width-60))<.001);
   assert.ok(layout.widths.every(w=>w>=43));
   const pdf=await PDFDocument.load(await financePdf(fixture,key,brand));
