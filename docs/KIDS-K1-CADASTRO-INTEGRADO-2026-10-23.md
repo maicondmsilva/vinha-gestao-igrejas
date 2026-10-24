@@ -32,7 +32,7 @@ Recepção/professor/supervisor terão permissões específicas junto das salas/
 
 ## Arquitetura
 
-Migração `20261024020252_kids_identity_foundation.sql`: identificador UTC gerado pela CLI; entrega em 23/10 no horário local.
+Migração `20261024024447_kids_identity_foundation.sql`: identificador UTC realmente registrado na aplicação pelo Supabase; entrega em 23/10 no horário local. O arquivo inicialmente preparado pela CLI (`20261024020252`) foi renomeado para corresponder ao registro aplicado, sem modificar o histórico do banco ou reaplicar a estrutura.
 
 Tabelas privadas com RLS e sem privilégios diretos de visitantes/autenticados/serviço: `kids_profiles`, `kids_guardians`, `kids_care`, `kids_history`, `kids_requests`. Implementação privilegiada fica no esquema privado com autenticação/autorização explícitas. Interfaces públicas são invocadoras; a API deriva o ministério da sessão, não do navegador.
 
