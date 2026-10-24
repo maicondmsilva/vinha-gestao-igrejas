@@ -1,7 +1,7 @@
 import {spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 if(process.argv[2]!=='--local-synthetic')throw Error('Somente preparação do banco Docker local.');
-const migration=readFileSync('supabase/migrations/20261024020252_kids_identity_foundation.sql','utf8')
+const migration=readFileSync('supabase/migrations/20261024024447_kids_identity_foundation.sql','utf8')
  .replaceAll('create table ','create table if not exists ').replaceAll('create index ','create index if not exists ')
  .replaceAll('create function ','create or replace function ')
  .replace('create index if not exists kids_history_person_scope','alter table private.kids_history add column if not exists person_id uuid;\ncreate index if not exists kids_history_person_scope')
