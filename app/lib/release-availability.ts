@@ -9,7 +9,7 @@ export const releaseCatalog = [
   { id: 'configuracoes', title: 'Configurações', status: 'validation', detail: 'Somente os acessos indicados como disponíveis nesta etapa.' },
   { id: 'familias', title: 'Famílias e termos', status: 'development', detail: 'Vínculos, consentimentos e PDFs aguardam migração e validação de acesso.' },
   { id: 'aplicativo', title: 'Aplicativo do membro', status: 'development', detail: 'Aplicativos personalizados ainda não estão publicados nas lojas.' },
-  { id: 'kids', title: 'Área Kids', status: 'development', detail: 'Responsáveis, salas e retirada segura aguardam validação ponta a ponta.' },
+  { id: 'kids', title: 'Área Kids', status: 'validation', detail: 'K1: cadastro integrado a Pessoas, revisão de visitantes, responsáveis e autorizações com histórico, informações restritas de cuidado. Entrada, retirada presencial, salas, etiquetas e aplicativo nativo não estão liberados nesta etapa.' },
   { id: 'usuarios', title: 'Usuários e permissões da igreja', status: 'validation', detail: 'Equipe e convites no Supabase, sujeitos à governança de papéis; envio por e-mail ainda não homologado.' },
   { id: 'eventos', title: 'Cultos e eventos', status: 'development', detail: 'Inscrições, ingressos e recebimentos ainda não liberados para operação real.' },
   { id: 'celulas', title: 'Células', status: 'ready', detail: 'Cadastro, redes e hierarquia, participantes, visitantes, indicações, transferências, estudos com arquivos privados, chamada, indicadores por rede e consolidação das unidades autorizadas do mesmo ministério. Avisos internos com rotina própria. E-mail e WhatsApp dependem de consentimento, configuração do canal e homologação de entrega; não são declarados ativos sem essa validação.' },

@@ -4,6 +4,8 @@
     "incremental": false
   },
   "include": [
+    "app/KidsFoundation.tsx",
+    "app/api/kids-foundation/route.ts",
     "app/api/finance-f6/route.ts",
     "next-env.d.ts",
     "env.d.ts",

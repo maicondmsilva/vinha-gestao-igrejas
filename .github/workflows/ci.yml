@@ -63,6 +63,7 @@ jobs:
 
       - name: Validar regras de avisos financeiros
         run: |
+          node --experimental-strip-types --test scripts/kids-foundation.test.mjs
           node --experimental-strip-types --test scripts/finance-records.test.mjs
           node --experimental-strip-types --test scripts/finance-f5.test.mjs scripts/finance-f5-route.test.mjs
           node --experimental-strip-types --test scripts/finance-f6.test.mjs scripts/finance-f6-route.test.mjs
@@ -109,6 +110,7 @@ jobs:
           pnpm run test:governance-concurrency
           node scripts/ledger-concurrency.mjs
           node scripts/cell-directory-concurrency.mjs
+          node scripts/kids-foundation-concurrency.mjs
           node scripts/cell-operations-concurrency.mjs
           node scripts/cell-visits-concurrency.mjs
           node scripts/cell-networks-concurrency.mjs
