@@ -11,6 +11,28 @@ export function f6Budget(value:unknown){if(!value||typeof value!=='object'||Arra
 const names:Record<string,string>={income:'Recebimento',expense:'Pagamento',transfer:'Transferência',opening:'Saldo inicial',pending:'Pendente',posted:'Realizado',reversed:'Estornado',approved:'Aprovado',processing:'Processando',rejected:'Recusado',expired:'Expirado',cancelled:'Cancelado',partially_refunded:'Devolvido parcialmente',refunded:'Devolvido',disputed:'Contestado',expected:'Prevista',available:'Disponível',settled:'Liquidada',cash:'Dinheiro',pix:'Pix',card:'Cartão',boleto:'Boleto',bank:'Transferência bancária',other:'Outros',tithe:'Dízimos',offering:'Ofertas',donation:'Doações',campaign:'Campanhas',event:'Eventos',asset:'Ativo',mercado_pago:'Mercado Pago',asaas:'Asaas',safe2pay:'Safe2Pay'};
 const human=(value:string|null|undefined)=>value?names[value]||value:'';
 export type ReportTable={headers:string[];rows:string[][];notice:string};
+export function reportColumns(value:string|null){
+ if(value===null)return undefined;
+ if(!/^\d{1,2}(,\d{1,2}){0,39}$/.test(value))throw Error('Selecione ao menos uma coluna válida.');
+ const columns=value.split(',').map(Number);
+ if(new Set(columns).size!==columns.length||columns.some(n=>n>39))throw Error('Seleção de colunas inválida.');
+ return columns;
+}
+export function selectReportColumns(table:ReportTable,columns?:number[]):ReportTable{
+ if(columns===undefined)return table;
+ if(!columns.length||columns.length>table.headers.length||new Set(columns).size!==columns.length||columns.some(n=>!Number.isInteger(n)||n<0||n>=table.headers.length))throw Error('Seleção de colunas inválida.');
+ // Preserve the report's canonical order, independent of checkbox click order.
+ const ordered=[...columns].sort((a,b)=>a-b);
+ return {...table,headers:ordered.map(i=>table.headers[i]),rows:table.rows.map(row=>ordered.map(i=>row[i]))};
+}
+export function f6ExportQuery(request:Request){
+ const url=new URL(request.url);
+ if(url.searchParams.getAll('columns').length>1)throw Error('Seleção de colunas repetida.');
+ const columns=reportColumns(url.searchParams.get('columns'));url.searchParams.delete('columns');
+ const result=f6Query(new Request(url));
+ if(columns&&result.format==='json')throw Error('Selecione colunas somente para exportação.');
+ return {...result,columns};
+}
 const decimal=(n:string)=>{const v=BigInt(n),a=(v<BigInt(0)?-v:v).toString().padStart(3,'0');return(v<BigInt(0)?'-':'')+a.slice(0,-2)+','+a.slice(-2)};
 export function f6Table(d:F6Data,key:ReportKey):ReportTable{
  const actual=d.rows.filter(r=>r.basis==='actual'),operating=actual.filter(r=>['income','expense'].includes(r.kind)),forecast=d.rows.filter(r=>r.basis==='forecast');
