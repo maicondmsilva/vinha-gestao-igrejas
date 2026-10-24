@@ -69,6 +69,10 @@ test('tela oferece seleção acessível, preserva uma coluna e atualiza a tabela
   return {tree,nodes,changes};
  };
  const full=mount({}),checks=full.nodes.filter(n=>n.type==='input'&&n.props.type==='checkbox');assert.equal(checks.length,19);assert.ok(checks.every(n=>n.props.checked));
+ const picker=full.nodes.find(n=>n.type==='details'&&n.props.className.includes('f6-column-settings'));assert.equal(picker.props.open,undefined);
+ const css=readFileSync(new URL('../app/finance-reports.css',import.meta.url),'utf8');
+ assert.match(css,/\.f6-workspace \.f6-result \.f6-column-settings\{[^}]*width:100%;[^}]*max-width:none/);
+ assert.match(css,/input\[type=checkbox\]\{[^}]*min-height:18px/);
  checks[6].props.onChange({target:{checked:false}});assert.ok(!full.changes[0].value.book.includes(6));
  const one=mount({book:[6]}),only=one.nodes.filter(n=>n.type==='input'&&n.props.type==='checkbox'&&n.props.checked);assert.equal(only.length,1);assert.equal(only[0].props.disabled,true);
  const html=renderToStaticMarkup(one.tree);assert.match(html,/Colunas do relatório/);assert.match(html,/Oferta de gratidão/);assert.ok(!html.includes('<th>Metadados</th>'));
