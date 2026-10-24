@@ -21,7 +21,7 @@ O perfil preview de EAS gera APK interno; produção gera AAB. A produção exig
 
 ## Limites atuais
 
-Ainda não há APK/AAB assinado, execução verificada em dispositivo/emulador ou publicação no Google Play. O ambiente não possui Java/ADB disponíveis. Configuração de conta Expo/EAS, assinatura e Google Play são pendências externas. Vídeo/foto de abertura, notificações, conteúdos, agenda, contribuições e operações Kids no aplicativo não estão declarados prontos.
+Ainda não há APK/AAB concluído, execução verificada em dispositivo/emulador ou publicação no Google Play. Android Studio foi localizado com Java 25 em `C:/Android/jbr` e SDK/ADB no diretório Android do usuário. O projeto Android foi gerado e o Gradle baixado, mas a compilação local falha na comunicação interna do Java (`Unable to establish loopback connection`, `UnixDomainSockets.connect0`). Preferência IPv4 e diretório temporário explícito não resolveram; nenhuma proteção de rede foi desativada. O projeto pode ser aberto no Android Studio para diagnosticar o ambiente. Configuração de conta Expo/EAS, assinatura e Google Play são pendências externas. Vídeo/foto de abertura, notificações, conteúdos, agenda, contribuições e operações Kids no aplicativo não estão declarados prontos.
 
 A auditoria inicial do gerador oficial identificou avisos de severidade alta na cadeia de ferramentas Expo (incluindo node-forge e zod). Não foi executado `audit fix --force`, que sugeria regressão incompatível do Expo. Esses avisos exigem revisão antes de assinar e distribuir a versão. A validação do pacote técnico não equivale à homologação de segurança ou da loja.
 

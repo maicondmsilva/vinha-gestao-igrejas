@@ -1,4 +1,5 @@
--- Canonical visual identity. Institutional data remains in organizations / organization_units.
+-- Canonical visual identity. Production migration receipt: 20261024213649.
+-- Institutional data remains in organizations / organization_units.
 create table private.church_branding (
  scope_id uuid primary key,
  organization_id uuid not null references public.organizations(id) on delete cascade,

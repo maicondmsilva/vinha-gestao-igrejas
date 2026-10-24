@@ -1,3 +1,4 @@
+-- Production migration receipt: 20261024213655.
 set local lock_timeout='5s';
 create table private.member_profile_requests(
  id uuid primary key default extensions.gen_random_uuid(), organization_id uuid not null references public.organizations(id),

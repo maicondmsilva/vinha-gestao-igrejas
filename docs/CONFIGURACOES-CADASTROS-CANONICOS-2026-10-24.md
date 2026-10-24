@@ -34,6 +34,6 @@ Evidência visual: `evidencias/configuracoes-cadastros-independentes-local-20261
 
 ## Situação do restante do plano
 
-A unificação completa do autoatendimento do membro, revisão de alterações por campo, reconciliação segura de pessoas/contas e integrações do aplicativo ainda precisa de implementação e homologação próprias. Google/Apple, notificações e publicação nas lojas dependem de configuração externa. O projeto nativo não está presente neste repositório. A operação Kids K2 anterior foi preservada em arquivos locais, mas não é montada pelo painel nem declarada publicada nesta entrega. Não foram ativados endpoints legados contidos.
+O autoatendimento do membro, a revisão por campo e os vínculos revisados foram implementados e homologados com dados fictícios; detalhes em `USUARIOS-MEMBROS-ANDROID-2026-10-24.md`. A base nativa está em `android-app`, ainda sem APK concluído ou publicação em loja. Google/Apple e notificações continuam pendentes. A operação Kids K2 anterior foi preservada em arquivos locais, mas não é montada pelo painel nem declarada publicada nesta entrega. Não foram ativados endpoints legados contidos.
 
 Antes da publicação destas mudanças: conferir o conjunto de arquivos sem incluir K2 pendente, executar CI sobre esse conjunto exato, revisar a migração e aplicar pelo fluxo de migrações autorizado. Não reescrever o histórico do banco nem publicar todo o diretório de trabalho indiscriminadamente.
