@@ -6,7 +6,7 @@ export const releaseCatalog = [
   { id: 'inicio', title: 'Visão geral', status: 'validation', detail: 'Resumo do núcleo cadastral em validação por módulo.' },
   { id: 'pessoas', title: 'Pessoas', status: 'validation', detail: 'Cadastro básico no Supabase; importações, documentos e jornadas ainda não liberados.' },
   { id: 'igrejas', title: 'Igrejas e unidades', status: 'validation', detail: 'Estrutura cadastral no Supabase; consolidação e autonomia dependem de validação adicional.' },
-  { id: 'configuracoes', title: 'Configurações', status: 'validation', detail: 'Somente os acessos indicados como disponíveis nesta etapa.' },
+  { id: 'configuracoes', title: 'Configurações', status: 'validation', detail: 'Identidade institucional, cadastros independentes das igrejas, usuários e permissões. Alterações cadastrais auditadas; publicação e integrações externas não são consideradas concluídas pela configuração.' },
   { id: 'familias', title: 'Famílias e termos', status: 'development', detail: 'Vínculos, consentimentos e PDFs aguardam migração e validação de acesso.' },
   { id: 'aplicativo', title: 'Aplicativo do membro', status: 'development', detail: 'Aplicativos personalizados ainda não estão publicados nas lojas.' },
   { id: 'kids', title: 'Área Kids', status: 'validation', detail: 'K1: cadastro integrado a Pessoas, revisão de visitantes, responsáveis e autorizações com histórico, informações restritas de cuidado. Entrada, retirada presencial, salas, etiquetas e aplicativo nativo não estão liberados nesta etapa.' },

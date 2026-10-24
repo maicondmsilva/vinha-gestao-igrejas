@@ -4,6 +4,13 @@
     "incremental": false
   },
   "include": [
+    "app/membro/[slug]/page.tsx",
+    "app/MemberProfileReview.tsx",
+    "app/api/member-profile-review/route.ts",
+    "app/OrganizationSettings.tsx",
+    "app/api/organization-settings/route.ts",
+    "app/api/onboarding/route.ts",
+    "app/onboarding/page.tsx",
     "app/KidsFoundation.tsx",
     "app/api/kids-foundation/route.ts",
     "app/api/finance-f6/route.ts",
