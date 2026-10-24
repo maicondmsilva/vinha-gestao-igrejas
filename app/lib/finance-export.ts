@@ -30,7 +30,7 @@ function sections(d:F6Data,key:ReportKey,columns?:number[]){const table=selectRe
  {title:financeReports.find(([id])=>id===key)![1],...table}
  ];}
 function decimal(s:string){const n=BigInt(s),v=(n<BigInt(0)?-n:n).toString().padStart(3,'0');return(n<BigInt(0)?'-':'')+v.slice(0,-2)+','+v.slice(-2)}
-export function reportContext(d:F6Data,brand:ExportBrand){
+export function reportContext(d:F6Data,brand:ExportBrand,includePreparation=true){
  const labels:Record<string,string>={dateBy:'Base de data',account:'Conta',category:'Categoria',subcategory:'Subcategoria',center:'Centro de custo',person:'Membro',supplier:'Fornecedor',purpose:'Finalidade',responsible:'Responsável',provider:'Provedor',method:'Forma',origin:'Origem',status:'Situação',reference:'Referência',min:'Valor mínimo (centavos)',max:'Valor máximo (centavos)'};
  const descriptions:Record<string,string>={cash:'Caixa / liquidação',competence:'Competência',due:'Vencimento',income:'Recebimento',expense:'Pagamento',posted:'Realizado',pending:'Pendente',mercado_pago:'Mercado Pago',asaas:'Asaas',safe2pay:'Safe2Pay',pix:'Pix',card:'Cartão',boleto:'Boleto'};
  const resolve=(key:string,value:string)=>{
@@ -43,7 +43,7 @@ export function reportContext(d:F6Data,brand:ExportBrand){
  return [brand.organization,...brand.churches.map(n=>'Igreja: '+n),`Período: ${day(d.filters.from)} a ${day(d.filters.to)}`,
   ...Object.entries(d.filters).filter(([k,v])=>v&&labels[k]).map(([k,v])=>labels[k]+': '+resolve(k,v)),
   'Emitido em: '+new Date(d.generatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' (Brasília)',
-  'Registro de preparação: '+(d.exportId||'não informado')];
+  ...(includePreparation?['Registro de preparação: '+(d.exportId||'não informado')]:[])];
 }
 export async function financeXlsx(d:F6Data,key:ReportKey,brand:ExportBrand,columns?:number[]){
  const {default:ExcelJS}=await import('exceljs');
@@ -83,7 +83,8 @@ export async function financePdf(d:F6Data,key:ReportKey,brand:ExportBrand,column
  newPage();
  const block=(text:string,size=fontSize,f=font)=>{for(const line of wrap(text,usable,f,size)){if(y<55)newPage();write(line,margin,y,f,size);y-=size+5}y-=4};
  block(financeReports.find(([id])=>id===key)![1],16,bold);
- for(const text of reportContext(d,brand).slice(1))block(text);
+ // Hide the technical identifier in the PDF only; keep exportId and audit intact.
+ for(const text of reportContext(d,brand,false).slice(1))block(text);
  block(f6Table(d,key).notice,10);
  for(const section of reportSections){
    if(y<130)newPage();block(section.title,11,bold);
