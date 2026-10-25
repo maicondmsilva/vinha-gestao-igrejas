@@ -1,4 +1,5 @@
 export const memberFields=['name','email','phone','status','group','birthDate','gender','maritalStatus','cpf','firstVisit','joined','baptized','baptismDate','tags','address','number','extra','district','city','state','zip','emergencyName','emergencyPhone','notes','privacy','imageConsent','messages'] as const;
+import {normalizeRegistrationField} from '../../shared/brazil-registration.ts';
 const consentFields=new Set(['privacy','imageConsent','messages']);
 const presentationFields=new Set(['id','initials','since','campus','campusId','access']);
 export function memberWriteInput(value:unknown,update:boolean){
@@ -11,7 +12,7 @@ export function memberWriteInput(value:unknown,update:boolean){
   if(presentationFields.has(key))continue;
   if(!(memberFields as readonly string[]).includes(key))throw new Error('Há campos não suportados neste cadastro.');
   if(consentFields.has(key)?typeof item!=='boolean':item!==null&&typeof item!=='string')throw new Error('Revise os tipos dos campos informados.');
-  changes[key]=item as string|boolean|null;
+  changes[key]=typeof item==='string'&&['phone','emergencyPhone','cpf','zip','birthDate'].includes(key)?normalizeRegistrationField(key,item):item as string|boolean|null;
  }
  if(!update&&(!changes.name||typeof changes.name!=='string'||changes.name.trim().length<2))throw new Error('Informe o nome completo.');
  if('name' in changes&&(typeof changes.name!=='string'||changes.name.trim().length<2))throw new Error('Informe o nome completo.');
@@ -25,7 +26,7 @@ export function memberFormPayload(draft:Record<string,unknown>,initial:Record<st
   if(consentFields.has(key)&&initial&&!changedConsents.includes(key))continue;
   // Pastoral history is append-only; an empty editor does not erase a note.
   if(key==='notes'&&!draft.notes)continue;
-  payload[key]=draft[key];
+  payload[key]=typeof draft[key]==='string'&&['phone','emergencyPhone','cpf','zip','birthDate'].includes(key)?normalizeRegistrationField(key,draft[key] as string):draft[key];
  }
  if(draft.campus)payload.campus=draft.campus;
  if(initial?.id)payload.id=initial.id;
