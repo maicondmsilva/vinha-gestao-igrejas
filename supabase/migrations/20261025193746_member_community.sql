@@ -217,8 +217,27 @@ create function public.member_community_admin(p_org uuid,p_unit uuid,p_action te
 revoke all on function public.member_community_admin(uuid,uuid,text,uuid,integer,jsonb,integer) from public,anon,service_role;
 grant execute on function public.member_community_admin(uuid,uuid,text,uuid,integer,jsonb,integer) to authenticated;
 
-alter function private.member_inbox_rows(uuid,uuid) rename to member_inbox_before_community;
-create function private.member_inbox_rows(p_org uuid,p_unit uuid) returns table(message_key text,title text,body text,occurred_at timestamptz,target text,target_id uuid) language sql stable security definer set search_path='' as $$
+create function private.member_inbox_before_community(p_org uuid,p_unit uuid) returns table(message_key text,title text,body text,occurred_at timestamptz,target text,target_id uuid) language sql stable security definer set search_path='' as $
+ select * from(
+ select 'post:'||p.id as message_key,p.title,p.body,p.created_at as occurred_at,'content'::text as target,p.id as target_id from private.member_publications p
+ join public.organization_units u on u.id=p.unit_id and u.organization_id=p.organization_id and u.status='active'
+ where p.organization_id=p_org and p.unit_id=p_unit and p.published and p.created_at>now()-interval '90 days'
+ union all
+ select 'event:'||e.id||':'||e.version,e.title,case when e.status='cancelled' then 'Evento cancelado pela igreja.' else 'Programação publicada ou atualizada. Confira data e local.' end,e.updated_at,'agenda',e.id
+ from private.church_app_events e where e.organization_id=p_org and e.unit_id=p_unit and e.status in('published','cancelled') and e.updated_at>now()-interval '90 days' and private.member_event_enabled(p_org,p_unit)
+ union all
+ select 'ticket:'||r.id||':'||r.version||':'||e.version,e.title,case when e.status='cancelled' then 'Evento cancelado. Seu ticket não permite entrada.' when r.status='cancelled' then 'Sua inscrição foi cancelada.' when r.checked_in_at is not null then 'Sua entrada foi confirmada.' else 'Sua inscrição gratuita está confirmada. Consulte seu ticket.' end,greatest(r.updated_at,e.updated_at),'ticket',r.id
+ from private.church_app_registrations r join private.church_app_events e on e.id=r.event_id where r.organization_id=p_org and r.user_id=auth.uid()
+ union all
+ select 'profile:'||r.id||':'||r.status,'Revisão do cadastro',coalesce(r.reason,'Sua solicitação foi revisada.'),r.reviewed_at,'profile',r.id from private.member_profile_requests r where r.organization_id=p_org and r.user_id=auth.uid() and r.status<>'pending'
+ union all
+ select 'transfer:'||r.id||':'||r.status,'Transferência de igreja',case when r.status='approved' then 'Transferência aprovada. ' when r.status='rejected' then 'Transferência recusada. ' else 'Solicitação cancelada. ' end||r.reason,r.reviewed_at,'church',r.id from private.member_church_transfers r where r.organization_id=p_org and r.user_id=auth.uid() and r.status<>'pending'
+ )q order by occurred_at desc nulls last,message_key limit 100;
+$;
+revoke all on function private.member_inbox_before_community(uuid,uuid) from public,anon,authenticated,service_role;
+
+
+create or replace function private.member_inbox_rows(p_org uuid,p_unit uuid) returns table(message_key text,title text,body text,occurred_at timestamptz,target text,target_id uuid) language sql stable security definer set search_path='' as $$
  select * from(
  select * from private.member_inbox_before_community(p_org,p_unit)
  union all select 'prayer:'||id||':'||version,'Pedido de oração atualizado',case status when 'care' then 'A equipe está acompanhando seu pedido.' when 'completed' then 'A equipe concluiu o acompanhamento.' else 'Pedido cancelado.' end,updated_at,'prayers',id from private.community_prayers where organization_id=p_org and user_id=auth.uid() and status<>'pending'
