@@ -1,0 +1,8 @@
+import {uuidPattern} from './private-files.ts';
+import {validSteps} from '../../shared/member-learning.ts';
+export function parseLearningAdmin(value:unknown){if(!value||typeof value!=='object'||Array.isArray(value))return null;const b=value as Record<string,unknown>;if(Object.keys(b).some(k=>!['unit','action','id','version','data','offset'].includes(k))||typeof b.unit!=='string'||!uuidPattern.test(b.unit)||typeof b.action!=='string'||!['list','create','edit','duplicate','publish','archive'].includes(b.action))return null;const d=(b.data??{}) as Record<string,unknown>,offset=b.offset??0;if(!d||typeof d!=='object'||Array.isArray(d)||!Number.isInteger(offset)||Number(offset)<0||Number(offset)>100000)return null;const id=b.id??null,version=b.version??null;if(!['list','create'].includes(b.action)&&(typeof id!=='string'||!uuidPattern.test(id)||!Number.isInteger(version)||Number(version)<1))return null;
+ if(['create','edit'].includes(b.action)){if(Object.keys(d).some(k=>!['nonce','title','summary','kind','steps'].includes(k))||typeof d.title!=='string'||d.title.trim().length<2||d.title.length>160||typeof d.summary!=='string'||d.summary.length>2000||!['journey','reading'].includes(String(d.kind))||!validSteps(d.kind as 'journey'|'reading',d.steps))return null}
+ if(['create','duplicate'].includes(b.action)&&(typeof d.nonce!=='string'||d.nonce.length<10||d.nonce.length>100))return null;
+ if(['list','publish','archive'].includes(b.action)&&Object.keys(d).length||b.action==='duplicate'&&Object.keys(d).some(k=>k!=='nonce'))return null;
+ return {unit:b.unit,action:b.action,id,version,data:d,offset:Number(offset)};
+}

@@ -1,0 +1,7 @@
+import {authorizeSupabaseChurch} from '../../lib/supabase/church-access';
+import {db} from '../../lib/supabase/operations';
+import {boundedBody} from '../../lib/private-files';
+import {parseLearningAdmin} from '../../lib/member-learning-command';
+import {learningError} from '../../../shared/member-learning';
+const json=(d:unknown,status=200)=>Response.json(d,{status,headers:{'Cache-Control':'private, no-store'}});
+export async function POST(request:Request){try{const auth=await authorizeSupabaseChurch(request,'units.manage');if(!auth||auth.response)return auth?.response||json({error:'Serviço indisponível.'},503);let b:ReturnType<typeof parseLearningAdmin>;try{b=parseLearningAdmin(JSON.parse(new TextDecoder().decode(await boundedBody(request,512000))))}catch{return json({error:'Revise os campos ou reduza o conteúdo das etapas.'},400)}if(!b)return json({error:'Revise os campos e as referências bíblicas.'},400);const r=await db(request).rpc('member_learning_admin',{p_org:auth.access!.membership.organization_id,p_unit:b.unit,p_action:b.action,p_id:b.id,p_version:b.version,p_data:b.data,p_offset:b.offset});if(r.error)return json({error:learningError(r.error.message)},r.error.code==='42501'?403:r.error.code==='40001'?409:['22023','23514','23502'].includes(r.error.code)?400:503);if(!r.data||!Array.isArray(r.data.items)&&r.data.ok!==true)return json({error:'Operação não confirmada.'},503);return json(r.data)}catch{return json({error:'Conexão interrompida. Atualize antes de repetir.'},503)}}

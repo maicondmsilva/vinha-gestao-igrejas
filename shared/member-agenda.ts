@@ -1,6 +1,6 @@
 export type AgendaEvent={id:string;title:string;description:string;kind:'event'|'service';starts_at:string;ends_at:string;location:string;address:string;capacity:number;remaining:number;status:'draft'|'published'|'cancelled';version:number;registrations?:number};
 export type MemberTicket={id:string;event_id:string;unit_id:string;name:string;status:'confirmed'|'cancelled';checked_in_at:string|null;version:number;title:string;starts_at:string;ends_at:string;location:string;address:string;event_status:string;code:string|null};
-export type InboxItem={message_key:string;title:string;body:string;occurred_at:string;target:'content'|'agenda'|'ticket'|'profile'|'church'|'prayers'|'testimonies'|'groups';target_id:string;read:boolean};
+export type InboxItem={message_key:string;title:string;body:string;occurred_at:string;target:'content'|'agenda'|'ticket'|'profile'|'church'|'prayers'|'testimonies'|'groups'|'learning';target_id:string;read:boolean};
 export function agendaError(message:string){
  if(message.includes('member_event_full'))return 'As vagas deste evento acabaram. Atualize a agenda.';
  if(message.includes('member_registration_identity'))return 'Complete seu cadastro e aguarde a conferência da igreja antes de se inscrever.';
