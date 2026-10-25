@@ -4,6 +4,8 @@
     "incremental": false
   },
   "include": [
+    "app/MemberChurchAdmin.tsx",
+    "app/api/member-church-admin/route.ts",
     "app/membro/[slug]/page.tsx",
     "app/MemberProfileReview.tsx",
     "app/api/member-profile-review/route.ts",

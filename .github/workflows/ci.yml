@@ -72,6 +72,7 @@ jobs:
           node --experimental-strip-types --test scripts/organization-settings.test.mjs
           node --experimental-strip-types --test scripts/member-self-service.test.mjs scripts/android-base.test.mjs
           node --experimental-strip-types --test scripts/brazil-registration.test.mjs scripts/android-church-select.test.mjs
+          node --experimental-strip-types --test scripts/member-church.test.mjs
           node --experimental-strip-types --test scripts/receiver-key-validation.test.mjs
           node --experimental-strip-types --test scripts/receiver-webhook.test.mjs
           node --experimental-strip-types --test scripts/finance-f4.test.mjs scripts/finance-f4-route.test.mjs scripts/finance-checkout.test.mjs scripts/finance-checkout-route.test.mjs scripts/finance-destination-route.test.mjs
