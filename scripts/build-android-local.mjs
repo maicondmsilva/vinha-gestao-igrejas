@@ -1,5 +1,5 @@
 import {spawn} from 'node:child_process';
-import {existsSync} from 'node:fs';
+import {existsSync,statSync} from 'node:fs';
 import {resolve,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 if(process.argv[2]!=='--internal-preview')throw Error('Somente APK interno, não publicação em loja.');
@@ -11,10 +11,17 @@ process.stdin.on('data',chunk=>{input+=chunk.toString();if(input.length>5000)pro
  let config;try{config=JSON.parse(input.trim());}catch{console.error('Configuração inválida.');process.exit(1)}input='';
  if(!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(config.url)||!/^sb_publishable_[A-Za-z0-9_-]+$/.test(config.key)||![config.javaHome,config.sdk].every(p=>typeof p==='string'&&isAbsolute(p)&&existsSync(p)))throw Error('Use somente chave pública e instalações locais verificadas.');
  if(config.socketTemp&&(!isAbsolute(config.socketTemp)||!existsSync(config.socketTemp)))throw Error('Diretório temporário inexistente.');
+ const buildRoot=config.buildRoot||root;
+ const architecture=config.architecture||'arm64-v8a';
+ if(!['arm64-v8a','x86_64'].includes(architecture))throw Error('Arquitetura de teste inválida.');
+ if(!isAbsolute(buildRoot)||!existsSync(buildRoot))throw Error('Caminho alternativo inválido.');
+ const originalStat=statSync(root,{bigint:true}),aliasStat=statSync(buildRoot,{bigint:true});
+ if(originalStat.dev!==aliasStat.dev||originalStat.ino!==aliasStat.ino)throw Error('O caminho alternativo deve apontar para este mesmo projeto.');
  const javaOptions=['-Djava.net.preferIPv4Stack=true',...(config.socketTemp?[`-Djdk.net.unixdomain.tmpdir="${config.socketTemp}"`]:[])].join(' ');
- const env={...process.env,JAVA_HOME:config.javaHome,ANDROID_HOME:config.sdk,ANDROID_SDK_ROOT:config.sdk,GRADLE_USER_HOME:resolve(root,'.gradle-cache'),JAVA_TOOL_OPTIONS:javaOptions,EXPO_PUBLIC_SUPABASE_URL:config.url,EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY:config.key};
+ const env={...process.env,JAVA_HOME:config.javaHome,ANDROID_HOME:config.sdk,ANDROID_SDK_ROOT:config.sdk,GRADLE_USER_HOME:resolve(buildRoot,'.gradle-cache'),JAVA_TOOL_OPTIONS:javaOptions,EXPO_PUBLIC_SUPABASE_URL:config.url,EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY:config.key};
  delete env.EAS_BUILD_PROFILE;delete env.ANDROID_APPLICATION_ID;
- const child=spawn('cmd.exe',['/d','/s','/c','gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon --console=plain --stacktrace'],{cwd:resolve(root,'android'),env,stdio:['ignore','inherit','inherit'],windowsHide:true});
+ // The generated Android folder is disposable; keep the Unicode-path opt-in here too.
+ const child=spawn('cmd.exe',['/d','/s','/c',`gradlew.bat assembleRelease -PreactNativeArchitectures=${architecture} -Pandroid.overridePathCheck=true --no-daemon --console=plain --stacktrace`],{cwd:resolve(buildRoot,'android'),env,stdio:['ignore','inherit','inherit'],windowsHide:true});
  child.on('error',()=>{console.error('Não foi possível iniciar a compilação Android.');process.exitCode=1});
  child.on('exit',code=>{console.log(code===0?'APK interno gerado; não é uma publicação no Google Play.':'Compilação Android não concluída.');process.exit(code??1)});
 });
