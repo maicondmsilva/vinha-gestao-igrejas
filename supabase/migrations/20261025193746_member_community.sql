@@ -217,7 +217,7 @@ create function public.member_community_admin(p_org uuid,p_unit uuid,p_action te
 revoke all on function public.member_community_admin(uuid,uuid,text,uuid,integer,jsonb,integer) from public,anon,service_role;
 grant execute on function public.member_community_admin(uuid,uuid,text,uuid,integer,jsonb,integer) to authenticated;
 
-create function private.member_inbox_before_community(p_org uuid,p_unit uuid) returns table(message_key text,title text,body text,occurred_at timestamptz,target text,target_id uuid) language sql stable security definer set search_path='' as $
+create function private.member_inbox_before_community(p_org uuid,p_unit uuid) returns table(message_key text,title text,body text,occurred_at timestamptz,target text,target_id uuid) language sql stable security definer set search_path='' as $$
  select * from(
  select 'post:'||p.id as message_key,p.title,p.body,p.created_at as occurred_at,'content'::text as target,p.id as target_id from private.member_publications p
  join public.organization_units u on u.id=p.unit_id and u.organization_id=p.organization_id and u.status='active'
@@ -233,7 +233,7 @@ create function private.member_inbox_before_community(p_org uuid,p_unit uuid) re
  union all
  select 'transfer:'||r.id||':'||r.status,'Transferência de igreja',case when r.status='approved' then 'Transferência aprovada. ' when r.status='rejected' then 'Transferência recusada. ' else 'Solicitação cancelada. ' end||r.reason,r.reviewed_at,'church',r.id from private.member_church_transfers r where r.organization_id=p_org and r.user_id=auth.uid() and r.status<>'pending'
  )q order by occurred_at desc nulls last,message_key limit 100;
-$;
+$$;
 revoke all on function private.member_inbox_before_community(uuid,uuid) from public,anon,authenticated,service_role;
 
 
