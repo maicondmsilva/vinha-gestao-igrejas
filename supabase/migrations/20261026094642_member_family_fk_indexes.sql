@@ -1,0 +1,27 @@
+-- Cover composite foreign keys of the Kids/member delivery.
+create index member_family_fk_00435fe684cb on private.cell_app_publications(cell_id,organization_id,unit_id);
+create index member_family_fk_091464baa399 on private.kids_assignments(group_id,organization_id,unit_id,session_id);
+create index member_family_fk_94439505ec25 on private.kids_assignments(person_id,organization_id);
+create index member_family_fk_940bb2f207c3 on private.kids_assignments(session_id,organization_id,unit_id);
+create index member_family_fk_e80b2eefeb5b on private.kids_attendance(arrival_guardian,organization_id);
+create index member_family_fk_7b8aa61d891a on private.kids_attendance(group_id,organization_id,unit_id,session_id);
+create index member_family_fk_39d710a1372b on private.kids_attendance(pickup_guardian,organization_id);
+create index member_family_fk_d8f0a1a4f49a on private.kids_attendance(profile_id,organization_id,unit_id);
+create index member_family_fk_a139865d5d29 on private.kids_attendance(session_id,organization_id,unit_id);
+create index member_family_fk_444aa50be6f5 on private.kids_attendance(transfer_to,organization_id,unit_id,session_id);
+create index member_family_fk_b640de91f91b on private.kids_classes(unit_id,organization_id);
+create index member_family_fk_2f3c83dd7a63 on private.kids_custody_events(attendance_id,organization_id,unit_id);
+create index member_family_fk_39ae78d6f9c4 on private.kids_custody_events(session_id,organization_id,unit_id);
+create index member_family_fk_3fb7f08039c7 on private.kids_member_reservations(group_id,organization_id,unit_id,session_id);
+create index member_family_fk_786eaf33fd10 on private.kids_member_reservations(person_id,organization_id);
+create index member_family_fk_a697b7081171 on private.kids_member_reservations(profile_id,organization_id,unit_id);
+create index member_family_fk_e87f66c4183e on private.kids_member_reservations(session_id,organization_id,unit_id);
+create index member_family_fk_79344ba98c7b on private.kids_rooms(unit_id,organization_id);
+create index member_family_fk_d184f7705e4c on private.kids_session_rooms(class_id,organization_id,unit_id);
+create index member_family_fk_64866938c100 on private.kids_session_rooms(room_id,organization_id,unit_id);
+create index member_family_fk_126606eaac81 on private.kids_session_rooms(session_id,organization_id,unit_id);
+create index member_family_fk_c36aafb58d6b on private.kids_sessions(unit_id,organization_id);
+create index member_family_fk_b3fcc9c97425 on private.member_family_requests(cell_id,organization_id,unit_id);
+create index member_family_fk_57611d7f924c on private.member_family_requests(person_id,organization_id);
+create index member_family_fk_281670af51bf on private.member_family_requests(profile_id,organization_id,unit_id);
+create index member_family_fk_4ec3c3625f7a on private.member_family_requests(unit_id,organization_id);

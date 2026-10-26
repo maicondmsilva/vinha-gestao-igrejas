@@ -48,6 +48,7 @@ test('API limita tamanho e não revela detalhes internos de falhas',async()=>{
 test('telas Kids não montam operação legada, guardam credenciais ou liberam retirada',()=>{
  const ui=readFileSync(new URL('../app/KidsFoundation.tsx',import.meta.url),'utf8');
  assert.doesNotMatch(ui,/localStorage|service_role|prompt\(|\/api\/children|\/api\/kids\?/);
- const dashboard=readFileSync(new URL('../app/DashboardApp.tsx',import.meta.url),'utf8');assert.match(dashboard,/<KidsFoundation key=\{unitId\} unitId=\{unitId\}/);
+ const dashboard=readFileSync(new URL('../app/DashboardApp.tsx',import.meta.url),'utf8');assert.match(dashboard,/<KidsOperations key=\{unitId\} unitId=\{unitId\}/);
  assert.doesNotMatch(dashboard,/<KidsArea people=\{people\}/);
+ assert.match(readFileSync(new URL('../app/KidsOperations.tsx',import.meta.url),'utf8'),/<KidsFoundation unitId=\{unitId\}/);
 });
