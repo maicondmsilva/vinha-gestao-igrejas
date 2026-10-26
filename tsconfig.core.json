@@ -86,7 +86,11 @@
     "app/api/platform/receiving-accounts/route.ts",
     "app/api/finance-f2/route.ts",
     "app/api/finance-f1/route.ts",
-    "app/api/finance-f1/files/route.ts"
+    "app/api/finance-f1/files/route.ts",
+    "app/api/member-services-admin/route.ts",
+    "app/api/member-payments/route.ts",
+    "app/api/member-card/route.ts",
+    "app/api/member-push/run/route.ts"
   ],
   "exclude": [
     "node_modules"
