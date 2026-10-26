@@ -1,0 +1,7 @@
+export type DigitalCard={ministry?:string;primary?:string;logo?:string|null;id:string;name:string;unit:string;category:string;expires:string;valid:boolean;code:string|null};
+export type PaymentPurpose={id:string;name:string;origin:string};
+export type MemberPayment={id:string;unit_id:string;amount:string;purpose:string;created_at:string;status:string;checkout_state:string|null;url:string|null};
+export const paymentStates:Record<string,string>={pending:'Aguardando pagamento',processing:'Em processamento',approved:'Aprovado',rejected:'Recusado',expired:'Expirado',cancelled:'Cancelado',refunded:'Devolvido',partially_refunded:'Devolvido parcialmente',disputed:'Contestado'};
+export function memberAmount(value:string):string|null{const v=value.trim().replace(/\s/g,'');if(!/^\d{1,6}(?:[,.]\d{1,2})?$/.test(v))return null;const[a,b='']=v.replace(',','.').split('.');const result=BigInt(a)*BigInt(100)+BigInt(b.padEnd(2,'0'));return result>=BigInt(100)&&result<=BigInt(99999999)?result.toString():null}
+export function memberMoney(value:string){return(Number(value)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+export function trustedPaymentUrl(value:unknown){if(typeof value!=='string')return null;try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&['www.mercadopago.com.br','mercadopago.com.br'].includes(u.hostname)&&u.pathname==='/checkout/v1/redirect'&&/^[A-Za-z0-9_-]+$/.test(u.searchParams.get('pref_id')||'')?u.href:null}catch{return null}}

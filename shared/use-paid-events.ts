@@ -1,0 +1,8 @@
+import {useEffect,useRef,useState} from 'react';
+import type {ChurchRpc} from './member-church';
+export function usePaidEvents(rpc:ChurchRpc,org:string,unit:string){
+ const [items,setItems]=useState<{id:string;title:string;amount:string;starts_at:string}[]>([]),[orders,setOrders]=useState<{id:string;event:string;state:string;expires:string}[]>([]),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);const epoch=useRef(0),lock=useRef(false);
+ useEffect(()=>{let live=true;epoch.current++;lock.current=false;setBusy(false);setItems([]);setOrders([]);if(!unit)return;rpc.rpc('member_event_purchase',{p_org:org,p_unit:unit,p_action:'prices'}).then(r=>{if(!live)return;if(r.error){setNotice('Entre com seu cadastro conferido para consultar ingressos pagos.');return}const d=r.data as {items:typeof items;orders:typeof orders};setItems(d.items);setOrders(d.orders)});return()=>{live=false;epoch.current++}},[rpc,org,unit,revision]);
+ async function buy(event:string,id:string){if(lock.current)return;lock.current=true;setBusy(true);setNotice('');const e=epoch.current;try{const r=await rpc.rpc('member_event_purchase',{p_org:org,p_unit:unit,p_action:'buy',p_id:event,p_data:{id}});if(e!==epoch.current)return;if(r.error||!(r.data as {ok?:boolean})?.ok)throw Error();setNotice('Pedido reservado. Abra o pagamento em Minhas contribuições. O ticket só é emitido após a confirmação do provedor; pagamentos tardios podem exigir conferência da igreja.');setRevision(v=>v+1)}catch{if(e===epoch.current)setNotice('Reserva não confirmada. Atualize os pedidos antes de repetir.')}finally{if(e===epoch.current){setBusy(false);lock.current=false}}}
+ return{items,orders,notice,busy,buy,refresh:()=>setRevision(v=>v+1)};
+}

@@ -78,6 +78,7 @@ jobs:
           node --experimental-strip-types --test scripts/member-community.test.mjs
           node --experimental-strip-types --test scripts/member-learning.test.mjs
           node --experimental-strip-types --test scripts/member-family.test.mjs
+          node --experimental-strip-types --test scripts/member-services.test.mjs scripts/member-payments-route.test.mjs
           node --experimental-strip-types --test scripts/kids-operations.test.mjs
           node --experimental-strip-types --test scripts/receiver-key-validation.test.mjs
           node --experimental-strip-types --test scripts/receiver-webhook.test.mjs
@@ -134,6 +135,7 @@ jobs:
           node scripts/member-community-concurrency.mjs --local-synthetic
           node scripts/member-learning-concurrency.mjs --local-synthetic
           node scripts/member-family-concurrency.mjs --local-synthetic
+          node scripts/member-services-concurrency.mjs --local-synthetic
           node scripts/kids-operations-concurrency.mjs --local-synthetic
 
       - name: Parar banco local preservando volumes
