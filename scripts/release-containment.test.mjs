@@ -15,8 +15,8 @@ function files(dir) {
 
 test('catalog fails closed for unknown views and distinguishes pilot from completed product', () => {
   assert.equal(new Set(releaseCatalog.map(x => x.id)).size, releaseCatalog.length);
-  for (const id of ['inicio', 'pessoas', 'igrejas', 'configuracoes','usuarios','financeiro']) assert.equal(pilotViewAllowed(id), true);
-  for (const id of ['eventos', 'louvor', 'missing', '']) assert.equal(pilotViewAllowed(id), false);
+  for (const id of ['inicio', 'pessoas', 'igrejas', 'configuracoes','usuarios','financeiro','eventos','comunicacao','transmissoes']) assert.equal(pilotViewAllowed(id), true);
+  for (const id of ['louvor', 'missing', '']) assert.equal(pilotViewAllowed(id), false);
   assert.equal(pilotViewAllowed('kids'),true);
   assert.equal(releaseCatalog.find(x=>x.id==='kids').status,'validation');
   assert.equal(releaseCatalog.find(x=>x.id==='financeiro').status,'validation');
