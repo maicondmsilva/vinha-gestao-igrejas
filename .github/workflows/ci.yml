@@ -77,6 +77,8 @@ jobs:
           node --experimental-strip-types --test scripts/member-agenda.test.mjs
           node --experimental-strip-types --test scripts/member-community.test.mjs
           node --experimental-strip-types --test scripts/member-learning.test.mjs
+          node --experimental-strip-types --test scripts/member-family.test.mjs
+          node --experimental-strip-types --test scripts/kids-operations.test.mjs
           node --experimental-strip-types --test scripts/receiver-key-validation.test.mjs
           node --experimental-strip-types --test scripts/receiver-webhook.test.mjs
           node --experimental-strip-types --test scripts/finance-f4.test.mjs scripts/finance-f4-route.test.mjs scripts/finance-checkout.test.mjs scripts/finance-checkout-route.test.mjs scripts/finance-destination-route.test.mjs
@@ -131,6 +133,8 @@ jobs:
           node scripts/member-agenda-concurrency.mjs --local-synthetic
           node scripts/member-community-concurrency.mjs --local-synthetic
           node scripts/member-learning-concurrency.mjs --local-synthetic
+          node scripts/member-family-concurrency.mjs --local-synthetic
+          node scripts/kids-operations-concurrency.mjs --local-synthetic
 
       - name: Parar banco local preservando volumes
         if: always()
