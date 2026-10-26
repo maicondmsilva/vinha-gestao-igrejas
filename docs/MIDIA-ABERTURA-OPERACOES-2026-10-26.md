@@ -22,6 +22,8 @@ Tabelas novas privadas, RLS habilitado sem acesso direto. RPCs usam identidade c
 - Suíte local do banco: 54 arquivos, 2.538 verificações, aprovada.
 - Testes de mídia: provedores, protocolos, limites e abertura; testes de navegação Android e contenção das rotas antigas.
 - Compilação web e verificação TypeScript web/Android.
+- Player web MP4 carregado, reproduzido por controle da tela e concluído em 5,055 segundos (amostra pública CC0 MDN, apenas no banco fictício). Evidência: docs/evidencias/midia-player-local-20261026.png.
+- Abertura de vídeo configurada pelo formulário local e consumida pelo portal sem bloquear o acesso após o encerramento.
 - Live fictícia criada/publicada apenas no banco local de homologação. Nenhuma transmissão, ocorrência ou cadastro fictício é criado na produção pela migração.
 
 ## Dependências externas
