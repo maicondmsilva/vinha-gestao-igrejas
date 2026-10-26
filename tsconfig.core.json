@@ -5,6 +5,10 @@
   },
   "include": [
     "app/MemberLearningAdmin.tsx",
+    "app/MemberFamilyAdmin.tsx",
+    "app/api/member-family-admin/route.ts",
+    "app/KidsOperations.tsx",
+    "app/api/kids-operations/route.ts",
     "app/api/member-learning-admin/route.ts",
     "app/MemberCommunityAdmin.tsx",
     "app/api/member-community-admin/route.ts",

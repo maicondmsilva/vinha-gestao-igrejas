@@ -56,9 +56,11 @@ export default defineConfig(async ({command}) => {
   return {
     // ExcelJS is Node-only; do not rewrite its CommonJS ZIP implementation in RSC dev.
     ssr: localPreview ? { external: ['exceljs'] } : undefined,
-    server: isCodexSeatbeltSandbox
-      ? { watch: { useFsEvents: false, usePolling: true } }
-      : undefined,
+    server: { watch: {
+      // Generated APKs may be locked while copied on Windows. They are not web sources.
+      ignored: ['**/output/**', '**/android-app/android/**', '**/android-app/.gradle-cache/**'],
+      ...(isCodexSeatbeltSandbox ? { useFsEvents: false, usePolling: true } : {}),
+    } },
     resolve: isVercelBuild ? {
       alias: {
         'cloudflare:workers': fileURLToPath(new URL('./app/lib/cloudflare-env-stub.ts', import.meta.url)),
