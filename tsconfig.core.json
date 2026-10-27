@@ -96,7 +96,14 @@
     "app/api/member-push/run/route.ts",
     "app/api/ministry-media/route.ts",
     "app/api/kids-notes/route.ts",
-    "app/api/kids-resources/route.ts"
+    "app/api/kids-resources/route.ts",
+    "app/DashboardNavigation.tsx",
+    "app/PublishingWorkspace.tsx",
+    "app/BroadcastWorkspace.tsx",
+    "app/CommunicationWorkspace.tsx",
+    "app/api/publishing/route.ts",
+    "app/api/kids-desk/route.ts",
+    "app/MemberPublishingCatalog.tsx"
   ],
   "exclude": [
     "node_modules"

@@ -34,6 +34,7 @@ const unitFields=[['name','Nome da igreja ou unidade'],['pastorName','Pastor res
 const addressFields=[['postal_code','CEP'],['street','Rua'],['number','Número'],['complement','Complemento'],['district','Bairro'],['city','Cidade'],['state','UF']] as const;
 export default function OrganizationSettings(){
  const [data,setData]=useState<Settings|null>(null),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[logo,setLogo]=useState(''),[revision,setRevision]=useState(0);
+ const [,refreshNavigation]=useState(0);useEffect(()=>{const sync=()=>refreshNavigation(n=>n+1);addEventListener('popstate',sync);return()=>removeEventListener('popstate',sync)},[]);
  const params=typeof location==='undefined'?null:new URLSearchParams(location.search),section=params?.get('pagina')==='usuarios'?'usuarios':params?.get('pagina')==='igrejas'?'igrejas':params?.get('secao')||'identidade';
  const load=useCallback(async()=>{const d=await call('/api/organization-settings') as Settings;setData(d);setLogo(d.brands[d.organization.id]||'');setRevision(n=>n+1)},[]);
  useEffect(()=>{let live=true;call('/api/organization-settings').then((d:Settings)=>{if(live){setData(d);setLogo(d.brands[d.organization.id]||'')}}).catch(e=>{if(live)setNotice(e.message)});return()=>{live=false}},[]);

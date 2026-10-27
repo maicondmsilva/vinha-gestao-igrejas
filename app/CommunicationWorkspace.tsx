@@ -1,14 +1,10 @@
 "use client";
-import {useEffect,useState,type FormEvent} from 'react';
-import {settingsUrl} from './lib/settings-navigation';
-import MinistryMediaAdmin from './MinistryMediaAdmin';
-type Post={id:string;unit_id:string;title:string;body:string;published:boolean};
+import {useEffect,useState} from 'react';
+import PublishingWorkspace from './PublishingWorkspace';
+import type {PublishingKind} from '../shared/publishing';
 export default function CommunicationWorkspace({unitId}:{unitId:string}){
  const [section,setSection]=useState(()=>typeof location==='undefined'?'avisos':new URLSearchParams(location.search).get('secao')||'avisos');
  useEffect(()=>{const sync=()=>setSection(new URLSearchParams(location.search).get('secao')||'avisos');addEventListener('popstate',sync);return()=>removeEventListener('popstate',sync)},[]);
- const [posts,setPosts]=useState<Post[]>([]),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
- useEffect(()=>{let live=true;setPosts([]);fetch(settingsUrl('/api/member-church-admin'),{cache:'no-store'}).then(async r=>{if(!r.ok)throw Error();return r.json() as Promise<{publications:Post[]}>}).then(d=>{if(live)setPosts((d.publications||[]).filter(p=>p.unit_id===unitId))}).catch(()=>{if(live)setNotice('Não foi possível consultar as publicações.')});return()=>{live=false}},[unitId,revision]);
- async function send(body:Record<string,unknown>){if(busy)return;setBusy(true);try{const r=await fetch(settingsUrl('/api/member-church-admin'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),d=await r.json() as {error?:string;ok?:boolean};if(!r.ok||!d.ok)throw Error(d.error||'Operação não confirmada.');setRevision(v=>v+1);setNotice('Publicação atualizada no aplicativo da igreja.')}catch(e){setNotice(e instanceof Error?e.message:'Não confirmado.')}finally{setBusy(false)}}
- function publish(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);void send({action:'publish',unit:unitId,data:{kind:'notice',title:f.get('title'),body:f.get('body'),url:''}})}
- return <div className="content"><div className="program-breadcrumb">Comunicação / {section==='videos'?'Vídeos e pregações':'Avisos da igreja'}</div>{section!=='videos'&&<section className="organization-card member-agenda"><h1>Comunicação da igreja</h1><p>Avisos públicos para quem acompanha esta igreja local. Não inclua dados de crianças, cuidados, documentos ou conversas privadas.</p>{notice&&<p role="status">{notice}</p>}<form onSubmit={publish}><fieldset disabled={busy||!unitId}><label>Título<input name="title" minLength={2} maxLength={160} required/></label><label>Aviso público<textarea name="body" maxLength={4000} required/></label><button type="submit">Publicar aviso da igreja</button></fieldset></form><button type="button" disabled={busy} onClick={()=>setRevision(v=>v+1)}>Atualizar avisos</button>{posts.map(p=><article key={p.id}><h2>{p.title}</h2><p>{p.body}</p>{p.published?<button type="button" disabled={busy} onClick={()=>void send({action:'unpublish',id:p.id})}>Retirar aviso do aplicativo</button>:<p>Publicação retirada</p>}</article>)}</section>}{section==='videos'&&<MinistryMediaAdmin key={unitId} unitId={unitId} mode="video"/>}<p>Conversas privadas e envio externo por WhatsApp ou e-mail ainda não estão disponíveis neste módulo.</p></div>
+ const kinds:Record<string,PublishingKind|'group'>={avisos:'notice',videos:'video',categorias:'category',grupos:'group',banners:'banner',arquivos:'file'};
+ return <PublishingWorkspace key={unitId+section} unit={unitId} kind={kinds[section]||'notice'}/>;
 }
