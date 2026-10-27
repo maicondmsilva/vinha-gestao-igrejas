@@ -4,6 +4,9 @@
     "incremental": false
   },
   "include": [
+    "app/EventsWorkspace.tsx",
+    "app/ProgrammingNavigation.tsx",
+    "app/api/programming/route.ts",
     "app/MemberLearningAdmin.tsx",
     "app/MemberFamilyAdmin.tsx",
     "app/api/member-family-admin/route.ts",

@@ -1,0 +1,10 @@
+'use client';
+import {useEffect,useRef,type ReactNode} from 'react';
+import {settingsUrl} from './lib/settings-navigation';
+import type {ProgrammingEvent} from '../shared/programming';
+export type EventDetailData={event:ProgrammingEvent;versions:Record<string,number>};
+export const eventMoney=(v:string)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)/100);
+export async function programmingRead<T>(path:string,signal?:AbortSignal):Promise<T>{const r=await fetch(settingsUrl(path),{cache:'no-store',signal}),d=await r.json() as T&{error?:string};if(!r.ok)throw Error(d.error||'Consulta indisponível.');return d}
+export async function programmingWrite(body:unknown){const r=await fetch(settingsUrl('/api/programming'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),d=await r.json() as {ok?:boolean;count?:number;error?:string;name?:string;already?:boolean};if(!r.ok||!d.ok)throw Error(d.error||'Operação não confirmada.');return d}
+export function ProgrammingModal({title,children,close,busy=false}:{title:string;children:ReactNode;close:()=>void;busy?:boolean}){const ref=useRef<HTMLDialogElement>(null);useEffect(()=>{const d=ref.current;d?.showModal();return()=>d?.close()},[]);return <dialog className="program-dialog" ref={ref} aria-label={title} onCancel={e=>{e.preventDefault();if(!busy)close()}}><div className="program-dialog-head"><h2>{title}</h2><button type="button" aria-label="Fechar" disabled={busy} onClick={close}>×</button></div>{children}</dialog>}
+export function ProgrammingPager({page,total,size,change,disabled=false}:{page:number;total:number;size:number;change:(p:number)=>void;disabled?:boolean}){return <footer className="program-pager"><span>{total?`${(page-1)*size+1}–${Math.min(page*size,total)} de ${total}`:'Nenhum registro'}</span><div><button type="button" disabled={disabled||page<=1} onClick={()=>change(page-1)}>Anterior</button><span>Página {page} de {Math.max(1,Math.ceil(total/size))}</span><button type="button" disabled={disabled||page*size>=total} onClick={()=>change(page+1)}>Próxima</button></div></footer>}
