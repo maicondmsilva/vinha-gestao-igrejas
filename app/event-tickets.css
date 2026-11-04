@@ -4,3 +4,5 @@
 
 .vt-admin .vt-panel{padding:24px}.vt-admin .program-primary{background:#24573e!important;color:#fff!important;border-color:#24573e!important;font-weight:650}.vt-admin .program-primary:disabled{opacity:.55}.vt-admin h3{font-weight:700;color:#244c38}.vt-admin .vt-options label{flex-direction:row;align-items:center}.vt-checkout .ve-primary{background:var(--ve-primary,#285c45);color:#fff;border:0;border-radius:9px}
 body:has(.vt-receipt) .vinha-chat-widget{display:none}@media print{.vinha-chat-widget{display:none!important}}
+
+.vt-consent{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:10px;margin:20px 0}.vt-consent input[type=checkbox]{width:19px!important;height:19px!important;min-height:19px!important;padding:0!important;flex:none;accent-color:#285c45}.vt-interest button{padding:12px 16px;margin:8px 8px 8px 0;border:1px solid #bccfbe;border-radius:9px;background:#eef4e9;color:#244c38;min-height:44px}

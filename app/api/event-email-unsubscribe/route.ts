@@ -1,0 +1,4 @@
+import {boundedBody,uuidPattern} from '../../lib/private-files';
+import {trustedSessionRequest} from '../../lib/access-security';
+import {supabaseAdminClient} from '../../lib/supabase/server-admin';
+export async function POST(request:Request){try{if(!trustedSessionRequest(request))return Response.json({error:'Origem inválida.'},{status:403});const b=JSON.parse(new TextDecoder().decode(await boundedBody(request,500)));if(!b||Object.keys(b).join(',')!=='token'||!uuidPattern.test(b.token))return Response.json({error:'Link inválido.'},{status:400});const r=await supabaseAdminClient().rpc('event_email_unsubscribe',{p_token:b.token});if(r.error)throw Error();return Response.json({ok:true},{headers:{'Cache-Control':'no-store'}})}catch{return Response.json({error:'Não foi possível confirmar. Tente novamente.'},{status:503})}}

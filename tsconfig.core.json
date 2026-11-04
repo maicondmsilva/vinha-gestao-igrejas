@@ -112,7 +112,12 @@
     "app/api/event-images/[id]/route.ts",
     "app/api/event-tickets/route.ts",
     "app/api/event-tickets-admin/route.ts",
-    "app/api/event-orders/route.ts"
+    "app/api/event-orders/route.ts",
+    "app/api/event-operations/route.ts",
+    "app/api/event-interest/route.ts",
+    "app/api/event-order-support/route.ts",
+    "app/api/event-email-unsubscribe/route.ts",
+    "app/avisos-evento/cancelar/page.tsx"
   ],
   "exclude": [
     "node_modules"
