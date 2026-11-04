@@ -1,4 +1,5 @@
 'use client';
+import PublicCanonicalEvent from '../../PublicCanonicalEvent';
 import './public-event.css';
 import './public-event-v2.css';
 import './public-event-v3.css';
@@ -9,7 +10,7 @@ type Schedule={id:string;title:string;description?:string;location?:string;start
 type PublicEvent={id:string;title:string;description:string;category:string;format:string;location_name?:string;address?:string;online_url?:string;starts_at:number;ends_at:number;unit_name?:string;church_name:string;primary_color:string;accent_color:string;capacity?:number;cover_image_id?:string};
 type Result={id:string;status:string;checkinToken:string;amountCents:number;paymentMessage?:string};
 
-export default function PublicEventPage(){
+function LegacyPublicEventPage(){
  const [event,setEvent]=useState<PublicEvent|null>(null),[tickets,setTickets]=useState<Ticket[]>([]),[gallery,setGallery]=useState<Media[]>([]),[schedule,setSchedule]=useState<Schedule[]>([]),[guests,setGuests]=useState<Guest[]>([]),[organizers,setOrganizers]=useState<Organizer[]>([]),[error,setError]=useState(''),[result,setResult]=useState<Result|null>(null),[copied,setCopied]=useState(false);
  useEffect(()=>{const slug=location.pathname.split('/').filter(Boolean).pop();fetch(`/api/public/events/${slug}`).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);setEvent(d.event);setTickets(d.tickets||[]);setGallery(d.gallery||[]);setSchedule(d.schedule||[]);setGuests(d.guests||[]);setOrganizers(d.organizers||[])}).catch(e=>setError(e.message))},[]);
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setError('');const d=new FormData(e.currentTarget),slug=location.pathname.split('/').filter(Boolean).pop(),r=await fetch(`/api/public/events/${slug}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticketId:d.get('ticketId'),fullName:d.get('fullName'),email:d.get('email'),phone:d.get('phone'),document:d.get('document'),quantity:Number(d.get('quantity')||1),couponCode:d.get('couponCode'),acceptedTerms:d.get('acceptedTerms')==='on'})}),data=await r.json();if(!r.ok)return setError(data.error);setResult(data)}
@@ -31,3 +32,5 @@ export default function PublicEventPage(){
  </main>
 }
 function Success({result}:{result:Result}){const [loading,setLoading]=useState(false),[paymentError,setPaymentError]=useState('');async function pay(){setLoading(true);setPaymentError('');const response=await fetch('/api/public/events/payments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({registrationId:result.id})}),data=await response.json();setLoading(false);if(!response.ok)return setPaymentError(data.error);location.href=data.checkoutUrl}return <div className="registration-success"><i>✓</i><h2>{result.status==='confirmed'?'Inscrição confirmada':result.status==='waitlisted'?'Você está na lista de espera':'Vaga reservada'}</h2><p>{result.status==='confirmed'?'Apresente este QR Code na entrada.':result.status==='waitlisted'?'Avisaremos quando uma vaga for liberada.':'Finalize o pagamento para confirmar sua inscrição.'}</p>{result.amountCents>0&&result.status==='pending_payment'&&<><em>Valor: {(result.amountCents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</em><button type="button" onClick={pay} disabled={loading}>{loading?'Abrindo pagamento…':'Pagar com segurança'}</button>{paymentError&&<div className="public-error">{paymentError}</div>}<small>Pix, cartão ou boleto conforme o provedor escolhido pela igreja.</small></>}{result.status!=='waitlisted'&&result.status!=='pending_payment'&&<><img className="event-qr" src={`/api/public/events/checkin/qr?token=${result.checkinToken}`} alt="QR Code individual para check-in"/><span>CÓDIGO DE CHECK-IN</span><b>{result.checkinToken.slice(0,8).toUpperCase()}</b></>}</div>}
+
+export default function EventPageRouter(){const [canonical,setCanonical]=useState<boolean|null>(null);useEffect(()=>setCanonical(/^e-[0-9a-f-]{36}$/.test(location.pathname.split('/').pop()||'')),[]);return canonical===null?<p role="status">Carregando evento…</p>:canonical?<PublicCanonicalEvent/>:<LegacyPublicEventPage/>}

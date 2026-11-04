@@ -83,7 +83,8 @@ test('remaining legacy-only endpoints have guarded exports; reviewed migrations 
 });
 
 test('legacy page entrypoints are contained and the dashboard gates mounting', () => {
-  for (const path of ['app-chat', 'app-notificacoes', 'app-voluntario', 'escalas', 'eventos', 'configuracoes/notificacoes', 'configuracoes/equipe-inicial']) {
+  const events=readFileSync(join(rootPath,'app/eventos/layout.tsx'),'utf8');assert.match(events,/canonicalEventPath\(location.pathname\)/);assert.match(events,/if\(!allowed\)return <UnavailableFeature/);
+  for (const path of ['app-chat', 'app-notificacoes', 'app-voluntario', 'escalas', 'configuracoes/notificacoes', 'configuracoes/equipe-inicial']) {
     const content = readFileSync(join(rootPath, 'app', path, 'layout.tsx'), 'utf8');
     assert.match(content, /return <UnavailableFeature/);
     assert.doesNotMatch(content, /\{children\}/);
