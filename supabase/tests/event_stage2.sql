@@ -58,6 +58,12 @@ select is((select (classification->>'name') from private.finance_digital_orders 
 select is((select gross::integer from private.finance_digital_orders where id=pg_temp.fi('paid-order')),1500,'valor vem do tipo cadastrado, em centavos');
 select throws_ok($$select public.event_ticket_checkout(pg_temp.fi('event2'),'create',pg_temp.fi('paid-order'),pg_temp.fi('second'),repeat('a',64),jsonb_set(pg_temp.payload2('paid','second'),'{buyerName}','"Outro comprador"'),repeat('f',64))$$,'40001','event_ticket_changed','mesma tentativa não aceita outro conteúdo');
 select is(public.event_ticket_checkout(null,'mine',null,pg_temp.fi('member'))->'items'->0->>'buyerEmail','member-family@example.invalid','titular consulta somente seu histórico');
+
+update private.event_ticket_types set per_user=1 where id=pg_temp.fi('paid');
+update auth.users set email='changed-second@example.invalid' where id=pg_temp.fi('second');
+select throws_ok($$select public.event_ticket_checkout(pg_temp.fi('event2'),'create',pg_temp.fi('changed-email-order'),pg_temp.fi('second'),repeat('a',64),pg_temp.payload2('paid','second')||'{"buyerEmail":"changed-second@example.invalid","emailConfirmation":"changed-second@example.invalid"}'::jsonb,repeat('f',64))$$,'22023','event_ticket_person_limit','alterar e-mail não reinicia limite da conta');
+update auth.users set email='second-family@example.invalid' where id=pg_temp.fi('second');
+
 -- Local rollback-only tests; no external provider calls.
 select throws_ok($$select public.event_ticket_checkout(pg_temp.fi('event2'),'status',pg_temp.fi('free-guest'),null,repeat('b',64))$$,'42501','event_ticket_proof','visitante exige comprovante privado correto');
 select throws_ok($$select pg_temp.buy2('unconfirmed-order','reserve','unconfirmed','reserve')$$,'42501','event_ticket_login','conta sem e-mail confirmado não compra');

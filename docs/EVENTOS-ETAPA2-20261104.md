@@ -23,8 +23,8 @@ O aplicativo consulta a mesma agenda e recebe o histórico dos novos pedidos. Pa
 
 ## Validação
 
-- 556 testes da aplicação, 2.747 verificações de dados em 59 arquivos.
-- 64 verificações específicas da etapa 2: visitante, vínculo, estoque, reserva, cupom, confirmação financeira, reembolso, pagamento tardio e check-in.
+- 556 testes da aplicação, 2.748 verificações de dados em 59 arquivos.
+- 65 verificações específicas da etapa 2: visitante, vínculo, estoque, reserva, cupom, confirmação financeira, reembolso, pagamento tardio e check-in.
 - Disputa concorrente pela última vaga: um vencedor; repetição do pedido não duplica ticket.
 - Tipagem da plataforma e Android, build, segredos e ações da interface.
 - Fluxo local pelo navegador até QR individual, com dados fictícios. Layout conferido em desktop e largura de 390 px.
