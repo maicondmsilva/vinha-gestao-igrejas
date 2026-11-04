@@ -1,9 +1,10 @@
+import {eventInfoValid} from '../../shared/event-info.ts';
 import {uuidPattern} from './private-files.ts';
 import {parseAgendaCommand} from './member-agenda-command.ts';
 import {coverUrl} from '../../shared/programming.ts';
 export function programmingCommand(value:unknown){
  if(!value||typeof value!=='object'||Array.isArray(value))return null;
- const b=value as Record<string,unknown>,data=b.data as Record<string,unknown>;
+ const b=value as Record<string,unknown>,raw=b.data as Record<string,unknown>;if(raw&&typeof raw==='object'&&'information' in raw&&(!['create','edit'].includes(String(b.action))||!eventInfoValid(raw.information)))return null;const data=raw&&typeof raw==='object'?Object.fromEntries(Object.entries(raw).filter(([k])=>k!=='information')):raw;
  if(Object.keys(b).some(k=>!['unit','action','id','version','data'].includes(k))||typeof b.unit!=='string'||!uuidPattern.test(b.unit)||typeof b.action!=='string'||!data||typeof data!=='object'||Array.isArray(data))return null;
  const id=typeof b.id==='string'&&uuidPattern.test(b.id)?b.id:null,version=Number.isSafeInteger(b.version)&&Number(b.version)>0?Number(b.version):null;
  if(['create','edit'].includes(b.action)){
@@ -20,5 +21,5 @@ export function programmingCommand(value:unknown){
   if(!id||!version||Object.keys(data).sort().join(',')!=='amount,purpose'||typeof data.amount!=='string'||!/^\d{1,8}$/.test(data.amount)||Number(data.amount)!==0&&Number(data.amount)<100||typeof data.purpose!=='string'||!(data.purpose===''&&Number(data.amount)===0||uuidPattern.test(data.purpose)))return null;
  }else if(b.action==='checkin'){if(!parseAgendaCommand(b))return null}
  else return null;
- return{unit:b.unit,action:b.action,id,version:b.action==='category'?Number(b.version):version,data};
+ return{unit:b.unit,action:b.action,id,version:b.action==='category'?Number(b.version):version,data:raw};
 }

@@ -1,0 +1,4 @@
+import {db} from '../../../lib/supabase/operations';
+import {supabaseAdminClient} from '../../../lib/supabase/server-admin';
+import {uuidPattern} from '../../../lib/private-files';
+export async function GET(request:Request){try{const id=new URL(request.url).pathname.split('/').pop()||'';if(!uuidPattern.test(id))return new Response(null,{status:404});const r=await db(request).rpc('member_event_image',{p_id:id});if(r.error||!r.data?.path)return new Response(null,{status:404});const file=await supabaseAdminClient().storage.from('vinha-event-images').download(r.data.path);if(file.error||!file.data)return new Response(null,{status:404});return new Response(await file.data.arrayBuffer(),{headers:{'Content-Type':r.data.mime,'X-Content-Type-Options':'nosniff','Cache-Control':'private, no-store','Content-Security-Policy':"default-src 'none'"}})}catch{return new Response(null,{status:503})}}

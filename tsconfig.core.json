@@ -103,7 +103,13 @@
     "app/CommunicationWorkspace.tsx",
     "app/api/publishing/route.ts",
     "app/api/kids-desk/route.ts",
-    "app/MemberPublishingCatalog.tsx"
+    "app/MemberPublishingCatalog.tsx",
+    "app/api/event-information/route.ts",
+    "app/PublicCanonicalEvent.tsx",
+    "app/eventos/[slug]/equipe/page.tsx",
+    "app/api/event-page/route.ts",
+    "app/api/event-images/route.ts",
+    "app/api/event-images/[id]/route.ts"
   ],
   "exclude": [
     "node_modules"
