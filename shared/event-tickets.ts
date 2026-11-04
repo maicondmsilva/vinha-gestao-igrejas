@@ -11,3 +11,5 @@ const text=(v:unknown,n:number)=>typeof v==='string'&&v.length<=n;
 export function ticketBuyerValid(v:unknown){if(!object(v)||Object.keys(v).some(k=>!['buyerName','buyerEmail','emailConfirmation','items','coupon','intent','expectedTotal','revision'].includes(k)))return false;
  if(!text(v.buyerName,160)||String(v.buyerName).trim().length<2||!text(v.buyerEmail,254)||!text(v.emailConfirmation,254)||!text(v.coupon,40)||!['pay','reserve'].includes(String(v.intent))||!Array.isArray(v.items)||v.items.length<1||v.items.length>20)return false;
  return v.items.every(i=>object(i)&&Object.keys(i).length===6&&['type','name','email','cpf','phone','answers'].every(k=>k in i)&&text(i.type,36)&&text(i.name,160)&&String(i.name).trim().length>=2&&text(i.email,254)&&text(i.cpf,18)&&text(i.phone,22)&&object(i.answers)&&Object.keys(i.answers).length<=30&&Object.values(i.answers).every(a=>text(a,1000)));}
+
+export function ticketCsv(rows:string[][]){return '\uFEFF'+rows.map(row=>row.map(v=>'"'+((/^[\s\u0000-\u001f]*[=+@-]/.test(v)?"'":'')+v).replaceAll('"','""')+'"').join(';')).join('\r\n')}

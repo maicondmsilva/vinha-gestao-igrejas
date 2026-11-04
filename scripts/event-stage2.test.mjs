@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import ts from 'typescript';
-import {ticketBuyerValid,ticketState} from '../shared/event-tickets.ts';
+import {ticketBuyerValid,ticketState,ticketCsv} from '../shared/event-tickets.ts';
 import {boundedBody,uuidPattern} from '../app/lib/private-files.ts';
 import {trustedSessionRequest} from '../app/lib/access-security.ts';
 const id='aa000000-0000-4000-8000-000000000001',buyer={buyerName:'Pessoa fictícia',buyerEmail:'test@example.invalid',emailConfirmation:'test@example.invalid',coupon:'',intent:'pay',items:[{type:id,name:'Participante fictício',email:'',cpf:'',phone:'',answers:{}}]};
@@ -18,3 +18,5 @@ test('erro do banco não revela detalhes internos',async()=>{const r=route({sqlE
 test('checkout incerto nunca autoriza segundo POST financeiro',async()=>{const r=route();assert.equal((await r.POST(request())).status,200);assert.equal(r.providerCalls(),0);assert.equal(r.calls.filter(c=>c.name==='event_ticket_delivery').length,1)});
 test('ambiguidade no provedor é retida e não vira confirmação',async()=>{const r=route({claim:'dispatching'}),response=await r.POST(request()),data=await response.json();assert.equal(r.providerCalls(),1);assert.equal(data.state,'holding');assert.ok(r.calls.some(c=>c.args.p_action==='uncertain'));assert.match(data.paymentMessage,/não faça outro pagamento/)});
 test('estado financeiro não confirmado não aparece como ingresso válido',()=>{assert.equal(ticketState('reserved'),'Reserva aguardando pagamento');assert.equal(ticketState('payment_review'),'Pagamento em conferência')});
+
+test('exportação neutraliza fórmulas com prefixos invisíveis e preserva aspas',()=>{const csv=ticketCsv([['\t=1+1',' @SUM(1)','Nome "fictício"']]);assert.ok(csv.startsWith('\uFEFF'));assert.ok(csv.includes('"\'\t=1+1"'));assert.ok(csv.includes('"\' @SUM(1)"'));assert.ok(csv.includes('"Nome ""fictício"""'))});
