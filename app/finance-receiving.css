@@ -27,3 +27,9 @@
 @media(max-width:700px){.receiving-area .receiving-summary{align-items:stretch;flex-direction:column;padding:18px;gap:12px}.receiving-area .receiving-intro h2{font-size:24px}.receiving-intro>label{margin-top:16px}.receiving-provider dl{grid-template-columns:1fr 1.5fr}.receiving-area .receiving-provider{padding:18px}.receiving-summary strong{font-size:16px}}
 .receiving-workspace>.f1-tabs{display:none}.f1-module .receiving-area header.receiving-intro{background:transparent;padding:0;min-height:0;height:auto;box-shadow:none;border:0}.receiving-area .receiving-intro .f1-overline{display:none}.receiving-area .receiving-intro h2{font-size:20px;margin:0 0 5px}
 .receiving-area .receiving-grid{align-items:start}
+.receiving-workspace .receiving-area button{background:#21673d;border:1px solid #21673d;color:#fff;border-radius:9px;line-height:1.4;font:inherit;font-size:13px;padding:10px 14px;min-height:42px;white-space:normal;box-shadow:none}
+.receiving-workspace .receiving-area button.f1-secondary{background:#fff;border-color:#cfddd3;color:#355f44}
+.receiving-workspace .receiving-area button:hover:not(:disabled){background:#185430;border-color:#185430;color:#fff}
+.receiving-workspace .receiving-area button.f1-secondary:hover:not(:disabled){background:#edf5ef;color:#234f34;border-color:#9db8a5}
+.receiving-workspace .receiving-area .f1-dialog-head button{background:#eff5f0;border-color:transparent;color:#355f44;padding:8px;min-width:40px}
+.receiving-workspace .receiving-area header.receiving-intro{background:transparent!important;padding:0!important;height:auto!important;min-height:0!important;border:0;box-shadow:none}
