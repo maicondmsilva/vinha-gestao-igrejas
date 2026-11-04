@@ -42,6 +42,9 @@ select lives_ok($$select public.event_information_admin(pg_temp.pa('org'),pg_tem
 select pg_temp.actor('member');
 select throws_ok($$select public.event_information_admin(pg_temp.pa('org'),pg_temp.pa('unit'),'read',pg_temp.ev(0))$$,'42501','member_agenda_denied','revogação da equipe vale imediatamente');
 select pg_temp.actor('owner');
+select lives_ok($$select public.event_information_admin(pg_temp.pa('org'),pg_temp.pa('unit'),'save',pg_temp.ev(0),5,pg_temp.info()||jsonb_build_object('targets',jsonb_build_array(pg_temp.pa('unitb'))))$$,'seleciona destinatário diferente da igreja organizadora');
+select is(jsonb_array_length(public.member_agenda(pg_temp.pa('org'),pg_temp.pa('unit'))->'items'),0,'agenda da organizadora respeita exclusão dos destinatários');
+select is(jsonb_array_length(public.member_agenda(pg_temp.pa('org'),pg_temp.pa('unitb'))->'items'),1,'destinatária mantém divulgação do evento único');
 select lives_ok($$select public.event_image_command(pg_temp.pa('org'),pg_temp.pa('unit'),pg_temp.pa('image'),'prepare','image/png')$$,'prepara imagem no escopo autorizado');
 select is(public.member_event_image(pg_temp.pa('image')),null::jsonb,'imagem incompleta nunca é servida');
 select lives_ok($$select public.event_image_command(pg_temp.pa('org'),pg_temp.pa('unit'),pg_temp.pa('image'),'finish')$$,'confirma imagem privada do administrador');
