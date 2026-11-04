@@ -109,7 +109,10 @@
     "app/eventos/[slug]/equipe/page.tsx",
     "app/api/event-page/route.ts",
     "app/api/event-images/route.ts",
-    "app/api/event-images/[id]/route.ts"
+    "app/api/event-images/[id]/route.ts",
+    "app/api/event-tickets/route.ts",
+    "app/api/event-tickets-admin/route.ts",
+    "app/api/event-orders/route.ts"
   ],
   "exclude": [
     "node_modules"
