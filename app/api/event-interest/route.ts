@@ -1,0 +1,5 @@
+import {db} from '../../lib/supabase/operations';
+import {trustedSessionRequest} from '../../lib/access-security';
+import {boundedBody,uuidPattern} from '../../lib/private-files';
+const json=(d:unknown,status=200)=>Response.json(d,{status,headers:{'Cache-Control':'private, no-store'}});
+export async function POST(request:Request){try{if(!trustedSessionRequest(request))return json({error:'Origem inválida.'},403);const c=db(request),u=await c.auth.getUser();if(u.error||!u.data.user)return json({error:'Entre na sua conta para marcar interesse.'},401);const b=JSON.parse(new TextDecoder().decode(await boundedBody(request,1000)));if(!b||Object.keys(b).some(k=>!['event','active','email'].includes(k))||!uuidPattern.test(b.event)||b.active!==null&&typeof b.active!=='boolean'||typeof b.email!=='boolean')return json({error:'Pedido inválido.'},400);const r=await c.rpc('member_event_interest',{p_event:b.event,p_active:b.active,p_email:b.email});if(r.error)return json({error:'Interesse não confirmado. Confira sua conta e o evento.'},403);return json(r.data)}catch{return json({error:'Não foi possível atualizar. Tente novamente.'},503)}}

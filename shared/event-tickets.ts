@@ -8,7 +8,8 @@ export const ticketState=(value:string)=>({holding:'Aguardando pagamento',reserv
 export const ticketMode=(value:string)=>({free:'Gratuito',paid:'Pago',reservation:'Reserva'}[value]||value);
 const object=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const text=(v:unknown,n:number)=>typeof v==='string'&&v.length<=n;
-export function ticketBuyerValid(v:unknown){if(!object(v)||Object.keys(v).some(k=>!['buyerName','buyerEmail','emailConfirmation','items','coupon','intent','expectedTotal','revision'].includes(k)))return false;
+export function ticketBuyerValid(v:unknown){if(!object(v)||Object.keys(v).some(k=>!['buyerName','buyerEmail','emailConfirmation','items','coupon','intent','expectedTotal','revision','emailConsent'].includes(k)))return false;
+ if('emailConsent' in v&&typeof v.emailConsent!=='boolean')return false;
  if(!text(v.buyerName,160)||String(v.buyerName).trim().length<2||!text(v.buyerEmail,254)||!text(v.emailConfirmation,254)||!text(v.coupon,40)||!['pay','reserve'].includes(String(v.intent))||!Array.isArray(v.items)||v.items.length<1||v.items.length>20)return false;
  return v.items.every(i=>object(i)&&Object.keys(i).length===6&&['type','name','email','cpf','phone','answers'].every(k=>k in i)&&text(i.type,36)&&text(i.name,160)&&String(i.name).trim().length>=2&&text(i.email,254)&&text(i.cpf,18)&&text(i.phone,22)&&object(i.answers)&&Object.keys(i.answers).length<=30&&Object.values(i.answers).every(a=>text(a,1000)));}
 

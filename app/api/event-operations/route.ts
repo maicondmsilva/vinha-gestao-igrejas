@@ -1,0 +1,11 @@
+import {authorizeSupabaseChurch} from '../../lib/supabase/church-access';
+import {db} from '../../lib/supabase/operations';
+import {boundedBody,uuidPattern} from '../../lib/private-files';
+import {supabaseAdminClient} from '../../lib/supabase/server-admin';
+import {eventEmailConfigured,processEventEmail} from '../../lib/event-email';
+const json=(d:unknown,status=200)=>Response.json(d,{status,headers:{'Cache-Control':'private, no-store'}});
+export const GET=(r:Request)=>run(r,false);export const POST=(r:Request)=>run(r,true);
+async function run(request:Request,write:boolean){try{const a=await authorizeSupabaseChurch(request,'units.read');if(!a||a.response)return a?.response||json({error:'Serviço indisponível.'},503);const b=write?JSON.parse(new TextDecoder().decode(await boundedBody(request,15000))):Object.fromEntries(new URL(request.url).searchParams);if(!b||Object.keys(b).some(k=>!['unit','event','action','id','version','data','tenant'].includes(k))||!uuidPattern.test(b.unit)||!uuidPattern.test(b.event)||b.id&&!uuidPattern.test(b.id)||!['messages','interests','finance','message_save','message_schedule','message_cancel','cancel_order','refund_review','refund_recorded','dispatch'].includes(b.action)||!write&&!['messages','interests','finance'].includes(b.action)||write&&b.version!==null&&b.version!==undefined&&!Number.isSafeInteger(b.version))return json({error:'Revise os campos do evento.'},400);
+ const r=await db(request).rpc('event_operations_admin',{p_org:a.access!.membership.organization_id,p_unit:b.unit,p_event:b.event,p_action:b.action==='dispatch'?'messages':b.action,p_id:b.id||null,p_version:b.version??null,p_data:b.data||{}});if(r.error)return json({error:r.error.code==='42501'?'Seu acesso não permite esta operação ou a conta recebedora.':r.error.code==='40001'?'O registro mudou ou exige acompanhamento financeiro. Atualize e confira antes de repetir.':'Revise os campos, datas e justificativas.'},r.error.code==='42501'?403:r.error.code==='40001'?409:400);
+ if(b.action==='dispatch')return json(await processEventEmail(supabaseAdminClient(),a.access!.membership.organization_id,b.event));return json({...r.data,emailReady:eventEmailConfigured(process.env),pushReady:process.env.MEMBER_PUSH_ENABLED==='true'});
+ }catch{return json({error:'Operação não confirmada. Consulte a lista antes de repetir.'},503)}}
