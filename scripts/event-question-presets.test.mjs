@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {agendaError} from '../shared/member-agenda.ts';
+import {ticketQuestionPresets,ticketQuestionSelection,ticketQuestionOther,ticketOtherPrefix} from '../shared/event-question-presets.ts';
+test('camiseta oferece tamanhos e resposta alternativa sem duplicar Outro',()=>{const p=ticketQuestionPresets.find(p=>p.key==='shirt');assert.equal(p.question.kind,'select_other');assert.ok(p.question.options.includes('M'));assert.ok(!p.question.options.includes('Outro'));assert.equal(ticketQuestionSelection(p.question,'M'),'M');assert.equal(ticketQuestionSelection(p.question,ticketOtherPrefix+'Infantil 8'),'__other__');assert.equal(ticketQuestionOther('Outro: Infantil 8'),'Infantil 8')});
+test('listas antigas preservam respostas sem interpretar Outro como campo aberto',()=>{const q={kind:'select'};assert.equal(ticketQuestionSelection(q,'Outro: exemplo'),'Outro: exemplo')});
+test('perguntas prontas possuem chaves unicas e nenhuma resposta preenchida',()=>{assert.equal(new Set(ticketQuestionPresets.map(p=>p.key)).size,ticketQuestionPresets.length);for(const p of ticketQuestionPresets){assert.ok(p.question.label.length>=2);assert.ok(!('id'in p.question));assert.ok(Array.isArray(p.question.options));assert.equal(typeof p.question.required,'boolean')}});
+test('publicacao incompleta informa endereco e link sem revelar erro interno',()=>{assert.match(agendaError('invalid_event_information'),/endereço completo/);assert.match(agendaError('invalid_event_information'),/link de participação/);assert.doesNotMatch(agendaError('invalid_event_information'),/private\.|SQL/)});
