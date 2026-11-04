@@ -1,4 +1,4 @@
-export type TicketQuestion={id:string;label:string;kind:'text'|'email'|'date'|'cpf'|'phone'|'number'|'select'|'boolean';required:boolean;options:string[]};
+export type TicketQuestion={id:string;label:string;kind:'text'|'email'|'date'|'cpf'|'phone'|'number'|'select'|'select_other'|'boolean';required:boolean;options:string[]};
 export type TicketType={id:string;name:string;mode:'free'|'paid'|'reservation';price:string;starts:string;ends:string;perUser:number|null;perCpf:number|null;remaining:number|null};
 export type TicketCatalog={enabled:boolean;allowGuests:boolean;authenticated:boolean;canPay:boolean;showRemaining:boolean;remaining:number|null;types:TicketType[];questions:TicketQuestion[]};
 export type TicketParticipant={type:string;name:string;email:string;cpf:string;phone:string;answers:Record<string,string>};
