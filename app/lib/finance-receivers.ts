@@ -22,6 +22,8 @@ export function receiverCommand(v:unknown){
   if(d.webhookSecret&&String(d.webhookSecret).length<20)throw Error('Informe a assinatura secreta completa do webhook.');
   if(d.webhookSecret===d.credential||d.publicKey===d.credential)throw Error('Access Token, Public Key e assinatura do webhook são credenciais diferentes.');
   data={...data,version:d.version,credential:d.credential,publicKey:d.publicKey||'',webhookSecret:d.webhookSecret||''};
+ }else if(action==='primary'){
+  common.push('version','primary');if(!Number.isSafeInteger(d.version)||Number(d.version)<1||typeof d.primary!=='boolean')throw Error('Atualize a conta e confira a seleção principal.');data={...data,version:d.version,primary:d.primary};
  }else if(action==='validate'||action==='activate'){
   common.push('version');if(!Number.isSafeInteger(d.version)||Number(d.version)<1||provider!=='mercado_pago')throw Error('Atualize a conexão Mercado Pago.');data.version=d.version;
   if(action==='activate'){common.push('confirmed');if(d.confirmed!==true)throw Error('Confirme a ativação dos recebimentos.');data.confirmed=true;}
