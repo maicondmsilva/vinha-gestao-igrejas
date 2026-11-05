@@ -1,3 +1,4 @@
+begin;
 set local lock_timeout='5s';
 create function private.event_checkout_review(p_org uuid,p_unit uuid,p_event uuid,p_order uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare o private.event_ticket_orders;
@@ -119,3 +120,5 @@ begin
  d:=replace(d,'cpf=p_data->>''cpf''','regexp_replace(coalesce(cpf,''''),''[^0-9]'','''',''g'')=p_data->>''cpf''');execute d;
 end $patch$;
 notify pgrst,'reload schema';
+
+commit;
