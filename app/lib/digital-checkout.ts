@@ -6,6 +6,15 @@ import type {OperationsClient} from './supabase/operations.ts';
 
 export class CheckoutPreparationError extends Error{readonly notSent:boolean;readonly status:number;readonly stage:string;readonly reason:string;constructor(notSent:boolean,status:number,stage:string,reason=''){super('Checkout preparation '+stage+' HTTP '+status);this.notSent=notSent;this.status=status;this.stage=stage;this.reason=reason}}
 export function checkoutPreparationIssue(e:unknown){return e instanceof CheckoutPreparationError?{retry:e.notSent,message:'Mercado Pago recusou a preparação do pagamento (HTTP '+e.status+(e.reason?' · '+e.reason:'')+'). '+(e.notSent?'Nenhuma cobrança foi criada nesta tentativa. Confira a conexão e a configuração da conta antes de preparar novamente.':'Mantenha o pedido em conferência; não crie outro pagamento.')}:null}
+export function checkoutErrorReason(body:unknown){
+ if(!body||typeof body!=='object'||Array.isArray(body))return '';
+ const d=body as {error?:unknown;message?:unknown;cause?:unknown};
+ const values=[d.error,d.message,...(Array.isArray(d.cause)?d.cause.slice(0,10).flatMap(x=>x&&typeof x==='object'?[(x as {code?:unknown}).code,(x as {description?:unknown}).description]:[]):[])].filter((x):x is string=>typeof x==='string').map(x=>x.slice(0,4096).toLowerCase()).join(' ');
+ const codes=['collector_does_not_comply_with_current_regulation','invalid_expiration_date_from','invalid_expiration_date_to','invalid_payment_methods','invalid_access_token','invalid_collector_id','invalid_collector_email','invalid_auto_return','auto_return_invalid','invalid_back_urls','invalid_payer_email','invalid_items','invalid_scope','invalid_client','invalid_token','invalid_date','invalid_request','forbidden'];
+ for(const code of codes)if(values.includes(code))return code;
+ for(const [pattern,code] of [[/collector.*(regulation|validation|comply)/,'collector_does_not_comply_with_current_regulation'],[/live credentials/,'live_credentials_rejected'],[/payer.*collector|collector.*payer/,'payer_collector_conflict'],[/expiration_date_from/,'invalid_expiration_date_from'],[/expiration_date_to/,'invalid_expiration_date_to'],[/expiration|invalid date/,'invalid_date'],[/excluded_payment|payment_methods|payment type/,'invalid_payment_methods'],[/back_urls|back_url|auto_return/,'invalid_back_urls'],[/notification_url/,'invalid_notification_url'],[/payer.*email|email.*payer/,'invalid_payer_email'],[/items|unit_price/,'invalid_items']] as const)if(pattern.test(values))return code;
+ return values.includes('bad_request')?'bad_request':'';
+}
 export type CheckoutReservation={id:string;order:string;receiver:string;gross:string;title:string;name:string;email:string;expiresAt:string;state:string;checkoutUrl?:string};
 /** A configured origin, never Host/Forwarded headers or a URL supplied by the payer. */
 export function checkoutOrigin(value:string){
@@ -42,7 +51,7 @@ export async function createDigitalPreference(c:DigitalConnection,r:CheckoutRese
  }
  const payload={...base,...(restrictions?{payment_methods:restrictions}:{})};
  const response=await transport('https://api.mercadopago.com/checkout/preferences',{method:'POST',headers:{Authorization:'Bearer '+secret.access_token,'Content-Type':'application/json',accept:'application/json'},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(15000)});
- if(!response.ok){let reason='';try{const d=await response.json() as {error?:unknown;message?:unknown};const allowed=new Set(['invalid_token','bad_request','invalid_auto_return','auto_return_invalid','invalid_back_urls','invalid_payment_methods','invalid_expiration_date_to','collector_does_not_comply','invalid_payer_email','invalid_items','invalid_request','invalid_scope','invalid_client','forbidden']);if(typeof d.error==='string'&&allowed.has(d.error))reason=d.error;else if(typeof d.message==='string'){const code=d.message.toLowerCase().replaceAll(' ','_');if(allowed.has(code))reason=code}}catch{}throw new CheckoutPreparationError([400,401,403,422].includes(response.status),response.status,'preference',reason)}
+ if(!response.ok){let reason='';try{reason=checkoutErrorReason(await response.json())}catch{}throw new CheckoutPreparationError([400,401,403,422].includes(response.status),response.status,'preference',reason)}
  const raw=await response.text();if(raw.length>131072)throw Error('Resposta inválida.');const d=JSON.parse(raw);
  if(String(d.collector_id)!==c.externalId||d.external_reference!==r.order||!Array.isArray(d.items)||d.items.length!==1||d.items[0].id!==r.order||d.items[0].quantity!==1||d.items[0].currency_id!=='BRL'||String(d.items[0].unit_price)!==String(Number(r.gross)/100))throw Error('Preferência divergente.');
  return mercadoCheckoutResult(d);
