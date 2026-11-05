@@ -59,5 +59,9 @@ update private.church_app_events set starts_at=now()-interval '2 hours',pickup_a
 set local role authenticated;select pg_temp.actor('owner');
 select lives_ok($$select pg_temp.admin2('checkin',null,jsonb_build_object('code',current_setting('commerce.code')))$$,'confirmed order can be collected in window');
 select is(pg_temp.admin2('checkin',null,jsonb_build_object('code',current_setting('commerce.code')))->>'already','true','collection is idempotent');
+reset role;
+select lives_ok($$select private.commerce_event_save(pg_temp.fi('event2'),jsonb_build_object('mode','sale','pickupLocal',to_char(now() at time zone 'America/Sao_Paulo','YYYY-MM-DD"T"HH24:MI'),'receiver','','methods','[]'::jsonb))$$,'gratuitous setup clears online receiving without invalid methods');
+set constraints commerce_pickup_dates immediate;
+select throws_ok($$update private.church_app_events set pickup_at=ends_at+interval '1 hour' where id=pg_temp.fi('event2')$$,'23514','invalid_commerce_dates','pickup final schedule cannot exceed end');
 select finish();rollback;
 

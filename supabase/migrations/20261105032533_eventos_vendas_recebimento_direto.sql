@@ -72,7 +72,7 @@ begin
  receiver:=nullif(d->>'receiver','')::uuid;
  select * into s from private.event_ticket_settings where event_id=e.id;
  if receiver is not null or s.event_id is not null then
-  perform private.event_ticket_admin(e.organization_id,e.unit_id,e.id,'settings',null,e.version,jsonb_build_object('enabled',coalesce(s.enabled,false),'allow_guests',coalesce(s.allow_guests,false),'show_remaining',coalesce(s.show_remaining,true),'purpose','','receiving_unit',e.unit_id,'reservation_hours',coalesce(s.reservation_hours,24),'questions',coalesce(s.questions,'[]'),'receiver',receiver,'payment_methods',d->'methods'));
+  perform private.event_ticket_admin(e.organization_id,e.unit_id,e.id,'settings',null,e.version,jsonb_build_object('enabled',coalesce(s.enabled,false),'allow_guests',coalesce(s.allow_guests,false),'show_remaining',coalesce(s.show_remaining,true),'purpose','','receiving_unit',e.unit_id,'reservation_hours',coalesce(s.reservation_hours,24),'questions',coalesce(s.questions,'[]'),'receiver',receiver)||case when receiver is not null then jsonb_build_object('payment_methods',d->'methods') else '{}'::jsonb end);
  end if;
 end $$;
 revoke all on function private.commerce_event_save(uuid,jsonb) from public,anon,authenticated,service_role;
