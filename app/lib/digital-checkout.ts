@@ -6,6 +6,14 @@ import type {OperationsClient} from './supabase/operations.ts';
 
 export class CheckoutPreparationError extends Error{readonly notSent:boolean;readonly status:number;readonly stage:string;readonly reason:string;constructor(notSent:boolean,status:number,stage:string,reason=''){super('Checkout preparation '+stage+' HTTP '+status);this.notSent=notSent;this.status=status;this.stage=stage;this.reason=reason}}
 export function checkoutPreparationIssue(e:unknown){return e instanceof CheckoutPreparationError?{retry:e.notSent,message:'Mercado Pago recusou a preparação do pagamento (HTTP '+e.status+(e.reason?' · '+e.reason:'')+'). '+(e.notSent?'Nenhuma cobrança foi criada nesta tentativa. Confira a conexão e a configuração da conta antes de preparar novamente.':'Mantenha o pedido em conferência; não crie outro pagamento.')}:null}
+/** Bounded server diagnostics; never return this text to public checkout clients. */
+export function checkoutProviderDiagnostic(body:unknown,secrets:string[]){
+ if(!body||typeof body!=='object'||Array.isArray(body))return 'empty provider detail';
+ const d=body as {error?:unknown;message?:unknown;cause?:unknown};
+ let text=JSON.stringify({error:typeof d.error==='string'?d.error.slice(0,100):'',message:typeof d.message==='string'?d.message.slice(0,2000):'',cause:Array.isArray(d.cause)?d.cause.slice(0,5).map(x=>x&&typeof x==='object'?{code:String(x.code||'').slice(0,100),description:String(x.description||'').slice(0,500)}:{}):[]});
+ for(const value of secrets.filter(x=>x.length>2).sort((a,b)=>b.length-a.length))text=text.split(value).join('[redacted]');
+ return text.replace(/[^\s@"<>]+@[^\s@"<>]+/g,'[email]').replace(/Bearer\s+[^\s"]+/gi,'[credential]').replace(/[A-Za-z0-9_-]{24,}/g,'[identifier]').replace(/\d{6,}/g,'[number]').slice(0,1200);
+}
 export function checkoutErrorReason(body:unknown){
  if(!body||typeof body!=='object'||Array.isArray(body))return '';
  const d=body as {error?:unknown;message?:unknown;cause?:unknown};
@@ -51,7 +59,7 @@ export async function createDigitalPreference(c:DigitalConnection,r:CheckoutRese
  }
  const payload={...base,...(restrictions?{payment_methods:restrictions}:{})};
  const response=await transport('https://api.mercadopago.com/checkout/preferences',{method:'POST',headers:{Authorization:'Bearer '+secret.access_token,'Content-Type':'application/json',accept:'application/json'},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(15000)});
- if(!response.ok){let reason='';try{reason=checkoutErrorReason(await response.json())}catch{}throw new CheckoutPreparationError([400,401,403,422].includes(response.status),response.status,'preference',reason)}
+ if(!response.ok){let reason='';try{const detail=await response.json();reason=checkoutErrorReason(detail);console.warn('vinha_checkout_provider_rejected',response.status,checkoutProviderDiagnostic(detail,[secret.access_token,r.email,r.name,...r.name.split(/\s+/),c.externalId]))}catch{}throw new CheckoutPreparationError([400,401,403,422].includes(response.status),response.status,'preference',reason)}
  const raw=await response.text();if(raw.length>131072)throw Error('Resposta inválida.');const d=JSON.parse(raw);
  if(String(d.collector_id)!==c.externalId||d.external_reference!==r.order||!Array.isArray(d.items)||d.items.length!==1||d.items[0].id!==r.order||d.items[0].quantity!==1||d.items[0].currency_id!=='BRL'||String(d.items[0].unit_price)!==String(Number(r.gross)/100))throw Error('Preferência divergente.');
  return mercadoCheckoutResult(d);
