@@ -15,3 +15,7 @@
 ## Limites da homologação real
 
 Pedido de R$ 10 preparado anteriormente, sem pagamento confirmado, reteve tentativa sem link. Não houve pagamento/devolução real. A conta recebedora está configurada com Pix, cartão e boleto; a conferência deve identificar o impedimento efetivo antes de nova tentativa. SMTP de eventos e Firebase/Expo não estão configurados; entrega real de e-mail/push permanece pendente.
+
+## Conferência em produção e causa identificada
+
+PR 82 publicado e migração aplicada. IDs 1 a 4 e rótulos de local confirmados na unidade real. Mercado Pago confirmou titular e meios ativos por leitura autenticada. A recusa HTTP 400 foi diagnosticada no servidor: `account_money cannot be excluded`. A integração passa a preservar a carteira obrigatória do provedor, sem liberar cartão/boleto quando não selecionados. Há teste específico dessa restrição. Não houve pagamento ou devolução real; a confirmação financeira continua dependente do teste realizado pelo usuário.

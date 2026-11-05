@@ -54,8 +54,9 @@ export async function createDigitalPreference(c:DigitalConnection,r:CheckoutRese
   if(!Array.isArray(methods)||!methods.length||methods.length>500||methods.some(m=>!m||typeof m.id!=='string'||!/^[a-zA-Z0-9_-]{1,100}$/.test(m.id)||typeof m.payment_type_id!=='string'||typeof m.status!=='string'))throw Error('Métodos inválidos.');
   const allowed=(m:{id:string;payment_type_id:string;status:string})=>m.status==='active'&&((c.methods!.includes('card')&&['credit_card','debit_card'].includes(m.payment_type_id))||(c.methods!.includes('pix')&&m.id==='pix')||(c.methods!.includes('boleto')&&m.payment_type_id==='ticket'));
   if(!methods.some(allowed))throw Error('Nenhum método selecionado está disponível nesta conta.');
-  const allowedType=(type:string)=>(c.methods!.includes('card')&&['credit_card','debit_card'].includes(type))||(c.methods!.includes('pix')&&type==='bank_transfer')||(c.methods!.includes('boleto')&&type==='ticket');
-  restrictions={excluded_payment_types:[...new Set<string>(methods.map(m=>m.payment_type_id))].filter(type=>!allowedType(type)).map(id=>({id})),excluded_payment_methods:methods.filter(m=>allowedType(m.payment_type_id)&&!allowed(m)).map(m=>({id:m.id}))};
+  // Mercado Pago never allows excluding its wallet balance; selected external methods stay restricted.
+  const allowedType=(type:string)=>type==='account_money'||(c.methods!.includes('card')&&['credit_card','debit_card'].includes(type))||(c.methods!.includes('pix')&&type==='bank_transfer')||(c.methods!.includes('boleto')&&type==='ticket');
+  restrictions={excluded_payment_types:[...new Set<string>(methods.map(m=>m.payment_type_id))].filter(type=>!allowedType(type)).map(id=>({id})),excluded_payment_methods:methods.filter(m=>m.payment_type_id!=='account_money'&&allowedType(m.payment_type_id)&&!allowed(m)).map(m=>({id:m.id}))};
  }
  const payload={...base,...(restrictions?{payment_methods:restrictions}:{})};
  const response=await transport('https://api.mercadopago.com/checkout/preferences',{method:'POST',headers:{Authorization:'Bearer '+secret.access_token,'Content-Type':'application/json',accept:'application/json'},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(15000)});
