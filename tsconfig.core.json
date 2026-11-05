@@ -117,7 +117,13 @@
     "app/api/event-interest/route.ts",
     "app/api/event-order-support/route.ts",
     "app/api/event-email-unsubscribe/route.ts",
-    "app/avisos-evento/cancelar/page.tsx"
+    "app/avisos-evento/cancelar/page.tsx",
+    "app/api/event-staff/route.ts",
+    "app/api/event-insights/route.ts",
+    "app/api/event-experience/route.ts",
+    "app/api/event-receipt/route.ts",
+    "app/api/event-receipt/payment/route.ts",
+    "app/comprovante-evento/page.tsx"
   ],
   "exclude": [
     "node_modules"
