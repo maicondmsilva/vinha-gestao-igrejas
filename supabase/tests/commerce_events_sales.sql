@@ -62,7 +62,7 @@ select is(pg_temp.admin2('checkin',null,jsonb_build_object('code',current_settin
 reset role;
 select lives_ok($$select private.commerce_event_save(pg_temp.fi('event2'),jsonb_build_object('mode','sale','pickupLocal',to_char(now() at time zone 'America/Sao_Paulo','YYYY-MM-DD"T"HH24:MI'),'receiver','','methods','[]'::jsonb))$$,'gratuitous setup clears online receiving without invalid methods');
 set constraints private.commerce_pickup_dates immediate;
-select throws_ok($$update private.church_app_events set pickup_at=ends_at+interval '1 hour' where id=pg_temp.fi('event2')$$,'23514','invalid_commerce_dates','pickup final schedule cannot exceed end');
+select throws_ok($$update private.church_app_events set pickup_at=ends_at+interval '1 hour' where id=pg_temp.fi('event2')$$,'23514','invalid_commerce_pickup_end','pickup final schedule cannot exceed end');
 select finish();rollback;
 
 

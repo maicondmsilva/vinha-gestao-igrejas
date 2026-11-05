@@ -1,7 +1,7 @@
 import type {AgendaEvent} from './member-agenda.ts';
 
 export type EventCategory={id:string;name:string;color:string;active:boolean;version:number};
-export type ProgrammingEvent=AgendaEvent&{commerce_mode?:'event'|'sale';pickup_at?:string|null;category_id:string|null;category_name:string|null;category_color:string|null;cover_url:string;series_id:string|null;price_cents:string;purpose_id:string|null};
+export type ProgrammingEvent=AgendaEvent&{display_id?:number|string;commerce_mode?:'event'|'sale';pickup_at?:string|null;category_id:string|null;category_name:string|null;category_color:string|null;cover_url:string;series_id:string|null;price_cents:string;purpose_id:string|null};
 export type ProgrammingSection='agenda'|'proximos'|'encerrados'|'todos'|'categorias'|'vendas';
 export const programmingSections:readonly ProgrammingSection[]=['agenda','proximos','encerrados','todos','categorias','vendas'];
 export const programmingLabels:Record<ProgrammingSection,string>={vendas:'Vendas e encomendas',agenda:'Agenda da igreja',proximos:'Próximos eventos',encerrados:'Eventos encerrados',todos:'Eventos',categorias:'Categorias de eventos'};

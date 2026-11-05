@@ -74,7 +74,7 @@ jobs:
           node --experimental-strip-types --test scripts/brazil-registration.test.mjs scripts/android-church-select.test.mjs
           node --experimental-strip-types --test scripts/member-church.test.mjs
           node --experimental-strip-types --test scripts/android-experience.test.mjs
-          node --experimental-strip-types --test scripts/member-agenda.test.mjs scripts/programming.test.mjs scripts/event-stage1.test.mjs scripts/event-stage2.test.mjs scripts/event-stage3.test.mjs scripts/event-closure.test.mjs scripts/event-question-presets.test.mjs scripts/event-publication.test.mjs scripts/publishing.test.mjs
+          node --experimental-strip-types --test scripts/member-agenda.test.mjs scripts/programming.test.mjs scripts/event-stage1.test.mjs scripts/event-stage2.test.mjs scripts/event-stage3.test.mjs scripts/event-closure.test.mjs scripts/event-checkout-review.test.mjs scripts/event-question-presets.test.mjs scripts/event-publication.test.mjs scripts/publishing.test.mjs
           node --experimental-strip-types --test scripts/member-community.test.mjs
           node --experimental-strip-types --test scripts/member-learning.test.mjs
           node --experimental-strip-types --test scripts/member-family.test.mjs
