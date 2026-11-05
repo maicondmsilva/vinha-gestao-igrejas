@@ -4,6 +4,8 @@ import {receiverId} from './finance-receivers.ts';
 import type {DigitalConnection} from './digital-provider.ts';
 import type {OperationsClient} from './supabase/operations.ts';
 
+export class CheckoutPreparationError extends Error{readonly notSent:boolean;readonly status:number;readonly stage:string;readonly reason:string;constructor(notSent:boolean,status:number,stage:string,reason=''){super('Checkout preparation '+stage+' HTTP '+status);this.notSent=notSent;this.status=status;this.stage=stage;this.reason=reason}}
+export function checkoutPreparationIssue(e:unknown){return e instanceof CheckoutPreparationError?{retry:e.notSent,message:'Mercado Pago recusou a preparação do pagamento (HTTP '+e.status+(e.reason?' · '+e.reason:'')+'). '+(e.notSent?'Nenhuma cobrança foi criada nesta tentativa. Confira a conexão e a configuração da conta antes de preparar novamente.':'Mantenha o pedido em conferência; não crie outro pagamento.')}:null}
 export type CheckoutReservation={id:string;order:string;receiver:string;gross:string;title:string;name:string;email:string;expiresAt:string;state:string;checkoutUrl?:string};
 /** A configured origin, never Host/Forwarded headers or a URL supplied by the payer. */
 export function checkoutOrigin(value:string){
@@ -30,7 +32,7 @@ export async function createDigitalPreference(c:DigitalConnection,r:CheckoutRese
  let restrictions:{excluded_payment_types:{id:string}[];excluded_payment_methods:{id:string}[]}|undefined;
  if(c.methods){
   const methodsResponse=await transport('https://api.mercadopago.com/v1/payment_methods',{method:'GET',headers:{Authorization:'Bearer '+secret.access_token,accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(15000)});
-  if(!methodsResponse.ok)throw Error('Métodos não confirmados pelo provedor.');
+  if(!methodsResponse.ok)throw new CheckoutPreparationError(true,methodsResponse.status,'methods');
   const raw=await methodsResponse.text();if(raw.length>262144)throw Error('Métodos inválidos.');const methods=JSON.parse(raw);
   if(!Array.isArray(methods)||!methods.length||methods.length>500||methods.some(m=>!m||typeof m.id!=='string'||!/^[a-zA-Z0-9_-]{1,100}$/.test(m.id)||typeof m.payment_type_id!=='string'||typeof m.status!=='string'))throw Error('Métodos inválidos.');
   const allowed=(m:{id:string;payment_type_id:string;status:string})=>m.status==='active'&&((c.methods!.includes('card')&&['credit_card','debit_card'].includes(m.payment_type_id))||(c.methods!.includes('pix')&&m.id==='pix')||(c.methods!.includes('boleto')&&m.payment_type_id==='ticket'));
@@ -40,7 +42,7 @@ export async function createDigitalPreference(c:DigitalConnection,r:CheckoutRese
  }
  const payload={...base,...(restrictions?{payment_methods:restrictions}:{})};
  const response=await transport('https://api.mercadopago.com/checkout/preferences',{method:'POST',headers:{Authorization:'Bearer '+secret.access_token,'Content-Type':'application/json',accept:'application/json'},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(15000)});
- if(!response.ok)throw Error('Resultado externo não confirmado.');
+ if(!response.ok){let reason='';try{const d=await response.json() as {error?:unknown;message?:unknown};const allowed=new Set(['invalid_token','bad_request','invalid_auto_return','auto_return_invalid','invalid_back_urls','invalid_payment_methods','invalid_expiration_date_to','collector_does_not_comply','invalid_payer_email','invalid_items','invalid_request','invalid_scope','invalid_client','forbidden']);if(typeof d.error==='string'&&allowed.has(d.error))reason=d.error;else if(typeof d.message==='string'){const code=d.message.toLowerCase().replaceAll(' ','_');if(allowed.has(code))reason=code}}catch{}throw new CheckoutPreparationError([400,401,403,422].includes(response.status),response.status,'preference',reason)}
  const raw=await response.text();if(raw.length>131072)throw Error('Resposta inválida.');const d=JSON.parse(raw);
  if(String(d.collector_id)!==c.externalId||d.external_reference!==r.order||!Array.isArray(d.items)||d.items.length!==1||d.items[0].id!==r.order||d.items[0].quantity!==1||d.items[0].currency_id!=='BRL'||String(d.items[0].unit_price)!==String(Number(r.gross)/100))throw Error('Preferência divergente.');
  return mercadoCheckoutResult(d);

@@ -1,0 +1,1 @@
+export function profileChanges(payload:Record<string,string>,baseline:Record<string,string>){return Object.entries(payload).map(([field,value])=>({field,value,before:baseline[field]||'',status:value===(baseline[field]||'')?'same':!value?'removed':!baseline[field]?'new':'changed'} as const))}
