@@ -1,0 +1,4 @@
+import {authorizeSupabaseChurch} from '../../lib/supabase/church-access';
+import {db} from '../../lib/supabase/operations';
+import {uuidPattern} from '../../lib/private-files';
+export async function GET(request:Request){const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});try{const a=await authorizeSupabaseChurch(request,'units.manage');if(!a||a.response)return a?.response||json({error:'Acesso indisponível.'},503);const unit=new URL(request.url).searchParams.get('unit')||'';if(!uuidPattern.test(unit))return json({error:'Selecione a igreja.'},400);const r=await db(request).rpc('commerce_receivers',{p_org:a.access!.membership.organization_id,p_unit:unit});return r.error?json({error:'Não foi possível consultar as contas autorizadas.'},403):json({items:r.data});}catch{return json({error:'Consulta indisponível. Tente novamente.'},503)}}

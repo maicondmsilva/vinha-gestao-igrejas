@@ -1,10 +1,10 @@
 import type {AgendaEvent} from './member-agenda.ts';
 
 export type EventCategory={id:string;name:string;color:string;active:boolean;version:number};
-export type ProgrammingEvent=AgendaEvent&{category_id:string|null;category_name:string|null;category_color:string|null;cover_url:string;series_id:string|null;price_cents:string;purpose_id:string|null};
-export type ProgrammingSection='agenda'|'proximos'|'encerrados'|'todos'|'categorias';
-export const programmingSections:readonly ProgrammingSection[]=['agenda','proximos','encerrados','todos','categorias'];
-export const programmingLabels:Record<ProgrammingSection,string>={agenda:'Agenda da igreja',proximos:'Próximos eventos',encerrados:'Eventos encerrados',todos:'Todos e rascunhos',categorias:'Categorias de eventos'};
+export type ProgrammingEvent=AgendaEvent&{commerce_mode?:'event'|'sale';pickup_at?:string|null;category_id:string|null;category_name:string|null;category_color:string|null;cover_url:string;series_id:string|null;price_cents:string;purpose_id:string|null};
+export type ProgrammingSection='agenda'|'proximos'|'encerrados'|'todos'|'categorias'|'vendas';
+export const programmingSections:readonly ProgrammingSection[]=['agenda','proximos','encerrados','todos','categorias','vendas'];
+export const programmingLabels:Record<ProgrammingSection,string>={vendas:'Vendas e encomendas',agenda:'Agenda da igreja',proximos:'Próximos eventos',encerrados:'Eventos encerrados',todos:'Eventos',categorias:'Categorias de eventos'};
 export function programmingSection(value:string|null):ProgrammingSection{return programmingSections.includes(value as ProgrammingSection)?value as ProgrammingSection:'proximos'}
 export function programmingHref(section:ProgrammingSection,search:string){const p=new URLSearchParams(search);p.set('pagina','eventos');p.set('secao',section);p.delete('celula');return '/painel?'+p}
 export function localDay(value:string|Date=new Date()){return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value))}

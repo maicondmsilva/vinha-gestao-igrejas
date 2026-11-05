@@ -1,13 +1,15 @@
+import {commerceInputValid} from '../../shared/commerce.ts';
 import {eventInfoValid} from '../../shared/event-info.ts';
 import {uuidPattern} from './private-files.ts';
 import {parseAgendaCommand} from './member-agenda-command.ts';
 import {coverUrl} from '../../shared/programming.ts';
 export function programmingCommand(value:unknown){
  if(!value||typeof value!=='object'||Array.isArray(value))return null;
- const b=value as Record<string,unknown>,raw=b.data as Record<string,unknown>;if(raw&&typeof raw==='object'&&'information' in raw&&(!['create','edit'].includes(String(b.action))||!eventInfoValid(raw.information)))return null;const data=raw&&typeof raw==='object'?Object.fromEntries(Object.entries(raw).filter(([k])=>k!=='information')):raw;
+ const b=value as Record<string,unknown>,raw=b.data as Record<string,unknown>;if(raw&&typeof raw==='object'&&'information' in raw&&(!['create','edit'].includes(String(b.action))||!eventInfoValid(raw.information)))return null;if(raw&&typeof raw==='object'&&'commerce' in raw&&(!['create','edit'].includes(String(b.action))||!('information' in raw)||!commerceInputValid(raw.commerce)))return null;const data=raw&&typeof raw==='object'?Object.fromEntries(Object.entries(raw).filter(([k])=>k!=='information'&&k!=='commerce')):raw;
  if(Object.keys(b).some(k=>!['unit','action','id','version','data'].includes(k))||typeof b.unit!=='string'||!uuidPattern.test(b.unit)||typeof b.action!=='string'||!data||typeof data!=='object'||Array.isArray(data))return null;
  const id=typeof b.id==='string'&&uuidPattern.test(b.id)?b.id:null,version=Number.isSafeInteger(b.version)&&Number(b.version)>0?Number(b.version):null;
  if(['create','edit'].includes(b.action)){
+  if(raw?.commerce&&((raw.commerce as any).mode==='sale')&&(data.repeat&&data.repeat!=='none'||data.future===true))return null;
   if(!id||b.action==='edit'&&!version||Object.keys(data).some(k=>!['title','description','kind','startsLocal','endsLocal','location','address','capacity','category','cover','repeat','count','future','versions'].includes(k)))return null;
   const fields=Object.fromEntries(['title','description','kind','startsLocal','endsLocal','location','address','capacity'].map(k=>[k,data[k]]));
   if(!parseAgendaCommand({action:b.action,unit:b.unit,id,version,data:fields})||!(data.category===''||typeof data.category==='string'&&uuidPattern.test(data.category))||coverUrl(data.cover)===null)return null;
