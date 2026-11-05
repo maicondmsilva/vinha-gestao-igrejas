@@ -1,11 +1,11 @@
 set local lock_timeout='5s';
 alter table private.church_app_events add column commerce_mode text not null default 'event' check(commerce_mode in('event','sale')),add column pickup_at timestamptz;
 -- Validate the final row at commit so atomic date edits may update the schedule and pickup together.
-create function private.commerce_dates_guard() returns trigger language plpgsql security definer set search_path='' as $
+create function private.commerce_dates_guard() returns trigger language plpgsql security definer set search_path='' as $guard$
 begin
  if exists(select 1 from private.church_app_events e where e.id=new.id and e.commerce_mode='sale' and (e.pickup_at is null or e.pickup_at<e.starts_at or e.pickup_at>e.ends_at)) then raise exception 'invalid_commerce_dates' using errcode='23514';end if;
  return null;
-end $;
+end $guard$;
 revoke all on function private.commerce_dates_guard() from public,anon,authenticated,service_role;
 create constraint trigger commerce_pickup_dates after insert or update on private.church_app_events deferrable initially deferred for each row execute function private.commerce_dates_guard();
 create index commerce_events_scope on private.church_app_events(organization_id,unit_id,commerce_mode,starts_at);
@@ -124,20 +124,9 @@ $sql$||needle);
  -- Public data carries the nature and pickup schedule; the checkout proof is unchanged.
  select pg_get_functiondef('member_app_api.event_page(uuid)'::regprocedure) into d;
  d:=replace(d,$sql$'id',e.id,'title',e.title$sql$,$sql$'commerce_mode',e.commerce_mode,'pickup_at',e.pickup_at,'id',e.id,'title',e.title$sql$);execute d;
+
  select pg_get_functiondef('private.event_information_admin(uuid,uuid,text,uuid,integer,jsonb)'::regprocedure) into d;
- d:=replace(d,$sql::regprocedure) into d;
- d:=replace(d,$sql$'enabled',true,'event',e.id$sql$,$sql$'commerceMode',e.commerce_mode,'pickupAt',e.pickup_at,'pickupUntil',e.ends_at,'pickupLocation',e.location,'enabled',true,'event',e.id$sql$);execute d;
- select pg_get_functiondef('private.event_ticket_order_view(private.event_ticket_orders)'::regprocedure) into d;
- d:=replace(d,$sql$'ok',true,'id',o.id$sql$,$sql$'commerceMode',(select commerce_mode from private.church_app_events where id=o.event_id),'ok',true,'id',o.id$sql$);execute d;
-end $patch$;
-notify pgrst,'reload schema';
-id',e.id,'title',e.title$sql$,$sql::regprocedure) into d;
- d:=replace(d,$sql$'enabled',true,'event',e.id$sql$,$sql$'commerceMode',e.commerce_mode,'pickupAt',e.pickup_at,'pickupUntil',e.ends_at,'pickupLocation',e.location,'enabled',true,'event',e.id$sql$);execute d;
- select pg_get_functiondef('private.event_ticket_order_view(private.event_ticket_orders)'::regprocedure) into d;
- d:=replace(d,$sql$'ok',true,'id',o.id$sql$,$sql$'commerceMode',(select commerce_mode from private.church_app_events where id=o.event_id),'ok',true,'id',o.id$sql$);execute d;
-end $patch$;
-notify pgrst,'reload schema';
-commerce_mode',e.commerce_mode,'pickup_at',e.pickup_at,'id',e.id,'title',e.title$sql$);execute d;
+ d:=replace(d,$sql$'id',e.id,'title',e.title$sql$,$sql$'commerce_mode',e.commerce_mode,'pickup_at',e.pickup_at,'id',e.id,'title',e.title$sql$);execute d;
  select pg_get_functiondef('member_app_api.event_ticket_catalog(uuid)'::regprocedure) into d;
  d:=replace(d,$sql$'enabled',true,'event',e.id$sql$,$sql$'commerceMode',e.commerce_mode,'pickupAt',e.pickup_at,'pickupUntil',e.ends_at,'pickupLocation',e.location,'enabled',true,'event',e.id$sql$);execute d;
  select pg_get_functiondef('private.event_ticket_order_view(private.event_ticket_orders)'::regprocedure) into d;
