@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import './action-coordinator.css';
+import {currentDashboardQuery,dashboardUrl} from '../shared/dashboard-route';
 
 type ActionDetail={label?:string};
 
@@ -21,10 +22,8 @@ export default function ActionCoordinator(){
   const open=(labelValue:string)=>{
     const label=String(labelValue||'Ação');
     const route=destinations.find(([pattern])=>pattern.test(label));
-    if(route && new URLSearchParams(location.search).get('pagina')!==route[1]){
-      const url=new URL('/painel',location.origin);
-      url.searchParams.set('pagina',route[1]);
-      location.assign(url);
+    if(route && currentDashboardQuery().get('pagina')!==route[1]){
+      location.assign(dashboardUrl(route[1]));
       return;
     }
     setAction(label);

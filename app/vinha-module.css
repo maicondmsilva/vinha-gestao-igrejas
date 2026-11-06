@@ -1,0 +1,5 @@
+/* Section tabs of Programação and Comunicação (app/ModuleTabs.tsx). Colors come from the Vinha tokens. */
+.vinha-module-tabs{margin:-4px 0 22px;max-width:100%}
+.vinha-module-tabs ol{margin:0;list-style:none;scrollbar-width:thin}
+.vinha-module-tabs a{text-decoration:none;white-space:nowrap}
+@media (max-width:760px){.vinha-module-tabs{margin:0 -16px 18px;padding:0 16px}}
