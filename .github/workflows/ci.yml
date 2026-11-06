@@ -83,7 +83,7 @@ jobs:
           node --experimental-strip-types --test scripts/receiver-key-validation.test.mjs
           node --experimental-strip-types --test scripts/receiver-webhook.test.mjs
           node --experimental-strip-types --test scripts/finance-f4.test.mjs scripts/finance-f4-route.test.mjs scripts/finance-checkout.test.mjs scripts/finance-checkout-route.test.mjs scripts/finance-destination-route.test.mjs
-          node --experimental-strip-types --test scripts/finance-f1.test.mjs scripts/finance-f1-route.test.mjs scripts/finance-f2.test.mjs scripts/finance-f2-route.test.mjs scripts/finance-f3.test.mjs scripts/finance-f3-route.test.mjs scripts/finance-usability.test.mjs
+          node --experimental-strip-types --test scripts/finance-f1.test.mjs scripts/finance-f1-route.test.mjs scripts/finance-f2.test.mjs scripts/finance-f2-route.test.mjs scripts/finance-f3.test.mjs scripts/finance-f3-route.test.mjs scripts/finance-usability.test.mjs scripts/finance-annotation-route.test.mjs
           node --experimental-strip-types --test scripts/people-summary.test.mjs scripts/people-summary-route.test.mjs
           node --experimental-strip-types --test scripts/cell-directory.test.mjs
           node --experimental-strip-types --test scripts/cell-operations-language.test.mjs

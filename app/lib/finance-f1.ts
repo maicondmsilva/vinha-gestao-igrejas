@@ -39,7 +39,8 @@ export function financeQuery(request:Request){
  if(p.get('action')==='choices')return{units,action:'choices',data:{search:text(p.get('search'),80,2)}};
  const from=financeDate(p.get('from')),to=financeDate(p.get('to'));if(to<from||(Date.parse(to)-Date.parse(from))/86400000>366)throw Error('Selecione um período de até 366 dias.');
  const page=Number(p.get('page')||1);if(!Number.isInteger(page)||page<1||page>10000)throw Error('Página inválida.');
+ const pageSize=Number(p.get('pageSize')||30);if(!Number.isInteger(pageSize)||pageSize<1||pageSize>150)throw Error('Escolha até 150 lançamentos por página.');
  const kind=p.get('kind')||'',status=p.get('status')||'',dateBy=p.get('dateBy')||'due';
  const scope=p.get('scope')||'';if(scope&&!['titles'].includes(scope)||kind&&!['income','expense','transfer','opening'].includes(kind)||status&&!['pending','posted','settled','cancelled','reversed'].includes(status)||!['due','paid','competence'].includes(dateBy))throw Error('Filtro inválido.');
- return{units,action:'snapshot',data:{from,to,page,kind,status,dateBy,scope,subcategory:id(p.get('subcategory'),true),account:id(p.get('account'),true),category:id(p.get('category'),true),center:id(p.get('center'),true),search:text(p.get('search')||'',80)}};
+ return{units,action:'snapshot',data:{from,to,page,pageSize,kind,status,dateBy,scope,subcategory:id(p.get('subcategory'),true),account:id(p.get('account'),true),category:id(p.get('category'),true),center:id(p.get('center'),true),search:text(p.get('search')||'',80)}};
 }

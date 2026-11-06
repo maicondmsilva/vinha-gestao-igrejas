@@ -29,6 +29,7 @@
     "app/KidsFoundation.tsx",
     "app/api/kids-foundation/route.ts",
     "app/api/finance-f6/route.ts",
+    "app/api/finance-annotation/route.ts",
     "next-env.d.ts",
     "env.d.ts",
     "db/env.d.ts",
