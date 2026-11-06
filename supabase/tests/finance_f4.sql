@@ -28,7 +28,7 @@ insert into private.finance_receivers(id,organization_id,unit_id,provider,enviro
 set local role authenticated;
 select lives_ok($$select public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'order','{"id":"af410000-0000-4000-8000-000000000001","purpose":"ef400000-0000-4000-8000-000000000001","receiver":"ff400000-0000-4000-8000-000000000001","gross":"10000","party":"Nome livre","sourceReference":"evento-1"}')$$,'pedido vinculado registrado sem cobrança');
 select lives_ok($$select public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'order','{"id":"af410000-0000-4000-8000-000000000001","purpose":"ef400000-0000-4000-8000-000000000001","receiver":"ff400000-0000-4000-8000-000000000001","gross":"10000","party":"Nome livre","sourceReference":"evento-1"}')$$,'pedido repetido não duplica');
-select is(jsonb_array_length(public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'list','{}')->'items'),1,'lista mostra pedido pendente sem prova');
+select is(jsonb_array_length(public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'list','{}')->'items'),0,'pedido sem pagamento não aparece no financeiro');
 reset role;
 select is((select count(*)::integer from private.finance_digital_orders where organization_id=current_setting('f4.org')::uuid),1,'um pedido');
 select is((select count(*)::integer from private.finance_entries where organization_id=current_setting('f4.org')::uuid),0,'pedido pendente não aumenta saldo');
@@ -40,6 +40,14 @@ select set_config('f4.proof',(current_setting('f4.proof')::jsonb||jsonb_build_ob
 select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb)$$,'bruto e taxa lançados automaticamente');
 select is((select count(*)::integer from private.finance_entries where organization_id=current_setting('f4.org')::uuid),2,'entrada e despesa de taxa separadas');
 select is((select sum(case when kind='income' then amount_cents else -amount_cents end)::text from private.finance_entries where organization_id=current_setting('f4.org')::uuid),'9650','líquido 96,50 sem descontar taxa duas vezes');
+set local role authenticated;
+select set_config('f4.unified',public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'snapshot',jsonb_build_object('from',current_date,'to',current_date,'pageSize',1))::text,true);
+select is(current_setting('f4.unified')::jsonb->>'total','1','paginação conta um pagamento, não dois componentes');
+select is(current_setting('f4.unified')::jsonb->'entries'->0->'digital_payment'->>'net','9650','lançamento único inclui taxa e líquido exato');
+select is(current_setting('f4.unified')::jsonb->'monthly'->0->>'digital_fee','350','fluxo discrimina taxa sem duplicar saldo');
+select is(current_setting('f4.unified')::jsonb->'summary'->>'expense','350','taxa continua contabilizada no período correto');
+reset role;
+
 select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb)$$,'retorno repetido aceito sem duplicação');
 select is((select count(*)::integer from private.finance_entries where organization_id=current_setting('f4.org')::uuid),2,'duplicidade não cria lançamento');
 select throws_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||'{"gross":"10001"}')$$,'22023',null,'valor divergente recusado');
@@ -77,7 +85,7 @@ select is((select posted_gross::text from private.finance_digital_receipts where
 update private.finance_receivers set status='revoked' where id='ff400000-0000-4000-8000-000000000001';
 select throws_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||jsonb_build_object('occurredAt',now()))$$,'42501',null,'revogação interrompe nova ingestão');
 select lives_ok($$select public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'detail',jsonb_build_object('id',(select id from private.finance_digital_receipts where external_id='456')))$$,'histórico permanece consultável após revogação da conexão');
-select is(jsonb_array_length(public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'list',jsonb_build_object('from',(current_date-1)::text,'to',current_date::text))->'items'),3,'período consultado inclui os pedidos corretos');
+select is(jsonb_array_length(public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'list',jsonb_build_object('from',(current_date-1)::text,'to',current_date::text))->'items'),2,'período inclui somente pagamentos confirmados em produção');
 select is(jsonb_array_length(public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'list',jsonb_build_object('from',(current_date+1)::text,'to',(current_date+1)::text))->'items'),0,'filtro por período não retorna pedidos de outra data');
 -- Checkout fixtures are local and never contact the provider.
 select ok(not has_function_privilege('authenticated','public.finance_checkout_delivery(uuid,uuid,uuid,text,jsonb)','execute'),'cliente não despacha nem confirma preferência');
@@ -127,5 +135,28 @@ set local role authenticated;
 select is(public.finance_digital_destination(current_setting('f4.org')::uuid,'cf400000-0000-4000-8000-000000000002','list','{}')->'items'->0->>'net_cents','7650','devolução comprovada ajusta líquido destinado sem duplicar contribuição');
 reset role;
 select ok(not has_table_privilege('authenticated','private.finance_digital_destinations','update'),'cliente não altera destino diretamente');
+
+set local role authenticated;
+select set_config('f4.unified',public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'snapshot',jsonb_build_object('from',current_date-10,'to',current_date,'pageSize',150))::text,true);
+select ok(not exists(select 1 from jsonb_array_elements(current_setting('f4.unified')::jsonb->'entries') e where e->>'digital_kind' in('fee','refund','fee_credit')),'taxas e devoluções não criam linhas operacionais separadas');
+select ok(exists(select 1 from jsonb_array_elements(current_setting('f4.unified')::jsonb->'entries') e where e->'digital_payment'->>'state'='refunded' and e->'digital_payment'->>'net'='0'),'devolução e estorno integral de taxa ficam no recebimento original');
+reset role;
+select ok(not has_function_privilege('authenticated','private.finance_entry_display(uuid,uuid)','execute'),'componentes privados não podem ser consultados diretamente');
+
+-- A refund in a later period must still expose the original unified launch.
+set local role authenticated;
+select public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'order','{"id":"af410000-0000-4000-8000-000000000006","purpose":"ef400000-0000-4000-8000-000000000001","receiver":"ff400000-0000-4000-8000-000000000001","gross":"10000","party":"Outro período fictício","sourceReference":"outro-mes"}');
+reset role;
+select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||jsonb_build_object('reference','af410000-0000-4000-8000-000000000006','externalId','460','refunded','0','state','approved','fees',jsonb_build_array(jsonb_build_object('kind','processing','amount','350')),'net','9650','paidDate',current_date-40,'occurredAt',clock_timestamp()-interval '2 seconds'));
+select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||jsonb_build_object('reference','af410000-0000-4000-8000-000000000006','externalId','460','refunded','2000','state','partially_refunded','fees',jsonb_build_array(jsonb_build_object('kind','processing','amount','350')),'net','7650','paidDate',current_date-40,'occurredAt',clock_timestamp()-interval '1 second'));
+set local role authenticated;
+select set_config('f4.cross_period',public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'snapshot',jsonb_build_object('from',current_date,'to',current_date,'kind','expense','search','outro-mes'))::text,true);
+-- Search by public party name, not the internal order reference.
+select set_config('f4.cross_period',public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'snapshot',jsonb_build_object('from',current_date,'to',current_date,'kind','expense','search','Outro período fictício'))::text,true);
+select is(current_setting('f4.cross_period')::jsonb->>'total','1','devolução de outro mês aponta para um recebimento original');
+select is(current_setting('f4.cross_period')::jsonb->'entries'->0->>'digital_kind','gross','mesmo filtro de saídas abre o recebimento principal');
+select is(current_setting('f4.cross_period')::jsonb->'summary'->>'income','0','recebimento antigo não infla entradas no período da devolução');
+select is(current_setting('f4.cross_period')::jsonb->'summary'->>'expense','2000','apenas a devolução ocorrida no período afeta o fluxo');
+reset role;
 select * from finish();
 rollback;

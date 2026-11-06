@@ -12,3 +12,20 @@ test('F6 contribuições individuais restritas e não agregadas por semelhança 
 test('F6 exportação protege fórmulas e aspas, com BOM e cabeçalho de filtros',()=>{const csv=f6Csv({headers:['Nome'],rows:[['=HYPERLINK("x")'],['\t@SUM(1)'],['normal;texto']],notice:'Aviso'},['Filtros: período']);assert.ok(csv.startsWith('\uFEFF'));assert.match(csv,/'=HYPERLINK\(""x""\)/);assert.ok(csv.includes("'\t@SUM(1)"));assert.ok(csv.includes('"normal;texto"'))});
 test('F6 todas as consultas têm tabela e aviso sem sucesso simulado',()=>{for(const[id]of financeReports){const t=f6Table(data(),id);assert.ok(t.headers.length);assert.equal(t.rows.length,0);assert.match(t.notice,/contador/)}});
 test('F6 orçamento exige versão, justificativa, primeiro dia do mês',()=>{const v={unitId:u,id:u,category:u,center:'',month:'2026-09-01',amount:'150,00',version:0,reason:'Orçamento fictício'};assert.equal(f6Budget(v).data.amountCents,'15000');for(const patch of [{version:-1},{month:'2026-09-02'},{reason:'curto'},{organization_id:u}])assert.throws(()=>f6Budget({...v,...patch}))});
+
+test('Recebimento digital: livro e exportação reúnem componentes sem mudar o resultado',()=>{
+ const common={receipt:'receipt',event_name:'Livro fictício',event_number:'3',paymentState:'refunded'};
+ const d=data([row({...common,digital_kind:'gross',amount:'1000'}),row({...common,id:'fee',digital_kind:'fee',kind:'expense',amount:'-30'}),row({...common,id:'refund',digital_kind:'refund',kind:'expense',amount:'-1000'})]);
+ const table=f6Table(d,'book');assert.equal(table.rows.length,1);assert.equal(table.rows[0][13],'-0,30');assert.match(table.rows[0][6],/Livro fictício · ID 3/);assert.match(table.rows[0][6],/taxas R\$ 0,30; devolvido R\$ 10,00/);assert.match(f6Csv(table),/-0,30/);
+ assert.deepEqual(f6Table(d,'result').rows,[['Sede fictícia','10,00','10,30','-0,30','3']]);
+});
+test('Devolução em outro mês usa somente os valores do período e preserva classificação contábil',()=>{
+ const d=data([row({receipt:'r',digital_kind:'refund',kind:'expense',amount:'-2000',date:'2026-10-02',digital_payment:{net:'7650'}})]);
+ const table=f6Table(d,'book');assert.equal(table.rows[0][13],'-20,00');assert.match(table.rows[0][6],/recebido R\$ 0,00/);assert.equal(f6Table(d,'categories').rows[0][2],'20,00');
+});
+test('Recebimentos diferentes e contas de igrejas distintas não são unidos',()=>{
+ const d=data([row({receipt:'a',digital_kind:'gross'}),row({receipt:'b',digital_kind:'gross'}),row({receipt:'a',unit:'other',digital_kind:'gross'}),row()]);assert.equal(f6Table(d,'book').rows.length,4);
+});
+test('Taxa devolvida reduz custo sem inflar recebimento do comprador',()=>{
+ const d=data([row({receipt:'r',digital_kind:'gross',amount:'1000'}),row({receipt:'r',digital_kind:'fee',kind:'expense',amount:'-30'}),row({receipt:'r',digital_kind:'fee_credit',amount:'30'}),row({receipt:'r',digital_kind:'refund',kind:'expense',amount:'-1000'})]);const result=f6Table(d,'book');assert.equal(result.rows[0][13],'0,00');assert.match(result.rows[0][6],/taxas R\$ 0,00/);
+});
