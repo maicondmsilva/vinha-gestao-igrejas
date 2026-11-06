@@ -70,7 +70,7 @@ jobs:
           node --experimental-strip-types --test scripts/finance-f7.test.mjs
           node --experimental-strip-types --test scripts/finance-export.test.mjs
           node --experimental-strip-types --test scripts/organization-settings.test.mjs
-          node --experimental-strip-types --test scripts/member-self-service.test.mjs scripts/android-base.test.mjs
+          node --experimental-strip-types --test scripts/member-self-service.test.mjs scripts/android-base.test.mjs scripts/account-closure.test.mjs
           node --experimental-strip-types --test scripts/brazil-registration.test.mjs scripts/android-church-select.test.mjs
           node --experimental-strip-types --test scripts/member-church.test.mjs
           node --experimental-strip-types --test scripts/android-experience.test.mjs
