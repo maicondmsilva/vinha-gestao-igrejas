@@ -120,12 +120,14 @@ select pg_temp.patch('private.member_agenda_admin(uuid,uuid,text,uuid,integer,js
  'not private.has_organization_role(p_org,array[''owner'',''admin'',''pastor'']::public.membership_role[]) or not private.can_access_unit(p_org,p_unit,array[''manage'',''admin'']::public.unit_access_level[])',
  'not (private.event_manager(p_org,p_unit) or p_action in(''list'',''attendees'',''checkin'') and private.checkin_operator(p_org,p_unit))');
 select pg_temp.patch('private.programming_admin(uuid,uuid,text,uuid,integer,jsonb)'::regprocedure,
- ' perform private.community_identity(p_org,p_unit,false);
- if p_action not in(''list'',''detail'',''categories'')',
- ' perform private.community_identity(p_org,p_unit,false);
+ 'begin
+ perform private.community_identity(p_org,p_unit,false);
+',
+ 'begin
+ perform private.community_identity(p_org,p_unit,false);
  -- Quem só faz a entrada lê a agenda e confirma presença; criar e editar exige a gestão da agenda.
  if p_action not in(''list'',''calendar'',''detail'',''attendees'',''categories'',''checkin'') and not private.event_manager(p_org,p_unit) then raise exception ''member_agenda_denied'' using errcode=''42501'';end if;
- if p_action not in(''list'',''detail'',''categories'')');
+');
 select pg_temp.patch('private.event_ticket_admin(uuid,uuid,uuid,text,uuid,integer,jsonb)'::regprocedure,
  'if not private.event_manager(p_org,p_unit) then raise exception ''event_ticket_denied''',
  'if not (private.event_manager(p_org,p_unit) or p_action=''checkin'' and private.checkin_operator(p_org,p_unit)) then raise exception ''event_ticket_denied''');
