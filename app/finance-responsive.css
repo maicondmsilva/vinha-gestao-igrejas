@@ -27,3 +27,5 @@
 .f1-workspace .f2-frequency>div:first-of-type label{flex-direction:row;min-width:0}
 .f1-workspace .f2-frequency input[type=radio]{min-height:18px;padding:0;flex:0 0 18px}
 @media(max-width:600px){.f1-workspace .f2-frequency>div:first-of-type label{flex:0 0 auto;padding:12px}}
+
+.f1-payment-breakdown{margin:24px 0;padding:20px;border:1px solid #d5e3d9;border-radius:16px;background:#f6f9f5}.f1-payment-breakdown h3{margin:0 0 18px}.f1-payment-breakdown input[readonly]{font-weight:600;background:white}.f1-payment-breakdown details{margin-top:12px}.f1-payment-breakdown li{margin:10px 0;overflow-wrap:anywhere}.f1-table-scroll caption{caption-side:bottom;text-align:left;padding:14px 4px}.f1-table-scroll td small{white-space:normal}
