@@ -1,5 +1,6 @@
 import type {AgendaEvent} from './member-agenda.ts';
 import {fromLocal,panelTimezone,toLocalDay} from './timezone.ts';
+import {dashboardUrl} from './dashboard-route.ts';
 
 export type EventCategory={id:string;name:string;color:string;active:boolean;version:number};
 export type ProgrammingEvent=AgendaEvent&{display_id?:number|string;commerce_mode?:'event'|'sale';pickup_at?:string|null;category_id:string|null;category_name:string|null;category_color:string|null;cover_url:string;series_id:string|null;price_cents:string;purpose_id:string|null};
@@ -7,7 +8,7 @@ export type ProgrammingSection='agenda'|'proximos'|'encerrados'|'todos'|'categor
 export const programmingSections:readonly ProgrammingSection[]=['agenda','proximos','encerrados','todos','categorias','vendas'];
 export const programmingLabels:Record<ProgrammingSection,string>={vendas:'Vendas e encomendas',agenda:'Agenda da igreja',proximos:'Próximos eventos',encerrados:'Eventos encerrados',todos:'Eventos',categorias:'Categorias de eventos'};
 export function programmingSection(value:string|null):ProgrammingSection{return programmingSections.includes(value as ProgrammingSection)?value as ProgrammingSection:'proximos'}
-export function programmingHref(section:ProgrammingSection,search:string){const p=new URLSearchParams(search);p.set('pagina','eventos');p.set('secao',section);p.delete('celula');return '/painel?'+p}
+export function programmingHref(section:ProgrammingSection,search:string){return dashboardUrl('eventos',section,search)}
 export function localDay(value:string|Date=new Date(),tz:string=panelTimezone()){return toLocalDay(value,tz)}
 export function shiftDay(day:string,days:number){const d=new Date(day+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)}
 export function shiftMonth(day:string,months:number){const d=new Date(day+'T12:00:00Z');const date=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(date,last));return d.toISOString().slice(0,10)}

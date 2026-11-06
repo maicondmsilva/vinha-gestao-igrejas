@@ -10,13 +10,14 @@ import {EventEditor,CategoryEditor} from './ProgrammingEditors';
 import EventDetail from './ProgrammingDetail';
 import './programming.css';
 import './event-module-layout.css';
+import {currentDashboardQuery} from '../shared/dashboard-route';
 type Page={items:ProgrammingEvent[];categories:EventCategory[];total:number;days:Record<string,number>};
 const dayLabel=(d:string)=>new Date(d+'T12:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long'});
 export default function EventsWorkspace({unitId}:{unitId:string}){
- const [section,setSection]=useState<ProgrammingSection>(()=>typeof location==='undefined'?'proximos':programmingSection(new URLSearchParams(location.search).get('secao')));
+ const [section,setSection]=useState<ProgrammingSection>(()=>typeof location==='undefined'?'proximos':programmingSection(currentDashboardQuery().get('secao')));
  const [date,setDate]=useState(()=>localDay()),[view,setView]=useState<'month'|'week'|'day'>('month'),[search,setSearch]=useState(''),[query,setQuery]=useState(''),[status,setStatus]=useState(''),[kind,setKind]=useState(''),[category,setCategory]=useState(''),[sort,setSort]=useState('asc'),[page,setPage]=useState(1),[size,setSize]=useState(20),[revision,setRevision]=useState(0);
  const [data,setData]=useState<Page|null>(null),[categories,setCategories]=useState<EventCategory[]>([]),[days,setDays]=useState<Record<string,number>>({}),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState(''),[editor,setEditor]=useState<EventDetailData|null|false>(false),[detail,setDetail]=useState<EventDetailData|null>(null),[categoryEditor,setCategoryEditor]=useState<EventCategory|null|false>(false);
- useEffect(()=>{const sync=()=>{setSection(programmingSection(new URLSearchParams(location.search).get('secao')));setPage(1);setQuery('');setSearch('');setStatus('');setCategory('');setKind('');setEditor(false);setDetail(null)};addEventListener('popstate',sync);return()=>removeEventListener('popstate',sync)},[]);
+ useEffect(()=>{const sync=()=>{setSection(programmingSection(currentDashboardQuery().get('secao')));setPage(1);setQuery('');setSearch('');setStatus('');setCategory('');setKind('');setEditor(false);setDetail(null)};addEventListener('popstate',sync);return()=>removeEventListener('popstate',sync)},[]);
  const range=calendarRange(date,view==='month'?'day':view),month=calendarRange(date,'month');
  useEffect(()=>{const c=new AbortController();setLoading(true);setError('');setData(null);const q=new URLSearchParams({unit:unitId,action:section==='categorias'?'categories':section==='agenda'?'calendar':'list',search:query,status,kind,category,section:section==='agenda'||section==='categorias'?'todos':section,page:String(page),size:String(size),sort});if(section==='agenda'){q.set('from',range.from);q.set('to',range.to)}
   read<Page>('/api/programming?'+q,c.signal).then(d=>{setData({...d,items:d.items||[],total:d.total||0});setCategories(d.categories||[])}).catch(e=>{if(!c.signal.aborted)setError(e.message)}).finally(()=>{if(!c.signal.aborted)setLoading(false)});return()=>c.abort();
