@@ -141,12 +141,15 @@ export default function PushCampaigns({unit}: {unit: string}) {
     }
   }
   return (
-    <section className="publishing-section">
+    <div className="content program-page publishing-page">
+      <div className="program-breadcrumb">
+        Comunicação <span>/</span> Push para o app
+      </div>
       <div className="program-heading">
         <div>
-          <p className="section-over">PUSH PARA O APLICATIVO</p>
+          <p className="section-over">Notificações no celular</p>
           <h1>Campanhas de push</h1>
-          <p>Escreva o aviso, escolha quem recebe e quando. O envio acontece em instantes, inclusive para várias igrejas.</p>
+          <p>Escreva a mensagem, escolha quem recebe e quando. O envio começa em até um minuto, inclusive para várias igrejas.</p>
         </div>
         <div className="program-actions">
           <button type="button" disabled={loading} onClick={refresh}>
@@ -170,7 +173,7 @@ export default function PushCampaigns({unit}: {unit: string}) {
           {error}
         </p>
       )}
-      <div className="program-filters">
+      <div className="program-filters publishing-filters-compact">
         <label>
           Situação
           <select value={status} onChange={(e) => (setPage(1), setLoading(true), setStatus(e.target.value))}>
@@ -183,10 +186,20 @@ export default function PushCampaigns({unit}: {unit: string}) {
           </select>
         </label>
       </div>
+      <section className="program-card" aria-busy={loading}>
+      <div className="program-card-title">
+        <h2>Campanhas</h2>
+        {data && <span>{data.total} {data.total === 1 ? 'campanha' : 'campanhas'}</span>}
+      </div>
       {loading && !data ? (
-        <p className="program-empty">Carregando campanhas…</p>
+        <div className="program-empty" role="status">
+          Carregando campanhas…
+        </div>
       ) : !data?.items.length ? (
-        <p className="program-empty">Nenhuma campanha ainda. Crie a primeira e veja quantas pessoas ela alcança antes de enviar.</p>
+        <div className="program-empty">
+          <h3>{status ? 'Nenhuma campanha nesta situação' : 'Nenhuma campanha ainda'}</h3>
+          <p>Crie a primeira e veja quantas pessoas ela alcança antes de enviar.</p>
+        </div>
       ) : (
         <div className="program-table-wrap">
           <table className="program-table">
@@ -197,41 +210,41 @@ export default function PushCampaigns({unit}: {unit: string}) {
                 <th>Quando</th>
                 <th>Alcance</th>
                 <th>Aberturas</th>
-                <th />
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {data.items.map((c) => (
                 <tr key={c.id}>
                   <td>
-                    <b>{c.title}</b>
-                    <br />
+                    <strong>{c.title}</strong>
                     <small>
                       {c.body.slice(0, 80)}
                       {c.body.length > 80 ? '…' : ''}
                     </small>
                   </td>
-                  <td>{statusLabel[c.status]}</td>
-                  <td>
-                    {c.status === 'scheduled' ? when(c.nextRunAt) : when(c.sendAt)}
-                    {c.recurrence !== 'none' && (
-                      <>
-                        <br />
-                        <small>{recurrenceLabel[c.recurrence]}</small>
-                      </>
-                    )}
+                  <td data-label="Situação">
+                    <span className={'program-badge push-' + c.status}>{statusLabel[c.status]}</span>
                   </td>
-                  <td>{c.stats.recipients ? `${c.stats.delivered} de ${c.stats.recipients}` : '—'}</td>
-                  <td>{c.stats.delivered ? `${c.stats.opened} (${Math.round((100 * c.stats.opened) / c.stats.delivered)}%)` : '—'}</td>
-                  <td className="publishing-row-actions">
-                    <button type="button" onClick={() => setDetail(c)}>
-                      Ver
-                    </button>
-                    {['draft', 'scheduled'].includes(c.status) && c.runs === 0 && (
-                      <button type="button" onClick={() => setEditor(c)}>
-                        Editar
+                  <td className="publishing-date" data-label="Quando">
+                    <span>
+                      {c.status === 'scheduled' ? when(c.nextRunAt) : when(c.sendAt)}
+                      {c.recurrence !== 'none' && <small>{recurrenceLabel[c.recurrence]}</small>}
+                    </span>
+                  </td>
+                  <td className="publishing-date" data-label="Alcance">{c.stats.recipients ? `${c.stats.delivered} de ${c.stats.recipients}` : '—'}</td>
+                  <td className="publishing-date" data-label="Aberturas">{c.stats.delivered ? `${c.stats.opened} (${Math.round((100 * c.stats.opened) / c.stats.delivered)}%)` : '—'}</td>
+                  <td>
+                    <div className="publishing-row-actions">
+                      <button type="button" onClick={() => setDetail(c)}>
+                        Detalhes
                       </button>
-                    )}
+                      {['draft', 'scheduled'].includes(c.status) && c.runs === 0 && (
+                        <button type="button" onClick={() => setEditor(c)}>
+                          Editar
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -240,6 +253,7 @@ export default function PushCampaigns({unit}: {unit: string}) {
         </div>
       )}
       {data && data.total > data.size && <Pager page={data.page} total={data.total} size={data.size} change={(p) => (setLoading(true), setPage(p))} disabled={loading} />}
+      </section>
       {editor !== false && options && (
         <CampaignEditor
           unit={unit}
@@ -254,19 +268,44 @@ export default function PushCampaigns({unit}: {unit: string}) {
         <Modal title={detail.title} close={() => setDetail(null)}>
           <div className="program-detail">
             <p>{detail.body}</p>
-            <p>
-              <b>Situação:</b> {statusLabel[detail.status]} · <b>Repetição:</b> {recurrenceLabel[detail.recurrence]}
+            <dl className="publishing-facts">
+              <div>
+                <dt>Situação</dt>
+                <dd>
+                  <span className={'program-badge push-' + detail.status}>{statusLabel[detail.status]}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Repetição</dt>
+                <dd>{recurrenceLabel[detail.recurrence]}</dd>
+              </div>
               {detail.status === 'scheduled' && (
-                <>
-                  {' '}
-                  · <b>Próximo envio:</b> {when(detail.nextRunAt)}
-                </>
+                <div>
+                  <dt>Próximo envio</dt>
+                  <dd>{when(detail.nextRunAt)}</dd>
+                </div>
               )}
-            </p>
-            <p>
-              <b>Destinatários:</b> {detail.stats.recipients} · <b>Entregues:</b> {detail.stats.delivered} · <b>Na fila:</b> {detail.stats.pending} ·{' '}
-              <b>Falhas:</b> {detail.stats.failed} · <b>Aberturas:</b> {detail.stats.opened}
-            </p>
+              <div>
+                <dt>Destinatários</dt>
+                <dd>{detail.stats.recipients}</dd>
+              </div>
+              <div>
+                <dt>Entregues</dt>
+                <dd>{detail.stats.delivered}</dd>
+              </div>
+              <div>
+                <dt>Na fila</dt>
+                <dd>{detail.stats.pending}</dd>
+              </div>
+              <div>
+                <dt>Falhas</dt>
+                <dd>{detail.stats.failed}</dd>
+              </div>
+              <div>
+                <dt>Aberturas</dt>
+                <dd>{detail.stats.opened}</dd>
+              </div>
+            </dl>
             <p>
               <small>
                 Criada por {detail.author} em {when(detail.createdAt)}. Falhas incluem aparelhos que desinstalaram o app; eles deixam de receber automaticamente.
@@ -274,7 +313,7 @@ export default function PushCampaigns({unit}: {unit: string}) {
             </p>
             {!['sent', 'cancelled'].includes(detail.status) && (
               <footer className="program-form-footer">
-                <button type="button" onClick={() => void cancel(detail)}>
+                <button type="button" className="publishing-quiet" onClick={() => void cancel(detail)}>
                   Cancelar campanha
                 </button>
               </footer>
@@ -282,7 +321,7 @@ export default function PushCampaigns({unit}: {unit: string}) {
           </div>
         </Modal>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -469,7 +508,7 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
           <Chips label="Ministérios e departamentos" items={visibleGroups} selected={audience.groups} toggle={(v) => setFilter('groups', toggle(audience.groups, v))} />
           <Chips label="Etapa da jornada" items={options.journey.map((j) => ({id: j, name: j}))} selected={audience.journey} toggle={(v) => setFilter('journey', toggle(audience.journey, v))} />
           <Chips label="Marcadores" items={options.tags.map((t) => ({id: t, name: t}))} selected={audience.tags} toggle={(v) => setFilter('tags', toggle(audience.tags, v))} />
-          <p className="publishing-recipients" aria-live="polite">
+          <p className="publishing-destination-summary" aria-live="polite">
             {!targets.length
               ? 'Escolha ao menos uma igreja.'
               : reach

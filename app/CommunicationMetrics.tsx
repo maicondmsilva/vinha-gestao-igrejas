@@ -33,16 +33,19 @@ export default function CommunicationMetrics({unit}: {unit: string}) {
   }, [unit, days]);
   const p = data?.push;
   return (
-    <section className="publishing-section">
+    <div className="content program-page publishing-page">
+      <div className="program-breadcrumb">
+        Comunicação <span>/</span> Métricas de alcance
+      </div>
       <div className="program-heading">
         <div>
-          <p className="section-over">ALCANCE DA COMUNICAÇÃO</p>
-          <h1>Métricas</h1>
+          <p className="section-over">Alcance da comunicação</p>
+          <h1>Métricas de alcance</h1>
           <p>Quantas pessoas receberam, abriram e leram o que a igreja publicou.</p>
         </div>
         <div className="program-actions">
-          <label>
-            Período{' '}
+          <label className="publishing-period">
+            Período
             <select value={days} onChange={(e) => setDays(Number(e.target.value))}>
               <option value={7}>7 dias</option>
               <option value={30}>30 dias</option>
@@ -57,7 +60,11 @@ export default function CommunicationMetrics({unit}: {unit: string}) {
         </p>
       )}
       {!data ? (
-        !error && <p className="program-empty">Carregando métricas…</p>
+        !error && (
+          <div className="program-empty" role="status">
+            Carregando métricas…
+          </div>
+        )
       ) : (
         <>
           <div className="metric-tiles">
@@ -77,9 +84,15 @@ export default function CommunicationMetrics({unit}: {unit: string}) {
               <small>{pct(p!.opened, p!.delivered)} dos entregues</small>
             </div>
           </div>
-          <h2>Campanhas recentes</h2>
+          <section className="program-card">
+          <div className="program-card-title">
+            <h2>Campanhas recentes</h2>
+            <span>Últimos {data.days} dias</span>
+          </div>
           {!data.campaigns.length ? (
-            <p className="program-empty">Nenhum push enviado nos últimos {data.days} dias.</p>
+            <div className="program-empty">
+              <p>Nenhum push enviado nos últimos {data.days} dias.</p>
+            </div>
           ) : (
             <div className="program-table-wrap">
               <table className="program-table">
@@ -95,24 +108,30 @@ export default function CommunicationMetrics({unit}: {unit: string}) {
                   {data.campaigns.map((c) => (
                     <tr key={c.id}>
                       <td>
-                        {c.title}
-                        <br />
+                        <strong>{c.title}</strong>
                         <small>{new Date(c.at).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'})}</small>
                       </td>
-                      <td>{sourceLabel[c.source] || c.source}</td>
-                      <td>
+                      <td data-label="Tipo">{sourceLabel[c.source] || c.source}</td>
+                      <td data-label="Entregues">
                         {c.delivered} de {c.recipients}
                       </td>
-                      <td>{pct(c.opened, c.delivered)}</td>
+                      <td data-label="Abertura">{pct(c.opened, c.delivered)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-          <h2>Avisos e banners</h2>
+          </section>
+          <section className="program-card">
+          <div className="program-card-title">
+            <h2>Avisos e banners</h2>
+            <span>Publicados no período</span>
+          </div>
           {!data.notices.length ? (
-            <p className="program-empty">Nenhum aviso ou banner publicado no período.</p>
+            <div className="program-empty">
+              <p>Nenhum aviso ou banner publicado no período.</p>
+            </div>
           ) : (
             <div className="program-table-wrap">
               <table className="program-table">
@@ -127,23 +146,23 @@ export default function CommunicationMetrics({unit}: {unit: string}) {
                   {data.notices.map((n) => (
                     <tr key={n.id}>
                       <td>
-                        {n.title}
-                        <br />
+                        <strong>{n.title}</strong>
                         <small>{n.kind === 'banner' ? 'Banner' : 'Aviso'}</small>
                       </td>
-                      <td>{n.reads}</td>
-                      <td>{n.clicks}</td>
+                      <td data-label="Leituras no app">{n.reads}</td>
+                      <td data-label="Toques">{n.clicks}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
+          </section>
           <p className="publishing-help">
             Leituras contam quem abriu o aviso na caixa de entrada do app. Toques contam cada pessoa uma vez. Aberturas de push dependem do app atualizado.
           </p>
         </>
       )}
-    </section>
+    </div>
   );
 }
