@@ -5,3 +5,13 @@
 .kids-desk{display:grid;gap:20px}.kids-desk-table{overflow:auto}.kids-desk-table table{border-collapse:collapse;width:100%;min-width:600px}.kids-desk-table th,.kids-desk-table td{text-align:left;padding:16px;border-bottom:1px solid #e2e8e5}.kids-desk-table th{background:#f3f7f5;font-size:12px;color:#536b60}.kids-desk-table td small{display:block;color:#63766d;margin-top:5px}.kids-note-body{white-space:pre-wrap;overflow-wrap:anywhere}.kids-note-card{border-left:4px solid #76a786}.ko-nav{flex-wrap:wrap;gap:6px}.ko-card{box-shadow:0 3px 16px #1d423707;border:1px solid #e1e9e4;border-radius:16px}.ko-filters{align-items:end}.ko-metrics article{border:1px solid #dfe9e2;background:linear-gradient(130deg,#fff,#f2f8f4)}.ko-card fieldset{display:grid;gap:12px}.ko-card article+article{margin-top:12px}.ko-card summary{font-weight:700;padding:8px 0;cursor:pointer}.ko-card input,.ko-card textarea{max-width:100%}@media(max-width:650px){.kids-desk .ko-card-title{align-items:start;flex-direction:column}.ko-filters{display:grid;grid-template-columns:1fr}.ko-nav button{white-space:normal;text-align:left}}
 
 @media(min-width:900px){.kids-operations .ko-nav{display:none}}
+
+/* Etapa 2 — campanhas de push */
+.push-preview{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:16px;background:#f3f6f4;border:1px solid #dce6df;max-width:420px}
+.push-preview b{font-size:14px}
+.push-preview span{font-size:13px;color:#4c5d52;white-space:pre-wrap}
+.push-chips{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.push-chips>span{font-size:13px;font-weight:600}
+.push-chips>div{display:flex;flex-wrap:wrap;gap:6px}
+.push-chips button{padding:6px 12px;border-radius:999px;border:1px solid #c6d5ca;background:#fff;font:inherit;font-size:13px;cursor:pointer}
+.push-chips button[aria-pressed="true"]{background:var(--ve-primary,#285c45);border-color:var(--ve-primary,#285c45);color:#fff}
