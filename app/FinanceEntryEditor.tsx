@@ -1,4 +1,5 @@
 'use client';
+import {financeMoneyField} from './lib/finance-f1';
 import {useState} from 'react';
 import {Dialog,PartyPicker,type Entry,type Catalog} from './FinanceModule';
 import FinanceClassification from './FinanceClassification';
@@ -19,7 +20,7 @@ export default function FinanceEntryEditor({entry,catalog,locked,close,onCommand
  <form onSubmit={async e=>{e.preventDefault();if(blocked)return;const f=new FormData(e.currentTarget);setError('');setSaving(true);try{const ok=await onCommand({action:'edit_entry',unitId:entry.unit_id,data:{id:crypto.randomUUID(),title:entry.id,version:entry.version,kind,amount:f.get('amount'),description:f.get('description'),account:f.get('account'),destination:kind==='transfer'?f.get('destination'):'',category:['income','expense'].includes(kind)?f.get('category'):'',center:f.get('center')||'',competence:f.get('competence'),due:f.get('due'),method:f.get('method'),notes:f.get('notes')||'',person:party.kind==='member'?party.id:'',supplier:party.kind==='supplier'?party.id:'',party:party.name,paid:paid||cashRequired?f.get('paid'):'',reason:f.get('reason')}});if(ok!==true)throw Error('Edição não confirmada. Confira o aviso e atualize antes de repetir.');close()}catch(e){setError(e instanceof Error?e.message:'Edição não confirmada.')}finally{setSaving(false)}}}>
  <fieldset disabled={blocked}><div className="f1-form-grid">
  <label>Natureza<select value={kind} onChange={e=>setKind(e.target.value)}>{Object.entries({income:'Entrada',expense:'Saída',transfer:'Transferência',opening:'Saldo inicial'}).map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
- <label>Valor principal<input name="amount" required inputMode="decimal" defaultValue={amount.slice(0,-2)+','+amount.slice(-2)}/></label>
+ <label>Valor principal<input name="amount" required inputMode="decimal" autoComplete="off" onBlur={e=>{e.currentTarget.value=financeMoneyField(e.currentTarget.value)}} defaultValue={amount.slice(0,-2)+','+amount.slice(-2)}/></label>
  <label className="wide">Descrição<input name="description" required minLength={2} maxLength={300} defaultValue={financeEntryDescription(entry)}/></label>
  <label>Conta<select name="account" required defaultValue={entry.account_id||''}><option value="">Selecione</option>{items.filter(c=>c.kind==='account'&&c.unit_id===entry.unit_id).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
  {kind==='transfer'&&<label>Conta de destino<select name="destination" required defaultValue={entry.destination_id||''}><option value="">Selecione</option>{items.filter(c=>c.kind==='account'&&c.unit_id===entry.unit_id).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}

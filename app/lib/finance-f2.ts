@@ -1,9 +1,9 @@
-import {financeCents,financeCommand,financeDate} from './finance-f1.ts';
+import {financeCents,financeCommand,financeDate,financeMoneyInput} from './finance-f1.ts';
 import {uuidPattern} from './private-files.ts';
 const uuid=(v:unknown)=>{if(typeof v!=='string'||!uuidPattern.test(v))throw Error('Identificador inválido.');return v.toLowerCase()};
 const txt=(v:unknown,max=300)=>{if(typeof v!=='string'||v.trim().length<2||v.length>max)throw Error('Informe a justificativa.');return v.trim()};
 const version=(v:unknown)=>{if(!Number.isSafeInteger(v)||Number(v)<1)throw Error('Atualize o registro antes de continuar.');return Number(v)};
-const cents=(v:unknown)=>v==='0'||v==='0,00'?'0':financeCents(v);
+const cents=(v:unknown)=>{const canonical=financeMoneyInput(v);return canonical!==null&&/^0+(?:,0{1,2})?$/.test(canonical)?'0':financeCents(v)};
 function keys(d:Record<string,unknown>,allowed:string[]){if(Object.keys(d).some(k=>!allowed.includes(k)))throw Error('Campo não permitido.')}
 export function financeF2Command(value:unknown){
  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Dados inválidos.');const r=value as Record<string,unknown>;keys(r,['action','unitId','data']);
