@@ -3,7 +3,8 @@ import {ActivityIndicator, Platform, Pressable, ScrollView, StatusBar as NativeS
 import {StatusBar} from 'expo-status-bar';
 import type {Session} from '@supabase/supabase-js';
 import {configured, supabase} from './src/supabase';
-import {compat, ministries, type Ministry, type Unit} from './src/api';
+import {compat, ministries, myAccess, type Ministry, type Unit} from './src/api';
+import type {StaffUnitAccess} from '../shared/contract/staff.ts';
 import {staffRoleLabel as roleLabel} from '../shared/contract/staff.ts';
 import type {CompatResponse} from '../shared/contract/apps.ts';
 import {colors, ui} from './src/theme';
@@ -14,14 +15,14 @@ type Screen = 'home' | 'push' | 'tickets';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null),
-    [ready, setReady] = useState(false),
+    [ready, setReady] = useState(!supabase),
     [version, setVersion] = useState<CompatResponse | null>(null);
   // The platform can retire an old build before an API change reaches it (offline: keep working).
   useEffect(() => {
     void compat().then(setVersion);
   }, []);
   useEffect(() => {
-    if (!supabase) return setReady(true);
+    if (!supabase) return;
     supabase.auth.getSession().then(({data}) => {
       setSession(data.session);
       setReady(true);
@@ -93,20 +94,38 @@ function Workspace({email}: {email: string}) {
     [error, setError] = useState(''),
     [ministry, setMinistry] = useState<Ministry | null>(null),
     [unit, setUnit] = useState<Unit | null>(null),
+    [access, setAccess] = useState<StaffUnitAccess[] | null>(null),
     [screen, setScreen] = useState<Screen>('home');
+  const chooseMinistry = (m: Ministry | null) => {
+    setAccess(null);
+    setUnit(null);
+    setMinistry(m);
+  };
   useEffect(() => {
     ministries()
       .then((m) => {
         setList(m);
-        if (m.length === 1) setMinistry(m[0]);
+        if (m.length === 1) chooseMinistry(m[0]);
       })
       .catch((e) => setError((e as Error).message));
   }, []);
+  // What this person may do in each church comes from the platform (Comunicação → Equipe e fuso horário).
   useEffect(() => {
-    if (!ministry) return setUnit(null);
-    const units = ministry.units || [];
-    setUnit(units.length === 1 ? units[0] : units.find((u) => u.id === ministry.default_unit_id) || null);
+    if (!ministry) return;
+    let live = true;
+    myAccess(ministry.organization_id)
+      .then((all) => {
+        if (!live) return;
+        const units = all.filter((u) => u.checkin || u.push);
+        setAccess(units);
+        setUnit(units.length === 1 ? units[0] : units.find((u) => u.id === ministry.default_unit_id) || null);
+      })
+      .catch((e) => live && setError((e as Error).message));
+    return () => {
+      live = false;
+    };
   }, [ministry]);
+  const here = access?.find((u) => u.id === unit?.id);
   const signOut = () => void supabase?.auth.signOut({scope: 'local'});
   if (error)
     return (
@@ -124,22 +143,41 @@ function Workspace({email}: {email: string}) {
         <Ghost label="Sair" onPress={signOut} />
       </View>
     );
+  if (ministry && !access) return <ActivityIndicator style={{marginTop: 80}} color={colors.brand} />;
+  if (ministry && access && !access.length)
+    return (
+      <View style={[ui.pad, {paddingTop: 40}]}>
+        <Text style={ui.over}>{ministry.organization_name.toUpperCase()}</Text>
+        <Text style={ui.h1}>Sem tarefas liberadas</Text>
+        <Text style={ui.copy}>
+          Você ainda não pode validar entradas nem enviar push em nenhuma igreja deste ministério. A administração libera em Comunicação → Equipe e fuso
+          horário.
+        </Text>
+        {list.length > 1 && <Ghost label="Trocar ministério" onPress={() => chooseMinistry(null)} />}
+        <Ghost label="Sair" onPress={signOut} />
+      </View>
+    );
   if (!ministry || !unit)
     return (
       <ScrollView contentContainerStyle={[ui.pad, {paddingTop: 40}]}>
         <Text style={ui.over}>{ministry ? 'ESCOLHA A IGREJA' : 'ESCOLHA O MINISTÉRIO'}</Text>
         <Text style={ui.h1}>{ministry ? ministry.organization_name : 'Onde você vai servir hoje?'}</Text>
-        {(ministry ? ministry.units : list).map((item) => {
+        {(ministry ? access || [] : list).map((item) => {
           const id = 'organization_id' in item ? item.organization_id : item.id,
             name = 'organization_name' in item ? item.organization_name : item.name;
           return (
-            <Pressable key={id} accessibilityRole="button" style={ui.card} onPress={() => (ministry ? setUnit(item as Unit) : setMinistry(item as Ministry))}>
+            <Pressable
+              key={id}
+              accessibilityRole="button"
+              style={ui.card}
+              onPress={() => (ministry ? setUnit(item as Unit) : chooseMinistry(item as Ministry))}
+            >
               <Text style={ui.h2}>{name}</Text>
               {'role' in item && <Text style={ui.copy}>{roleLabel[item.role] || item.role}</Text>}
             </Pressable>
           );
         })}
-        {ministry && list.length > 1 && <Ghost label="Trocar ministério" onPress={() => setMinistry(null)} />}
+        {ministry && list.length > 1 && <Ghost label="Trocar ministério" onPress={() => chooseMinistry(null)} />}
         <Ghost label="Sair" onPress={signOut} />
       </ScrollView>
     );
@@ -152,9 +190,11 @@ function Workspace({email}: {email: string}) {
       <Text style={ui.copy}>
         {roleLabel[ministry.role] || ministry.role} · {email}
       </Text>
-      <Action title="Validar entrada" text="Leia o QR Code de ingressos, inscrições e retiradas de vendas." onPress={() => setScreen('tickets')} />
-      <Action title="Enviar push" text="Avise o ministério, a igreja local ou as igrejas que você atende." onPress={() => setScreen('push')} />
-      <Ghost label="Trocar igreja ou ministério" onPress={() => (setUnit(null), list.length > 1 && setMinistry(null))} />
+      {here?.checkin && (
+        <Action title="Validar entrada" text="Leia o QR Code de ingressos, inscrições e retiradas de vendas." onPress={() => setScreen('tickets')} />
+      )}
+      {here?.push && <Action title="Enviar push" text="Avise o ministério, a igreja local ou as igrejas que você atende." onPress={() => setScreen('push')} />}
+      <Ghost label="Trocar igreja ou ministério" onPress={() => (list.length > 1 ? chooseMinistry(null) : setUnit(null))} />
       <Ghost label="Sair" onPress={signOut} />
     </ScrollView>
   );

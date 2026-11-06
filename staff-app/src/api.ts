@@ -3,7 +3,7 @@ import {supabase} from './supabase';
 import pkg from '../package.json';
 import {ApiError, readApiError} from '../../shared/contract/errors.ts';
 import {clientHeader, clientHeaderValue, type CompatResponse} from '../../shared/contract/apps.ts';
-import {isStaff, type Ministry} from '../../shared/contract/staff.ts';
+import {isStaff, type Ministry, type StaffUnitAccess} from '../../shared/contract/staff.ts';
 
 export {ticketCode, type Ministry, type Unit} from '../../shared/contract/staff.ts';
 export {ApiError};
@@ -54,4 +54,9 @@ export async function ministries(): Promise<Ministry[]> {
   const r = await supabase.rpc('access_context');
   if (r.error) throw Error('Não foi possível carregar seus ministérios.');
   return ((r.data as {memberships?: Ministry[]} | null)?.memberships || []).filter(isStaff);
+}
+
+/** What the signed-in person may do in each church of the ministry (agenda, entrance, publishing, push). */
+export async function myAccess(org: string): Promise<StaffUnitAccess[]> {
+  return (await api<{units: StaffUnitAccess[]}>('/api/staff-access?action=mine', org)).units || [];
 }
