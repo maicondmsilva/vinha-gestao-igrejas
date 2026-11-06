@@ -44,3 +44,26 @@ test('produção exige identificadores de loja do próprio ministério', () => {
   assert.match(c, /runtimeVersion: \{policy: 'appVersion'\}/);
   assert.match(c, /\/\/ <ministry-imports>/);
 });
+
+test('Vinha Equipe usa a sessão própria e o ministério escolhido, sem chave de servidor', () => {
+  const api = read('staff-app/src/api.ts'),
+    scanner = read('staff-app/src/TicketScanner.tsx'),
+    push = read('staff-app/src/PushComposer.tsx'),
+    config = read('staff-app/app.config.ts');
+  assert.match(api, /Authorization: 'Bearer ' \+ token/);
+  assert.match(api, /'x-vinha-tenant': org/);
+  assert.doesNotMatch(api + scanner + push, /service_role|SUPABASE_SECRET/);
+  assert.match(scanner, /\/api\/event-tickets-admin/);
+  assert.match(push, /action: 'preview'/);
+  assert.match(config, /STAFF_IOS_BUNDLE_IDENTIFIER/);
+  assert.match(config, /cameraPermission/);
+});
+
+test('toque na notificação abre a tela certa e só conta abertura com o id da mensagem', () => {
+  const routing = read('android-app/src/push-routing.ts'),
+    menu = read('android-app/src/MemberExperience.tsx');
+  assert.match(menu, /pushTarget\(data\)/);
+  assert.match(menu, /reportPushOpened\(data\)/);
+  assert.match(routing, /case 'event':\n      return \{kind: 'tab', tab: 'agenda', event: id\}/);
+  assert.match(routing, /\/api\/push\/opened/);
+});

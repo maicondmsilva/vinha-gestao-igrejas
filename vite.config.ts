@@ -57,7 +57,7 @@ export default defineConfig(async ({command}) => {
     ssr: localPreview ? { external: ['exceljs'] } : undefined,
     server: { watch: {
       // Generated APKs may be locked while copied on Windows. They are not web sources.
-      ignored: ['**/output/**', '**/android-app/android/**', '**/android-app/.gradle-cache/**'],
+      ignored: ['**/output/**', '**/android-app/android/**', '**/android-app/.gradle-cache/**', '**/staff-app/**'],
       ...(isCodexSeatbeltSandbox ? { useFsEvents: false, usePolling: true } : {}),
     } },
     resolve: isVercelBuild ? {

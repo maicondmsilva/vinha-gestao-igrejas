@@ -9,7 +9,7 @@ import type {ChurchRpc} from '../../shared/member-church';
 export const pushDeviceKey='vinha.push.device';
 export default function PushSettings({rpc,org,unit,onInbox}:{rpc:ChurchRpc;org:string;unit:string;onInbox:()=>void}){
  const [notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
- useEffect(()=>{const l=Notifications.addNotificationResponseReceivedListener(()=>onInbox());return()=>l.remove()},[onInbox]);
+ useEffect(()=>{const l=Notifications.addNotificationResponseReceivedListener(r=>{const screen=(r.notification.request.content.data as {screen?:unknown}|undefined)?.screen;if(!screen||screen==='inbox')onInbox()});return()=>l.remove()},[onInbox]);
  async function enable(){if(busy)return;setBusy(true);try{
  const r=await rpc.rpc('member_services',{p_org:org,p_unit:unit,p_action:'push_status'}),config=r.data as {configured:boolean;project:string;application:string};if(r.error||!config?.configured)throw Error('A igreja ainda está configurando os alertas deste aplicativo.');
  if(!Device.isDevice)throw Error('Ative os alertas em um celular físico.');
