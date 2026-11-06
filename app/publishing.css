@@ -21,3 +21,78 @@
 .metric-tiles b{font-size:28px;color:#183d2c}
 .metric-tiles small{font-size:12px;color:#5f6f64}
 .push-automation{display:grid;gap:12px}
+
+/* Comunicação e Ao vivo — uma escala só para texto, botões e tabelas (mesma base de Eventos).
+   Seletores com .program-page.publishing-page para valer qualquer que seja a ordem de carga do CSS. */
+.program-page.publishing-page{font-size:14px;line-height:1.6}
+.program-page.publishing-page .program-breadcrumb{font-size:12px}
+.program-page.publishing-page .program-heading p:not(.section-over){font-size:15px;max-width:640px}
+.program-page.publishing-page .program-heading .section-over{font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.program-page.publishing-page>.program-card,.program-page.publishing-page>.program-filters{margin:0 0 22px}
+.program-page.publishing-page .program-card-title h2{font-size:17px;margin:0}
+.program-page.publishing-page .program-card-title>span{font-size:13px}
+.program-page.publishing-page .program-filters{grid-template-columns:minmax(220px,2fr) minmax(160px,1fr) auto auto}
+.program-page.publishing-page .program-filters>button{min-width:110px}
+.program-page.publishing-page .publishing-filters-compact{grid-template-columns:minmax(200px,320px)}
+.program-page.publishing-page .program-table-wrap{border:0;border-radius:0}
+.program-page.publishing-page .program-table{font-size:14px;min-width:760px}
+.program-page.publishing-page .program-table th{font-size:12px;padding:14px 18px}
+.program-page.publishing-page .program-table td{padding:16px 18px;vertical-align:middle}
+.program-page.publishing-page .program-table td>strong{display:block;font-size:14px;font-weight:650;color:#234635}
+.program-page.publishing-page .program-table td small{display:block;font-size:12px;margin-top:4px}
+.program-page.publishing-page .publishing-title strong{font-size:14px;font-weight:650;line-height:1.4}
+.program-page.publishing-page .publishing-title small{display:block;font-size:12px;line-height:1.5;margin-top:4px;color:#607767}
+.program-page.publishing-page .publishing-recipients{font-size:13px;line-height:1.5}
+.program-page.publishing-page .publishing-date{white-space:nowrap;font-size:13px;color:#4f6657}
+.program-page.publishing-page .publishing-badges{display:flex;flex-wrap:wrap;gap:6px}
+.program-page.publishing-page .program-card>.program-pager{padding:16px 20px;border-top:1px solid #e5ece2}
+.program-page.publishing-page .program-card>.program-empty{padding:48px 24px}
+.program-page.publishing-page .program-empty h3{font-size:17px;margin:0 0 6px}
+.program-page.publishing-page .program-empty p{font-size:14px;margin:0}
+.program-page.publishing-page .publishing-help{font-size:13px;line-height:1.7;margin:4px 0 22px}
+.program-page.publishing-page .publishing-legacy{font-size:13px}
+.program-page.publishing-page .publishing-legacy summary{font-size:14px}
+/* Ações por linha: uma linha só, mesmo tamanho; a principal em destaque e a de retirar discreta. */
+.program-page.publishing-page .publishing-row-actions{display:flex;flex-wrap:nowrap;gap:8px;min-width:0}
+.program-page.publishing-page .publishing-row-actions button{min-height:38px;padding:8px 14px;font-size:13px;white-space:nowrap;flex:0 0 auto}
+.program-page.publishing-page .publishing-row-actions .publishing-go{background:#e9f2e4;border-color:#b9cfae;color:#22533a}
+.program-page :is(.publishing-quiet),.program-dialog .publishing-quiet{color:#8b3a2b;border-color:#ebd3cb;background:#fff}
+.program-page .publishing-quiet:hover:not(:disabled),.program-dialog .publishing-quiet:hover:not(:disabled){background:#fbf0ec;border-color:#d9a99b}
+.program-page.publishing-page .publishing-period{flex-direction:row;align-items:center;gap:10px;font-size:14px}
+.program-page.publishing-page .publishing-period select{width:auto;min-width:130px}
+.program-page.publishing-page .metric-tiles{margin:0 0 22px}
+.program-page.publishing-page .metric-tiles span{font-size:14px}
+.program-page.publishing-page .metric-tiles small{font-size:13px}
+/* Situações: cor e texto; nunca só cor. */
+.program-page .program-badge.draft,.program-dialog .program-badge.draft,.program-badge.push-draft{background:#f6f0dd;color:#7f6420}
+.program-page .program-badge.archived,.program-badge.push-cancelled{background:#eef1ee;color:#5f6f64}
+.program-badge.live-scheduled,.program-badge.push-scheduled{background:#e8eff7;color:#2f5378}
+.program-badge.live-live,.program-badge.push-sending{background:#fbe9e6;color:#a1311f;font-weight:650}
+.program-badge.live-ended{background:#eef1ee;color:#5f6f64}
+.program-badge.push-sent{background:#e9f4e6;color:#286043}
+.program-badge:is(.push-draft,.push-cancelled,.push-scheduled,.push-sending,.push-sent){display:inline-block;border-radius:20px;padding:5px 11px;font-size:12px;white-space:nowrap}
+.publishing-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:0}
+.publishing-facts>div{padding:12px 14px;border:1px solid #e0e8df;border-radius:10px;background:#fafcf8}
+.publishing-facts dt{font-size:12px;color:#607767;margin-bottom:4px}
+.publishing-facts dd{margin:0;font-size:15px;font-weight:650;color:#234635}
+.program-dialog .program-form fieldset legend{font-size:15px;font-weight:650;color:#234635;margin-bottom:10px}
+.program-dialog .publishing-destination-summary{font-size:14px;margin:8px 0 0}
+@media(max-width:1100px){
+ .program-page.publishing-page .program-table{min-width:0}
+ .program-page.publishing-page .program-table td{padding:6px 0;border:0}
+ .program-page.publishing-page .program-table tr{padding:18px 20px}
+ .program-page.publishing-page .publishing-row-actions{flex-wrap:wrap;margin-top:8px}
+ .program-page.publishing-page .program-table td[data-label]{display:flex;justify-content:space-between;align-items:baseline;gap:16px;white-space:normal}
+ .program-page.publishing-page .program-table td[data-label]::before{content:attr(data-label);font-size:12px;font-weight:600;color:#607767;flex:0 0 auto}
+ .program-page.publishing-page .program-table td[data-label]>*{text-align:right}
+}
+@media(max-width:760px){
+ .program-page.publishing-page .program-filters{grid-template-columns:1fr 1fr}
+ .program-page.publishing-page .program-filters :is(.program-search,label){grid-column:1/-1}
+ .program-page.publishing-page .publishing-filters-compact{grid-template-columns:1fr}
+ .program-page.publishing-page .publishing-row-actions button{flex:1 1 120px}
+ .program-page.publishing-page .publishing-period{flex-direction:column;align-items:stretch;width:100%}
+ .program-page.publishing-page .publishing-period select{width:100%}
+ .program-page.publishing-page .program-heading>.program-actions:has(>.publishing-period){display:block}
+ .program-page.publishing-page .program-heading>.program-actions>.program-primary:last-child:nth-child(odd){grid-column:1/-1}
+}
