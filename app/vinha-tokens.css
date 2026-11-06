@@ -1,0 +1,21 @@
+/* Gerado por scripts/build-tokens.mjs a partir de shared/design-tokens.ts. Não edite à mão. */
+@theme {
+  --color-vinha-brand: #285c45;
+  --color-vinha-brand-dark: #163d2f;
+  --color-vinha-brand-soft: #e5eee8;
+  --color-vinha-gold: #dbbb70;
+  --color-vinha-gold-deep: #7f6420;
+  --color-vinha-bg: #f5f6f2;
+  --color-vinha-surface: #ffffff;
+  --color-vinha-line: #dce6df;
+  --color-vinha-ink: #1f2a22;
+  --color-vinha-muted: #5f6f64;
+  --color-vinha-ok: #1f7a4d;
+  --color-vinha-warn: #9a5b00;
+  --color-vinha-danger: #b42318;
+  --color-vinha-on-brand: #ffffff;
+  --radius-vinha-sm: 8px;
+  --radius-vinha-md: 12px;
+  --radius-vinha-lg: 18px;
+  --radius-vinha-pill: 999px;
+}

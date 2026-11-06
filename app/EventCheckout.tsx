@@ -11,6 +11,9 @@ import {
 } from "../shared/event-tickets";
 import "./event-tickets.css";
 import EventOrderSupport from "./EventOrderSupport";
+import FieldError, { invalidProps } from "./FieldError";
+import { ApiError, readApiError } from "../shared/contract/errors";
+import { ticketBuyerIssue } from "../shared/contract/checkout";
 type Pix = { paymentId: string; qrCode: string; qrImage: string; ticketUrl: string; expiresAt: string };
 type Order = TicketOrder & { paymentMessage?: string; pixAvailable?: boolean; pix?: Pix };
 type Quote = { total: string; subtotal: string; discount: string; revision: number };
@@ -47,7 +50,7 @@ async function command(event: string, attempt: Attempt, action: string, data: un
       body: JSON.stringify({ event, ...attempt, data, action }),
     }),
     d = (await r.json()) as Order & Quote & { error?: string };
-  if (!r.ok) throw Error(d.error || "Pedido indisponível.");
+  if (!r.ok) throw new ApiError(readApiError(d, "Pedido indisponível."), r.status);
   return d;
 }
 export default function EventCheckout({
@@ -78,6 +81,7 @@ export default function EventCheckout({
     [pix, setPix] = useState<Pix | null>(null),
     [copied, setCopied] = useState(false),
     [busy, setBusy] = useState(false),
+    [fields, setFields] = useState<Record<string, string>>({}),
     [error, setError] = useState("");
   const storage = "vinha-event-order:" + event;
   useEffect(() => {
@@ -386,6 +390,13 @@ export default function EventCheckout({
               onSubmit={async (e) => {
                 e.preventDefault();
                 if (busy || count < 1) return;
+                // Same rules as /api/event-orders: mark the input to fix before asking the server.
+                const issue = ticketBuyerIssue(payload());
+                setFields(issue?.fields || {});
+                if (issue) {
+                  setError(issue.error);
+                  return;
+                }
                 setBusy(true);
                 setError("");
                 try {
@@ -396,6 +407,7 @@ export default function EventCheckout({
                   setStep("review");
                 } catch (x) {
                   setError((x as Error).message);
+                  setFields(x instanceof ApiError ? x.fields : {});
                 } finally {
                   setBusy(false);
                 }
@@ -469,7 +481,9 @@ export default function EventCheckout({
                           maxLength={160}
                           value={buyer.buyerName}
                           onChange={(e) => setBuyer((v) => ({ ...v, buyerName: e.target.value }))}
+                          {...invalidProps(fields, "buyerName")}
                         />
+                        <FieldError fields={fields} name="buyerName" />
                       </label>
                       <label>
                         E-mail
@@ -480,7 +494,9 @@ export default function EventCheckout({
                           maxLength={254}
                           value={buyer.buyerEmail}
                           onChange={(e) => setBuyer((v) => ({ ...v, buyerEmail: e.target.value }))}
+                          {...invalidProps(fields, "buyerEmail")}
                         />
+                        <FieldError fields={fields} name="buyerEmail" />
                         {emailHint(buyer.buyerEmail) && (
                           <button
                             type="button"
@@ -525,7 +541,9 @@ export default function EventCheckout({
                                   value={p.name}
                                   placeholder={i === 0 ? buyer.buyerName : ""}
                                   onChange={(e) => update(i, "name", e.target.value)}
+                                  {...invalidProps(fields, `items.${i}.name`)}
                                 />
+                                <FieldError fields={fields} name={`items.${i}.name`} />
                               </label>
                             )}
                             {needsCpf && (
@@ -536,6 +554,7 @@ export default function EventCheckout({
                                   required
                                   maxLength={14}
                                   value={p.cpf}
+                                  {...invalidProps(fields, `items.${i}.cpf`)}
                                   onChange={(e) =>
                                     update(
                                       i,
@@ -549,6 +568,7 @@ export default function EventCheckout({
                                     )
                                   }
                                 />
+                                <FieldError fields={fields} name={`items.${i}.cpf`} />
                               </label>
                             )}
                             {catalog.questions.map((q) => (

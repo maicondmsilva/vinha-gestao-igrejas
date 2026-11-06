@@ -3,9 +3,10 @@ import {ActivityIndicator, Pressable, ScrollView, Text, View} from 'react-native
 import {CameraView, useCameraPermissions} from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import {api, ticketCode, type Unit} from './api';
+import type {StaffEvent, TicketCheckinResult} from '../../shared/contract/staff.ts';
 import {colors, ui} from './theme';
 
-type Event = {id: string; title: string; starts_at: string; commerce_mode?: string};
+type Event = StaffEvent;
 type Result = {tone: 'ok' | 'warn' | 'danger'; title: string; detail: string};
 
 /** Entrance desk: scan the QR of a paid ticket, a free registration or a sale pickup. */
@@ -56,11 +57,14 @@ function Scanner({org, unit, event, back}: {org: string; unit: Unit; event: Even
   async function check(code: string) {
     // Paid tickets and sale pickups first; free registrations use the agenda check-in.
     try {
-      const r = await api<{already?: boolean; name?: string}>('/api/event-tickets-admin', org, {method: 'POST', body: {unit: unit.id, event: event.id, action: 'checkin', data: {code}}});
+      const r = await api<TicketCheckinResult>('/api/event-tickets-admin', org, {
+        method: 'POST',
+        body: {unit: unit.id, event: event.id, action: 'checkin', data: {code}},
+      });
       return r;
     } catch (paidError) {
       try {
-        return await api<{already?: boolean; name?: string}>('/api/programming', org, {method: 'POST', body: {unit: unit.id, action: 'checkin', id: event.id, data: {code}}});
+        return await api<TicketCheckinResult>('/api/programming', org, {method: 'POST', body: {unit: unit.id, action: 'checkin', id: event.id, data: {code}}});
       } catch {
         throw paidError;
       }
@@ -75,7 +79,11 @@ function Scanner({org, unit, event, back}: {org: string; unit: Unit; event: Even
     try {
       const r = await check(code);
       if (r.already) {
-        setResult({tone: 'warn', title: 'Entrada já registrada', detail: (r.name ? r.name + ' · ' : '') + 'Este QR já foi usado. Confira com a pessoa antes de liberar.'});
+        setResult({
+          tone: 'warn',
+          title: 'Entrada já registrada',
+          detail: (r.name ? r.name + ' · ' : '') + 'Este QR já foi usado. Confira com a pessoa antes de liberar.',
+        });
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       } else {
         setResult({tone: 'ok', title: 'Entrada liberada', detail: r.name || 'Ingresso válido para este evento.'});

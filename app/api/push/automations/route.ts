@@ -31,7 +31,14 @@ async function run(request: Request, b: {unit?: unknown; version?: unknown; data
     });
     if (r.error)
       return json(
-        {error: r.error.code === '42501' ? 'Somente dono, pastor ou administração altera as automações.' : r.error.code === '40001' ? 'As automações mudaram. Atualize a tela.' : 'Revise os textos das automações.'},
+        {
+          error:
+            r.error.code === '42501'
+              ? 'Somente dono, pastor ou administração altera as automações.'
+              : r.error.code === '40001'
+                ? 'As automações mudaram. Atualize a tela.'
+                : 'Revise os textos das automações.',
+        },
         r.error.code === '42501' ? 403 : r.error.code === '40001' ? 409 : 400,
       );
     return json(r.data);

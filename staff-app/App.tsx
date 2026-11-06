@@ -3,7 +3,9 @@ import {ActivityIndicator, Platform, Pressable, ScrollView, StatusBar as NativeS
 import {StatusBar} from 'expo-status-bar';
 import type {Session} from '@supabase/supabase-js';
 import {configured, supabase} from './src/supabase';
-import {ministries, type Ministry, type Unit} from './src/api';
+import {compat, ministries, type Ministry, type Unit} from './src/api';
+import {staffRoleLabel as roleLabel} from '../shared/contract/staff.ts';
+import type {CompatResponse} from '../shared/contract/apps.ts';
 import {colors, ui} from './src/theme';
 import PushComposer from './src/PushComposer';
 import TicketScanner from './src/TicketScanner';
@@ -12,7 +14,12 @@ type Screen = 'home' | 'push' | 'tickets';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null),
-    [ready, setReady] = useState(false);
+    [ready, setReady] = useState(false),
+    [version, setVersion] = useState<CompatResponse | null>(null);
+  // The platform can retire an old build before an API change reaches it (offline: keep working).
+  useEffect(() => {
+    void compat().then(setVersion);
+  }, []);
   useEffect(() => {
     if (!supabase) return setReady(true);
     supabase.auth.getSession().then(({data}) => {
@@ -26,7 +33,13 @@ export default function App() {
     // Top inset: status bar height on Android, notch area on iOS.
     <View style={[ui.screen, {paddingTop: Platform.OS === 'android' ? NativeStatusBar.currentHeight || 24 : 48}]}>
       <StatusBar style="dark" />
-      {!configured ? (
+      {version?.status === 'update_required' ? (
+        <View style={ui.pad}>
+          <Text style={ui.over}>VINHA EQUIPE</Text>
+          <Text style={ui.h1}>Atualize o aplicativo</Text>
+          <Text style={ui.copy}>{version.message}</Text>
+        </View>
+      ) : !configured ? (
         <View style={ui.pad}>
           <Text style={ui.h1}>Vinha Equipe</Text>
           <Text style={ui.copy}>Este aplicativo ainda não foi configurado com o servidor da Vinha.</Text>
@@ -36,7 +49,10 @@ export default function App() {
       ) : !session ? (
         <Login />
       ) : (
-        <Workspace email={session.user.email || ''} />
+        <>
+          {version?.status === 'update_available' && <Text style={[ui.copy, {paddingHorizontal: 20, paddingTop: 8}]}>{version.message}</Text>}
+          <Workspace email={session.user.email || ''} />
+        </>
       )}
     </View>
   );
@@ -143,8 +159,6 @@ function Workspace({email}: {email: string}) {
     </ScrollView>
   );
 }
-
-const roleLabel: Record<string, string> = {owner: 'Responsável', pastor: 'Pastor(a)', admin: 'Administração', secretary: 'Secretaria', finance: 'Financeiro', leader: 'Liderança'};
 
 function Action({title, text, onPress}: {title: string; text: string; onPress: () => void}) {
   return (

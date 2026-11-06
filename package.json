@@ -25,7 +25,10 @@
     "db:status": "supabase status",
     "db:reset": "supabase db reset --local",
     "db:migrations": "supabase migration list --local",
-    "db:test": "supabase test db --local"
+    "db:test": "supabase test db --local",
+    "format": "prettier --write shared/contract shared/design-tokens.ts app/FieldError.tsx app/api/app/compat app/lib/push-command.ts app/api/push staff-app/App.tsx staff-app/src staff-app/app.config.ts staff-app/metro.config.cjs scripts/shared-contract.test.mjs scripts/build-tokens.mjs",
+    "format:check": "prettier --check shared/contract shared/design-tokens.ts app/FieldError.tsx app/api/app/compat app/lib/push-command.ts app/api/push staff-app/App.tsx staff-app/src staff-app/app.config.ts staff-app/metro.config.cjs scripts/shared-contract.test.mjs scripts/build-tokens.mjs",
+    "tokens": "node --experimental-strip-types scripts/build-tokens.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
@@ -33,13 +36,14 @@
     "@types/qrcode": "^1.5.6",
     "drizzle-orm": "0.45.2",
     "exceljs": "4.4.0",
+    "hls.js": "1.7.3",
     "next": "16.3.8",
     "nodemailer": "10.1.7",
     "pdf-lib": "1.17.1",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "hls.js": "1.7.3"
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
@@ -57,6 +61,7 @@
     "eslint": "9.39.4",
     "eslint-config-next": "16.3.8",
     "nitro": "3.0.260903-beta",
+    "prettier": "3.6.2",
     "react-server-dom-webpack": "19.2.8",
     "supabase": "2.120.0",
     "tailwindcss": "4.2.1",
