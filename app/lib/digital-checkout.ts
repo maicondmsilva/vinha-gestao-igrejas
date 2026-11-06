@@ -84,3 +84,97 @@ export async function dispatchDigitalCheckout(server:OperationsClient,scope:{org
   throw Error('Não foi possível confirmar o checkout. A tentativa foi retida para conferência; não gere outra cobrança.');
  }
 }
+
+export type DigitalPix = { paymentId: string; qrCode: string; qrImage: string; ticketUrl: string; expiresAt: string };
+const pixMinimumMs = 31 * 60 * 1000, pixMaximumMs = 29 * 24 * 60 * 60 * 1000;
+/**
+ * Pix shown on the Vinha page itself. One payment per order: the idempotency key is derived from the order id,
+ * so repeating the request returns the same QR instead of a second charge. The webhook stays the only proof.
+ */
+export async function createDigitalPix(
+  c: DigitalConnection,
+  r: CheckoutReservation & { methods?: string[] | null },
+  origin: string,
+  transport: typeof fetch = fetch,
+  now = Date.now(),
+): Promise<DigitalPix> {
+  enabled(c);
+  origin = checkoutOrigin(origin);
+  receiverId(r.id);
+  receiverId(r.order);
+  receiverId(r.receiver);
+  if ((c.methods && !c.methods.includes('pix')) || (Array.isArray(r.methods) && !r.methods.includes('pix')))
+    throw new CheckoutPreparationError(true, 409, 'pix', 'pix_not_enabled');
+  if (!/^\d{1,9}$/.test(r.gross) || Number(r.gross) < 1) throw Error('Valor inválido.');
+  const limit = Date.parse(r.expiresAt);
+  if (!Number.isFinite(limit) || limit - now < pixMinimumMs) throw new CheckoutPreparationError(true, 409, 'pix', 'reservation_too_short');
+  const expires = new Date(Math.min(limit, now + pixMaximumMs));
+  const secret = openReceiver<{ access_token: string; user_id: string }>(
+    c.sealed,
+    receiverContext(c.org, c.unit, c.provider, c.environment),
+  );
+  if (secret.user_id !== c.externalId || !secret.access_token) throw Error('Titular divergente.');
+  const [firstName, ...rest] = r.name.trim().split(/\s+/);
+  const response = await transport('https://api.mercadopago.com/v1/payments', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + secret.access_token,
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+      'X-Idempotency-Key': 'vinha-pix-' + r.order,
+    },
+    body: JSON.stringify({
+      transaction_amount: Number(r.gross) / 100,
+      payment_method_id: 'pix',
+      description: r.title.slice(0, 200),
+      external_reference: r.order,
+      notification_url: origin + '/api/finance-digital/webhook/' + r.receiver + '?environment=' + c.environment,
+      date_of_expiration: expires.toISOString().replace('Z', '+00:00'),
+      payer: { email: r.email, first_name: (firstName || '').slice(0, 80), last_name: rest.join(' ').slice(0, 80) },
+    }),
+    redirect: 'error',
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) {
+    let reason = '';
+    try {
+      const detail = await response.json();
+      reason = checkoutErrorReason(detail);
+      console.warn('vinha_pix_provider_rejected', response.status, checkoutProviderDiagnostic(detail, [secret.access_token, r.email, r.name, ...r.name.split(/\s+/), c.externalId]));
+    } catch {}
+    // 5xx and timeouts are ambiguous: the same idempotency key makes a later retry safe.
+    throw new CheckoutPreparationError([400, 401, 403, 422].includes(response.status), response.status, 'pix', reason);
+  }
+  const raw = await response.text();
+  if (raw.length > 262144) throw Error('Resposta inválida.');
+  const d = JSON.parse(raw);
+  const t = d?.point_of_interaction?.transaction_data;
+  if (
+    !/^\d{1,30}$/.test(String(d?.id)) ||
+    String(d.collector_id) !== c.externalId ||
+    d.external_reference !== r.order ||
+    d.payment_method_id !== 'pix' ||
+    d.currency_id !== 'BRL' ||
+    Math.round(Number(d.transaction_amount) * 100) !== Number(r.gross) ||
+    !['pending', 'approved'].includes(d.status) ||
+    typeof t?.qr_code !== 'string' ||
+    t.qr_code.length < 20 ||
+    t.qr_code.length > 1000 ||
+    typeof t.qr_code_base64 !== 'string' ||
+    t.qr_code_base64.length > 200000 ||
+    !/^[A-Za-z0-9+/=]+$/.test(t.qr_code_base64)
+  )
+    throw Error('Pix divergente.');
+  let ticketUrl = '';
+  try {
+    const u = new URL(String(t.ticket_url || ''));
+    if (u.protocol === 'https:' && /(^|\.)mercadopago\.com(\.br)?$/.test(u.hostname)) ticketUrl = u.href;
+  } catch {}
+  return {
+    paymentId: String(d.id),
+    qrCode: t.qr_code,
+    qrImage: 'data:image/png;base64,' + t.qr_code_base64,
+    ticketUrl,
+    expiresAt: typeof d.date_of_expiration === 'string' ? d.date_of_expiration : expires.toISOString(),
+  };
+}
