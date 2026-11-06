@@ -80,20 +80,24 @@ select is((select count(*)::int from private.push_messages where state='submitte
 set local role service_role;select public.push_engine('materialize');reset role;
 select is((select status from private.push_campaigns where request_id=pg_temp.pc('r1')),'sent','campanha concluída quando nada está pendente');
 
+-- Ids read as the test owner before acting as the panel user (the panel never reads private tables).
+create temp table cids as select request_id,id from private.push_campaigns;
+create temp table mids as select user_id,id from private.push_messages;
+grant select on cids,mids to authenticated;
 -- Edit and cancel rules
 set local role authenticated;select pg_temp.actor('admin');
-select throws_ok(format($$select pg_temp.adm('edit',pg_temp.body(jsonb_build_object('mode','now')),%L::uuid,1)$$,(select id from private.push_campaigns where request_id=pg_temp.pc('r1'))),'40001',null,'campanha já enviada não é editada');
-select is(pg_temp.adm('cancel','{}',(select id from private.push_campaigns where request_id=pg_temp.pc('r2')),1)->'campaign'->>'status','cancelled','rascunho cancelado');
-select is((pg_temp.adm('detail','{}',(select id from private.push_campaigns where request_id=pg_temp.pc('r1')))->'stats'->>'delivered')::int,3,'estatísticas de entrega');
+select throws_ok(format($$select pg_temp.adm('edit',pg_temp.body(jsonb_build_object('mode','now')),%L::uuid,1)$$,(select id from cids where request_id=pg_temp.pc('r1'))),'40001',null,'campanha já enviada não é editada');
+select is(pg_temp.adm('cancel','{}',(select id from cids where request_id=pg_temp.pc('r2')),1)->'campaign'->>'status','cancelled','rascunho cancelado');
+select is((pg_temp.adm('detail','{}',(select id from cids where request_id=pg_temp.pc('r1')))->'stats'->>'delivered')::int,3,'estatísticas de entrega');
 reset role;
 
 -- Opened metric: only the recipient can mark it.
 set local role authenticated;select pg_temp.actor('admin');
-select public.push_opened((select id from private.push_messages where user_id=pg_temp.pc('adult')));
+select public.push_opened((select id from mids where user_id=pg_temp.pc('adult')));
 reset role;
 select is((select opened_at from private.push_messages where user_id=pg_temp.pc('adult')),null,'outra pessoa não marca abertura');
 set local role authenticated;select pg_temp.actor('adult');
-select public.push_opened((select id from private.push_messages where user_id=pg_temp.pc('adult')));
+select public.push_opened((select id from mids where user_id=pg_temp.pc('adult')));
 reset role;
 select isnt((select opened_at from private.push_messages where user_id=pg_temp.pc('adult')),null,'destinatário marca abertura');
 
