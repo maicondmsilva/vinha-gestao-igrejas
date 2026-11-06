@@ -18,9 +18,14 @@ insert into public.people(id,organization_id,unit_id,auth_user_id,full_name,stat
  (pg_temp.pc('deceased-p'),pg_temp.pc('org'),pg_temp.pc('a'),pg_temp.pc('deceased'),'Falecido fictício','deceased',current_date-interval '70 years');
 insert into private.member_push_apps values(pg_temp.pc('org'),pg_temp.pc('project'),'com.vinha.pushtest',true,now());
 insert into auth.sessions(id,user_id) select pg_temp.pc(t||'-s'),pg_temp.pc(t) from unnest(array['young','adult','cellmate','deceased','plain'])t;
-insert into private.member_push_devices(id,organization_id,user_id,unit_id,token,enabled,session_id)
- select pg_temp.pc(t||'-d'),pg_temp.pc('org'),pg_temp.pc(t),pg_temp.pc('a'),'ExpoPushToken['||t||'abcdefghijk]',true,pg_temp.pc(t||'-s')
- from unnest(array['young','adult','cellmate','deceased','plain'])t;
+-- Devices are registered from the member's own session (member_push_session_guard reads session_id from the JWT).
+create function pg_temp.device(t text) returns void language plpgsql as $$
+begin
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.pc(t),'role','authenticated','session_id',pg_temp.pc(t||'-s'))::text,true);
+ insert into private.member_push_devices(id,organization_id,user_id,unit_id,token,enabled)
+  values(pg_temp.pc(t||'-d'),pg_temp.pc('org'),pg_temp.pc(t),pg_temp.pc('a'),'ExpoPushToken['||t||'abcdefghijk]',true);
+end $$;
+select pg_temp.device(t) from unnest(array['young','adult','cellmate','deceased','plain'])t;
 
 create function pg_temp.adm(a text,d jsonb default '{}',id uuid default null,v int default null) returns jsonb language sql as $$select public.push_admin(md5('push-campaign-test-org')::uuid,md5('push-campaign-test-a')::uuid,a,id,v,d)$$;
 create function pg_temp.body(extra jsonb default '{}') returns jsonb language sql as $$select jsonb_build_object('title','Culto de domingo','body','Hoje às 19h, traga sua família!','targets',jsonb_build_array(md5('push-campaign-test-a')::uuid),'link',jsonb_build_object('screen','agenda'),'audience','{}'::jsonb)||extra$$;
