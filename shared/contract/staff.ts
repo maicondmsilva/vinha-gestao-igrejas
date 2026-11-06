@@ -34,3 +34,42 @@ export type StaffEvent = {id: string; title: string; starts_at: string; commerce
 const uuidAnywhere = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 /** Ticket QR codes carry the ticket code alone or inside a link. */
 export const ticketCode = (scanned: string) => uuidAnywhere.exec(scanned || '')?.[0].toLowerCase() || null;
+
+// ── Permissões finas (Etapa 3 · PR 2) ───────────────────────────────────────
+/** What a secretary or leader can receive per church. Owners, admins and pastors already do everything. */
+export const staffScopes = ['agenda', 'checkin', 'publishing', 'push'] as const;
+export type StaffScope = (typeof staffScopes)[number];
+export const staffScopeLabel: Record<StaffScope, string> = {
+  agenda: 'Agenda e eventos',
+  checkin: 'Entrada (QR Code)',
+  publishing: 'Avisos e publicações',
+  push: 'Push para o app',
+};
+/** One church in `staff_access('mine')`: what the signed-in person can do there. */
+export type StaffUnitAccess = Unit & {timezone: string; agenda: boolean; checkin: boolean; publishing: boolean; push: boolean};
+export type StaffTeamMember = {user: string; role: string; name: string; email: string; units: string[]; grants: Record<string, StaffScope[]>};
+export type StaffAccessList = {
+  ok: true;
+  timezone: string;
+  units: (Unit & {timezone: string; ownTimezone: string | null; autonomy: boolean})[];
+  team: StaffTeamMember[];
+};
+
+const uuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, 'Identificador inválido.');
+export const staffAccessCommandSchema = z.discriminatedUnion('action', [
+  z.strictObject({
+    action: z.literal('grant'),
+    data: z.strictObject({user: uuid, unit: uuid, scopes: z.array(z.enum(staffScopes, {error: 'Permissão desconhecida.'})).max(4)}),
+  }),
+  z.strictObject({
+    action: z.literal('timezone'),
+    data: z.strictObject({
+      unit: z.union([uuid, z.literal('')]).optional(),
+      timezone: z
+        .string()
+        .regex(/^([A-Za-z]+(\/[A-Za-z0-9_+-]+){1,2})?$/, 'Escolha um fuso horário válido.')
+        .optional(),
+    }),
+  }),
+]);
+export type StaffAccessCommand = z.infer<typeof staffAccessCommandSchema>;
