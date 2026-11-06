@@ -31,3 +31,12 @@ body:has(.vt-receipt) .vinha-chat-widget{display:none}@media print{.vinha-chat-w
   .vt-sticky-cta{position:sticky;bottom:0;z-index:5;margin:20px -16px 0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff;box-shadow:0 -6px 18px rgba(24,61,44,.08)}
   .vt-sticky-cta .ve-primary{flex:1}
 }
+
+/* Etapa 1 — Pix na própria página */
+.vt-pix{display:flex;flex-direction:column;align-items:center;gap:12px;margin:18px 0;padding:22px 18px;border:1px solid #dce6df;border-radius:18px;background:#fff;text-align:center}
+.vt-pix h3{margin:0}
+.vt-pix p{margin:0;max-width:420px}
+.vt-pix img{width:220px;height:220px;image-rendering:pixelated;border-radius:8px;border:1px solid #e4eae5}
+.vt-pix label{width:100%;max-width:420px;text-align:left}
+.vt-pix textarea{width:100%;padding:10px;border:1px solid #c6d5ca;border-radius:9px;font:12px/1.4 ui-monospace,monospace;color:#183d2c;resize:none;word-break:break-all}
+.vt-pix .ve-primary{min-height:48px;padding:0 28px;font-weight:700;width:100%;max-width:420px}

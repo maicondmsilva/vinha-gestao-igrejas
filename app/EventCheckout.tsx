@@ -11,6 +11,8 @@ import {
 } from "../shared/event-tickets";
 import "./event-tickets.css";
 import EventOrderSupport from "./EventOrderSupport";
+type Pix = { paymentId: string; qrCode: string; qrImage: string; ticketUrl: string; expiresAt: string };
+type Order = TicketOrder & { paymentMessage?: string; pixAvailable?: boolean; pix?: Pix };
 type Quote = { total: string; subtotal: string; discount: string; revision: number };
 type Attempt = { id: string; proof: string; data?: unknown };
 const newAttempt = (): Attempt => ({
@@ -44,7 +46,7 @@ async function command(event: string, attempt: Attempt, action: string, data: un
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ event, ...attempt, data, action }),
     }),
-    d = (await r.json()) as TicketOrder & Quote & { error?: string; paymentMessage?: string };
+    d = (await r.json()) as Order & Quote & { error?: string };
   if (!r.ok) throw Error(d.error || "Pedido indisponível.");
   return d;
 }
@@ -72,7 +74,9 @@ export default function EventCheckout({
     [couponOpen, setCouponOpen] = useState(false),
     [quote, setQuote] = useState<Quote | null>(null),
     [attempt, setAttempt] = useState<Attempt | null>(null),
-    [order, setOrder] = useState<(TicketOrder & { paymentMessage?: string }) | null>(null),
+    [order, setOrder] = useState<Order | null>(null),
+    [pix, setPix] = useState<Pix | null>(null),
+    [copied, setCopied] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const storage = "vinha-event-order:" + event;
@@ -110,6 +114,31 @@ export default function EventCheckout({
       live = false;
     };
   }, [event]);
+  // Same order, same Pix: the server derives the idempotency key from the order, so retrying never creates a second charge.
+  async function requestPix(a: Attempt | null = attempt) {
+    if (!a) return;
+    setBusy(true);
+    setError("");
+    try {
+      const d = await command(event, a, "pix");
+      setOrder((current) => ({ ...d, paymentMessage: current?.paymentMessage }));
+      if (d.pix) setPix(d.pix);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function copyPix() {
+    if (!pix) return;
+    try {
+      await navigator.clipboard.writeText(pix.qrCode);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setError("Não foi possível copiar. Selecione o código e copie manualmente.");
+    }
+  }
   async function run(action: string) {
     if (!attempt || busy) return;
     setBusy(true);
@@ -245,10 +274,46 @@ export default function EventCheckout({
             {order.state === "payment_review" && (
               <p>A organização precisa conferir o pagamento e a disponibilidade. Não pague novamente.</p>
             )}
-            {order.checkoutUrl && (
-              <a className="ve-primary" href={order.checkoutUrl} rel="noopener noreferrer">
-                Ir para o pagamento seguro
-              </a>
+            {order.state === "holding" && Number(order.total) > 0 && pix ? (
+              <div className="vt-pix">
+                <h3>Pague com Pix</h3>
+                <p>Abra o app do seu banco, escolha Pix e leia o QR Code ou cole o código.</p>
+                {/* eslint-disable-next-line @next/next/no-img-element -- data URI from the provider, not optimizable */}
+                <img src={pix.qrImage} alt="QR Code Pix do pedido" width={220} height={220} />
+                <label>
+                  Pix copia e cola
+                  <textarea readOnly rows={3} value={pix.qrCode} onFocus={(e) => e.currentTarget.select()} />
+                </label>
+                <button type="button" className="ve-primary" onClick={() => void copyPix()}>
+                  {copied ? "Código copiado ✓" : "Copiar código Pix"}
+                </button>
+                <p className="vt-hint">
+                  Válido até {new Date(pix.expiresAt).toLocaleString("pt-BR")}. Assim que o banco confirmar, esta página
+                  mostra seu {sale ? "pedido" : "ingresso"} automaticamente.
+                </p>
+                {order.checkoutUrl && (
+                  <p className="vt-hint">
+                    Prefere cartão?{" "}
+                    <a href={order.checkoutUrl} rel="noopener noreferrer">
+                      Pagar com cartão
+                    </a>{" "}
+                    (use só um dos dois).
+                  </p>
+                )}
+              </div>
+            ) : (
+              order.state === "holding" &&
+              Number(order.total) > 0 &&
+              order.checkoutUrl && (
+                <div className="ve-actions">
+                  <button type="button" className="ve-primary" disabled={busy} onClick={() => void requestPix()}>
+                    {busy ? "Gerando Pix…" : "Pagar com Pix aqui"}
+                  </button>
+                  <a href={order.checkoutUrl} rel="noopener noreferrer">
+                    Pagar com cartão
+                  </a>
+                </div>
+              )
             )}
             <div className="ve-actions">
               {order.state === "reserved" && (
@@ -604,9 +669,11 @@ export default function EventCheckout({
                         setAttempt(a);
                         const d = await command(event, a, "create", a.data);
                         setOrder(d);
-                        // Go straight to the provider in the same tab; its return URL brings the buyer back here.
-                        if (d.checkoutUrl && d.state === "holding" && Number(d.total) > 0)
-                          window.location.assign(d.checkoutUrl);
+                        // Pix appears right here when the receiver accepts it; otherwise go straight to the provider.
+                        if (d.checkoutUrl && d.state === "holding" && Number(d.total) > 0) {
+                          if (d.pixAvailable) await requestPix(a);
+                          else window.location.assign(d.checkoutUrl);
+                        }
                       } catch (x) {
                         setError((x as Error).message);
                       } finally {
