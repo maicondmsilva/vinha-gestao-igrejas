@@ -4,6 +4,19 @@
 
 Base nativa Expo/React Native compartilhada entre ministérios. O perfil `brands/mpr.json` corresponde ao cadastro existente do Ministério Palavra da Reconciliação, não a uma organização criada para demonstração. Novos ministérios recebem perfis e identificadores próprios; as telas e as regras de autenticação permanecem comuns.
 
+## Publicação nas lojas (Android e iOS)
+
+Cada ministério tem o próprio app, publicado na **conta de desenvolvedor do ministério** (exigência da App Store, regra 4.2.6). O código é um só.
+
+1. **Contas do ministério:** Apple Developer como organização (exige número D-U-N-S) e Google Play Console de organização. O ministério convida a Vinha como desenvolvedora nas duas.
+2. **Perfil do app:** `node scripts/new-ministry-app.mjs --perfil <id> --nome "<Nome no celular>" --ministerio <uuid> --slug <slug>`. O comando cria `brands/<id>.json` e registra o perfil em `app.config.ts`.
+3. **Variáveis no EAS (nunca no repositório):** `VINHA_APP_PROFILE`, `ANDROID_APPLICATION_ID`, `IOS_BUNDLE_IDENTIFIER`, `EXPO_PROJECT_ID`, `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. A produção recusa o build sem os identificadores da plataforma.
+4. **Teste interno:** `eas build --profile preview --platform all`.
+5. **Lojas:** `eas build --profile production --platform all` e depois `eas submit --profile production --platform all`. O Android entra no teste interno como rascunho.
+6. **Correções sem nova revisão:** `eas update --channel production`. Mudanças nativas, como plugins e permissões, exigem nova versão (`runtimeVersion` segue a versão do app).
+
+**Exclusão de conta:** fica no menu "Mais", em "Excluir minha conta", e também na web em `https://app.vinhaigrejas.com.br/conta/excluir`. Informe essa URL no Google Play, em Segurança dos dados → Exclusão de conta. Contas com papel de dono, pastor, administração ou financeiro precisam transferir a função antes.
+
 ## Implementado
 
 - Configuração de marca por perfil de geração (`VINHA_APP_PROFILE`), com MPR como primeiro perfil.

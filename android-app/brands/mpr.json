@@ -1,7 +1,8 @@
 {
- "name":"MPR-Igreja",
- "slug":"mpr-igreja",
- "ministryId":"c84066a5-6c7d-4a8f-ba51-6185c9a1f602",
- "ministrySlug":"ministerio-palavra-da-reconciliacao-a-igreja-alcancando-as-nacoes-5a96ea64",
- "previewApplicationId":"com.vinha.mpr.preview"
+ "name": "MPR-Igreja",
+ "slug": "mpr-igreja",
+ "ministryId": "c84066a5-6c7d-4a8f-ba51-6185c9a1f602",
+ "ministrySlug": "ministerio-palavra-da-reconciliacao-a-igreja-alcancando-as-nacoes-5a96ea64",
+ "previewApplicationId": "com.vinha.mpr.preview",
+ "previewBundleIdentifier": "com.vinha.mpr.preview"
 }
