@@ -1,0 +1,81 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select no_plan();
+insert into auth.users(id,instance_id,aud,role,email,email_confirmed_at,created_at,updated_at) values('af700000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','f5-owner@example.test',now(),now(),now());
+insert into public.organizations(id,name,slug,status) values('bf700000-0000-4000-8000-000000000001','Revisão fictício','f5-synthetic','active');
+insert into public.organization_units(id,organization_id,name,slug,unit_type) values('cf700000-0000-4000-8000-000000000001','bf700000-0000-4000-8000-000000000001','Sede Revisão','sede','headquarters'),('cf700000-0000-4000-8000-000000000002','bf700000-0000-4000-8000-000000000001','Campus Revisão','campus','campus');
+insert into public.organization_memberships(organization_id,user_id,role,status,default_unit_id) values('bf700000-0000-4000-8000-000000000001','af700000-0000-4000-8000-000000000001','owner','active','cf700000-0000-4000-8000-000000000001');
+select set_config('f4.org','bf700000-0000-4000-8000-000000000001',true);select set_config('f4.unit','cf700000-0000-4000-8000-000000000001',true);
+select set_config('request.jwt.claims','{"sub":"af700000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+set local role authenticated;
+select public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'catalog','{"id":"df700000-0000-4000-8000-000000000001","kind":"account","name":"Banco Revisão"}');
+select public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'catalog','{"id":"df700000-0000-4000-8000-000000000002","kind":"category","name":"Doações Revisão","direction":"income"}');
+select public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'entry',jsonb_build_object('id','ab700000-0000-4000-8000-000000000001','kind','income','amountCents','1000','description','Previsão inicial fictícia','account','df700000-0000-4000-8000-000000000001','category','df700000-0000-4000-8000-000000000002','competence',current_date,'due',current_date,'method','pix'));
+reset role;
+
+
+select set_config('f5.end',(date_trunc('month',current_date)-interval '1 day')::date::text,true);
+select set_config('f5.from',(date_trunc('month',current_date)-interval '1 month')::date::text,true);
+select set_config('f5.day',((date_trunc('month',current_date)-interval '1 month')::date+14)::text,true);
+select set_config('f5.previous',(date_trunc('month',current_date)-interval '1 month 1 day')::date::text,true);
+set local role authenticated;
+select public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'catalog','{"id":"df700000-0000-4000-8000-000000000003","kind":"category","name":"Taxas F5","direction":"expense"}');
+select public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'entry',jsonb_build_object('id','ab710000-0000-4000-8000-000000000001','kind','income','amountCents','10000','description','Recebimento agrupado fictício','account','df700000-0000-4000-8000-000000000001','category','df700000-0000-4000-8000-000000000002','competence',current_setting('f5.day'),'due',current_setting('f5.day'),'paid',current_setting('f5.day'),'method','pix'));
+select public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'entry',jsonb_build_object('id','ab710000-0000-4000-8000-000000000002','kind','expense','amountCents','350','description','Taxa vinculada fictícia','account','df700000-0000-4000-8000-000000000001','category','df700000-0000-4000-8000-000000000003','competence',current_setting('f5.day'),'due',current_setting('f5.day'),'paid',current_setting('f5.day'),'method','pix'));
+reset role;
+-- Provider proof is a private synthetic fixture, never an external API call.
+insert into private.finance_receivers(id,organization_id,unit_id,provider,environment,status,created_by) values('af780000-0000-4000-8000-000000000001',current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'mercado_pago','production','reauthorize','af700000-0000-4000-8000-000000000001');
+insert into private.finance_purposes(id,organization_id,unit_id,name,origin,account_id,category_id,fee_category,refund_category,credit_category,created_by) values('af780000-0000-4000-8000-000000000002',current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'Finalidade fictícia','other','df700000-0000-4000-8000-000000000001','df700000-0000-4000-8000-000000000002','df700000-0000-4000-8000-000000000003','df700000-0000-4000-8000-000000000003','df700000-0000-4000-8000-000000000002','af700000-0000-4000-8000-000000000001');
+insert into private.finance_digital_orders(id,organization_id,unit_id,purpose_id,receiver_id,environment,gross,classification,created_by) values('af780000-0000-4000-8000-000000000003',current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'af780000-0000-4000-8000-000000000002','af780000-0000-4000-8000-000000000001','production',10000,'{}','af700000-0000-4000-8000-000000000001');
+insert into private.finance_digital_receipts(id,order_id,receiver_id,external_id,snapshot,occurred_at,posted_gross,posted_fee) values('af780000-0000-4000-8000-000000000004','af780000-0000-4000-8000-000000000003','af780000-0000-4000-8000-000000000001','PROVIDER-1','{"state":"approved","settlement":"available","gross":"10000","net":"9650","fees":[{"kind":"processing","amount":"350"}]}',current_setting('f5.day')::date,10000,350);
+insert into private.finance_digital_links values('ab710000-0000-4000-8000-000000000001','af780000-0000-4000-8000-000000000004','gross'),('ab710000-0000-4000-8000-000000000002','af780000-0000-4000-8000-000000000004','fee');
+select is(private.finance_receipt_bank_status('af780000-0000-4000-8000-000000000004'),'pending','disponível no provedor não significa conciliado no banco');
+set local role authenticated;
+select set_config('f5.import',jsonb_build_object('id','ab720000-0000-4000-8000-000000000001','account','df700000-0000-4000-8000-000000000001','sourceHash',repeat('a',64),'accountHash',repeat('b',64),'filename','ficticio.ofx','accountTail','1234','from',current_setting('f5.from'),'to',current_setting('f5.end'),'balanceDate',current_setting('f5.end'),'balance','9650','transactions',jsonb_build_array(jsonb_build_object('fitid','BANK-F5-1','date',current_setting('f5.day'),'amount','9650','memo','Depósito líquido fictício','reference','PROVIDER-1')))::text,true);
+select lives_ok($$select public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'import',current_setting('f5.import')::jsonb)$$,'OFX normalizado importado');
+select lives_ok($$select public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'import',current_setting('f5.import')::jsonb)$$,'repetição do pedido é idempotente');
+select is(public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'import',current_setting('f5.import')::jsonb||'{"id":"ab720000-0000-4000-8000-000000000002"}')->>'duplicateFile','true','mesmo arquivo com novo pedido não duplica');
+select throws_ok($$select public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'import',current_setting('f5.import')::jsonb||'{"id":"ab720000-0000-4000-8000-000000000003","accountHash":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}')$$,'22023',null,'arquivo de outra conta recusado');
+select throws_ok($$select public.close_church_ledger_period(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,current_setting('f5.end')::date)$$,'22023',null,'fluxo antigo não fecha contornando pendências');
+reset role;
+select is((select count(*)::integer from private.finance_bank_transactions where organization_id=current_setting('f4.org')::uuid),1,'um movimento bancário');
+select is((select count(*)::integer from private.finance_entries where organization_id=current_setting('f4.org')::uuid),3,'importação não gera receita ou taxa duplicada');
+select set_config('f5.bank',(select id::text from private.finance_bank_transactions where organization_id=current_setting('f4.org')::uuid),true);
+select set_config('f5.snapshot',jsonb_build_object('account','df700000-0000-4000-8000-000000000001','from',current_setting('f5.from'),'to',current_setting('f5.end'))::text,true);
+
+-- New workflow uses only a selected bank movement; no requirement to match all books.
+set local role authenticated;
+select set_config('op.entry',jsonb_build_object('id','ac760000-0000-4000-8000-000000000001','transaction',current_setting('f5.bank'),'version',1,'entry',jsonb_build_object('id','ac760000-0000-4000-8000-000000000001','kind','income','amountCents','9650','description','Entrada revisada do OFX fictício','account','df700000-0000-4000-8000-000000000001','category','df700000-0000-4000-8000-000000000002','competence',current_setting('f5.day'),'due',current_setting('f5.day'),'paid',current_setting('f5.day'),'method','bank'))::text,true);
+select lives_ok($$select public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'ofx_entry',current_setting('op.entry')::jsonb)$$,'OFX cria lançamento revisado');
+select lives_ok($$select public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'ofx_entry',current_setting('op.entry')::jsonb)$$,'reenvio do mesmo pedido OFX não duplica');
+select throws_ok($$select public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'ofx_entry',current_setting('op.entry')::jsonb||jsonb_build_object('id','ac760000-0000-4000-8000-000000000002'))$$,'40001',null,'um movimento não gera dois lançamentos');
+select lives_ok($$select public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'match',jsonb_build_object('id','ac760000-0000-4000-8000-000000000003','account','df700000-0000-4000-8000-000000000001','bank',jsonb_build_array(current_setting('f5.bank')),'book',jsonb_build_array('ac760000-0000-4000-8000-000000000001'),'reason','Apenas a seleção fictícia'))$$,'concilia apenas selecionados e deixa outros pendentes');
+select is(public.finance_f5(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'snapshot',current_setting('f5.snapshot')::jsonb)->'checklist'->>'bookPending','2','outros movimentos não foram conciliados automaticamente');
+select throws_ok($$select public.finance_f5(current_setting('f4.org')::uuid,'cf700000-0000-4000-8000-000000000002','ofx_entry',current_setting('op.entry')::jsonb)$$,'40001',null,'pedido OFX não pode ser reutilizado em outra igreja');
+reset role;
+select is((select count(*)::int from private.finance_ofx_entries where organization_id=current_setting('f4.org')::uuid),1,'vínculo OFX único e preservado');
+-- Link a provider order to a real event identity in this synthetic organization.
+insert into private.church_app_events(id,organization_id,unit_id,title,kind,starts_at,ends_at,capacity) values('ac780000-0000-4000-8000-000000000001',current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'Conferência de homologação fictícia','event',now()+interval '1 day',now()+interval '2 days',100);
+insert into private.event_ticket_settings(event_id,organization_id,unit_id,receiving_unit,created_by) values('ac780000-0000-4000-8000-000000000001',current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,current_setting('f4.unit')::uuid,'af700000-0000-4000-8000-000000000001');
+insert into private.event_ticket_orders(id,event_id,organization_id,unit_id,proof_hash,fingerprint,buyer_name,buyer_email,buyer_key,state,expires_at,subtotal,total,questions,receiving_unit,finance_order) values('af780000-0000-4000-8000-000000000003','ac780000-0000-4000-8000-000000000001',current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,repeat('a',64),repeat('b',64),'Comprador fictício','ficticio@example.test','ficticio','holding',now()+interval '1 day',0,0,'[]',current_setting('f4.unit')::uuid,'af780000-0000-4000-8000-000000000003');
+select is(private.finance_entry_display(current_setting('f4.org')::uuid,'ab710000-0000-4000-8000-000000000001')->>'event_name','Conferência de homologação fictícia','lançamento identifica nome do evento');
+select is(private.finance_entry_display(current_setting('f4.org')::uuid,'ab710000-0000-4000-8000-000000000002')->>'display_description','Taxa de pagamento · Conferência de homologação fictícia · ID 1','taxa identifica finalidade e ID numérico do evento');
+select is(private.finance_order_origin(current_setting('f4.org')::uuid,'cf700000-0000-4000-8000-000000000002','af780000-0000-4000-8000-000000000003'),'{}'::jsonb,'origem não vaza para outra igreja recebedora');
+-- A provider posting accepts presentation corrections, never monetary edits.
+select set_config('op.annotation',jsonb_build_object('id','ac770000-0000-4000-8000-000000000001','entry','ab710000-0000-4000-8000-000000000001','version',0,'description','Recebimento · Conferência fictícia · ID 1','notes','Observação fictícia','reason','Identificação mais clara')::text,true);
+set local role authenticated;
+select lives_ok($$select public.finance_annotate_entry(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,current_setting('op.annotation')::jsonb)$$,'descrição de recebimento pode ser ajustada sem recontabilizar');
+select lives_ok($$select public.finance_annotate_entry(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,current_setting('op.annotation')::jsonb)$$,'anotação idempotente');
+select throws_ok($$select public.finance_annotate_entry(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,current_setting('op.annotation')::jsonb||jsonb_build_object('id','ac770000-0000-4000-8000-000000000002'))$$,'40001',null,'versão antiga não sobrescreve descrição');
+select throws_ok($$select public.finance_annotate_entry(current_setting('f4.org')::uuid,'cf700000-0000-4000-8000-000000000002',current_setting('op.annotation')::jsonb||jsonb_build_object('id','ac770000-0000-4000-8000-000000000003'))$$,'42501',null,'descrição respeita igreja do lançamento');
+reset role;
+select is((select amount_cents::text from private.finance_entries where id='ab710000-0000-4000-8000-000000000001'),'10000','valor original permaneceu intacto');
+select is((select description from private.finance_entries where id='ab710000-0000-4000-8000-000000000001'),'Recebimento agrupado fictício','evidência original não foi sobrescrita');
+select is(private.finance_entry_display(current_setting('f4.org')::uuid,'ab710000-0000-4000-8000-000000000001')->>'display_description','Recebimento · Conferência fictícia · ID 1','apresentação usa descrição revisada');
+set local role authenticated;
+do $$declare i int;begin for i in 1..40 loop perform public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'entry',jsonb_build_object('id',extensions.gen_random_uuid(),'kind','income','amountCents','100','description','Paginação fictícia '||i,'account','df700000-0000-4000-8000-000000000001','category','df700000-0000-4000-8000-000000000002','competence',current_date,'due',current_date,'method','pix'));end loop;end$$;
+select is(jsonb_array_length(public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'snapshot',jsonb_build_object('from',current_date,'to',current_date,'page',2,'pageSize',15))->'entries'),15,'pagina lançamentos no banco com tamanho escolhido');
+select is(jsonb_array_length(public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'snapshot',jsonb_build_object('from',current_date,'to',current_date,'page',1,'pageSize',150))->'entries'),41,'até 150 por página sem truncar aos 30 anteriores');
+reset role;
+select * from finish();
+rollback;
