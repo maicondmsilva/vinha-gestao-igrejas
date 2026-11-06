@@ -1,11 +1,13 @@
 import {useEffect, useState} from 'react';
 import {ActivityIndicator, Pressable, ScrollView, Text, TextInput, View} from 'react-native';
 import * as Crypto from 'expo-crypto';
-import {api, type Unit} from './api';
+import {api, ApiError, type Unit} from './api';
+import {fieldErrors} from '../../shared/contract/errors.ts';
+import {pushCampaignSchema, pushLimits, type PushOptions, type PushReach} from '../../shared/contract/push.ts';
 import {colors, ui} from './theme';
 
-type Options = {units: Unit[]; cells: {id: string; name: string; unit: string}[]; groups: {id: string; name: string; unit: string}[]};
-type Reach = {devices: number; people: number};
+type Options = PushOptions;
+type Reach = PushReach;
 
 /** Push from the phone: destinations are only the churches the server says this person may publish to. */
 export default function PushComposer({org, unit, back}: {org: string; unit: Unit; units: Unit[]; back: () => void}) {
@@ -19,6 +21,7 @@ export default function PushComposer({org, unit, back}: {org: string; unit: Unit
     [busy, setBusy] = useState(false),
     [done, setDone] = useState(''),
     [error, setError] = useState(''),
+    [fields, setFields] = useState<Record<string, string>>({}),
     [request, setRequest] = useState(() => Crypto.randomUUID());
   useEffect(() => {
     api<Options>('/api/push/campaigns?' + new URLSearchParams({unit: unit.id, options: '1'}), org)
@@ -41,19 +44,36 @@ export default function PushComposer({org, unit, back}: {org: string; unit: Unit
   }, [options, targets.join(), cells.join(), groups.join()]);
   async function send() {
     if (busy) return;
+    const data = {
+      title: title.trim(),
+      body: body.trim(),
+      targets,
+      audience,
+      link: {screen: 'inbox' as const},
+      mode: 'now' as const,
+      recurrence: 'none' as const,
+      request,
+    };
+    // Same rules as the panel and the API (shared/contract/push.ts).
+    const check = pushCampaignSchema.safeParse(data);
+    if (!check.success) {
+      const f = fieldErrors(check.error);
+      setFields(f);
+      setError(Object.values(f)[0]);
+      return;
+    }
+    setFields({});
     setBusy(true);
     setError('');
     try {
-      await api('/api/push/campaigns', org, {
-        method: 'POST',
-        body: {unit: unit.id, action: 'create', data: {title: title.trim(), body: body.trim(), targets, audience, link: {screen: 'inbox'}, mode: 'now', recurrence: 'none', request}},
-      });
+      await api('/api/push/campaigns', org, {method: 'POST', body: {unit: unit.id, action: 'create', data}});
       setDone(`Enviado para ${reach?.people ?? 'as'} pessoas. Os avisos chegam em até um minuto.`);
       setTitle('');
       setBody('');
       setRequest(Crypto.randomUUID());
     } catch (e) {
       setError((e as Error).message);
+      setFields(e instanceof ApiError ? e.fields : {});
     } finally {
       setBusy(false);
     }
@@ -68,19 +88,45 @@ export default function PushComposer({org, unit, back}: {org: string; unit: Unit
       <Text style={ui.over}>ENVIAR PUSH</Text>
       <Text style={ui.h1}>Novo aviso</Text>
       {!options ? (
-        error ? <Text style={ui.error}>{error}</Text> : <ActivityIndicator color={colors.brand} />
+        error ? (
+          <Text style={ui.error}>{error}</Text>
+        ) : (
+          <ActivityIndicator color={colors.brand} />
+        )
       ) : (
         <>
-          <Text style={ui.label}>Título ({title.length}/65)</Text>
-          <TextInput style={ui.input} maxLength={65} value={title} onChangeText={setTitle} placeholder="Culto de domingo" />
-          <Text style={ui.label}>Mensagem ({body.length}/240)</Text>
-          <TextInput style={[ui.input, {minHeight: 90, paddingTop: 12, textAlignVertical: 'top'}]} multiline maxLength={240} value={body} onChangeText={setBody} placeholder="Hoje às 19h. Traga sua família!" />
+          <Text style={ui.label}>
+            Título ({title.length}/{pushLimits.title})
+          </Text>
+          <TextInput
+            style={[ui.input, !!fields.title && ui.inputInvalid]}
+            maxLength={pushLimits.title}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Culto de domingo"
+            accessibilityHint={fields.title}
+          />
+          <FieldError message={fields.title} />
+          <Text style={ui.label}>
+            Mensagem ({body.length}/{pushLimits.body})
+          </Text>
+          <TextInput
+            style={[ui.input, {minHeight: 90, paddingTop: 12, textAlignVertical: 'top'}, !!fields.body && ui.inputInvalid]}
+            multiline
+            maxLength={pushLimits.body}
+            value={body}
+            onChangeText={setBody}
+            placeholder="Hoje às 19h. Traga sua família!"
+            accessibilityHint={fields.body}
+          />
+          <FieldError message={fields.body} />
           <View style={[ui.card, {backgroundColor: '#eef3ef'}]}>
             <Text style={{fontWeight: '700', color: colors.text}}>{title || 'Título da notificação'}</Text>
             <Text style={ui.copy}>{body || 'Assim o aviso aparece na tela do celular.'}</Text>
           </View>
           <Text style={ui.label}>Igrejas que recebem</Text>
           <Chips items={options.units} selected={targets} toggle={(id) => toggle(targets, setTargets, id)} />
+          <FieldError message={fields.targets} />
           {!!options.cells.filter((c) => targets.includes(c.unit)).length && (
             <>
               <Text style={ui.label}>Somente estas células (opcional)</Text>
@@ -94,7 +140,11 @@ export default function PushComposer({org, unit, back}: {org: string; unit: Unit
             </>
           )}
           <Text style={ui.copy} accessibilityLiveRegion="polite">
-            {!targets.length ? 'Escolha ao menos uma igreja.' : reach ? `Alcance agora: ${reach.people} pessoas em ${reach.devices} aparelhos.` : 'Calculando alcance…'}
+            {!targets.length
+              ? 'Escolha ao menos uma igreja.'
+              : reach
+                ? `Alcance agora: ${reach.people} pessoas em ${reach.devices} aparelhos.`
+                : 'Calculando alcance…'}
           </Text>
           {!!error && <Text style={ui.error}>{error}</Text>}
           {!!done && <Text style={{color: colors.ok, fontWeight: '600'}}>{done}</Text>}
@@ -121,4 +171,12 @@ function Chips({items, selected, toggle}: {items: {id: string; name: string}[]; 
       })}
     </View>
   );
+}
+
+function FieldError({message}: {message?: string}) {
+  return message ? (
+    <Text style={ui.fieldError} accessibilityRole="alert">
+      {message}
+    </Text>
+  ) : null;
 }

@@ -2,6 +2,9 @@
 import {useEffect, useMemo, useState, type FormEvent} from 'react';
 import {ProgrammingModal as Modal, ProgrammingPager as Pager} from './ProgrammingTools';
 import {settingsUrl} from './lib/settings-navigation';
+import FieldError, {invalidProps} from './FieldError';
+import {ApiError, fieldErrors, readApiError} from '../shared/contract/errors';
+import {pushCampaignSchema} from '../shared/contract/push';
 import './programming.css';
 import './publishing.css';
 
@@ -83,7 +86,7 @@ const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString('pt-BR'
 async function api<T = {ok?: boolean}>(body: unknown): Promise<T> {
   const r = await fetch(settingsUrl('/api/push/campaigns'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   const d = (await r.json().catch(() => ({}))) as T & {error?: string};
-  if (!r.ok) throw Error(d.error || 'Sem confirmação.');
+  if (!r.ok) throw new ApiError(readApiError(d, 'Sem confirmação.'), r.status);
   return d;
 }
 
@@ -296,6 +299,7 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
     [reach, setReach] = useState<{devices: number; people: number} | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
+    [fields, setFields] = useState<Record<string, string>>({}),
     [request] = useState(newRequest);
   const visibleCells = useMemo(() => options.cells.filter((c) => targets.includes(c.unit)), [options.cells, targets]),
     visibleGroups = useMemo(() => options.groups.filter((g) => targets.includes(g.unit)), [options.groups, targets]);
@@ -333,15 +337,25 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
         targets,
         audience,
         mode,
-        sendAt: mode === 'schedule' ? new Date(sendAt).toISOString() : '',
+        sendAt: mode === 'schedule' && Number.isFinite(Date.parse(sendAt)) ? new Date(sendAt).toISOString() : '',
         recurrence,
-        recurrenceUntil: recurrence !== 'none' && until ? new Date(until).toISOString() : '',
+        recurrenceUntil: recurrence !== 'none' && Number.isFinite(Date.parse(until)) ? new Date(until).toISOString() : '',
         ...(campaign ? {} : {request}),
       };
+      // Same rules as the API and Vinha Equipe: point at the input before the round trip.
+      const check = pushCampaignSchema.safeParse(data);
+      if (!check.success) {
+        const f = fieldErrors(check.error);
+        setFields(f);
+        setError(Object.values(f)[0] || 'Revise os campos destacados.');
+        return;
+      }
+      setFields({});
       await api(campaign ? {unit, action: 'edit', id: campaign.id, version: campaign.version, data} : {unit, action: 'create', data});
       saved(mode === 'now' ? 'Campanha na fila de envio. Os primeiros avisos chegam em até um minuto.' : mode === 'schedule' ? 'Campanha agendada.' : 'Rascunho salvo.');
     } catch (x) {
       setError((x as Error).message);
+      setFields(x instanceof ApiError ? x.fields : {});
     } finally {
       setBusy(false);
     }
@@ -352,11 +366,13 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
         <div className="publishing-editor-grid">
           <label>
             Título ({title.length}/65)
-            <input required minLength={2} maxLength={65} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Culto de domingo" />
+            <input required minLength={2} maxLength={65} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Culto de domingo" {...invalidProps(fields, 'title')} />
+            <FieldError fields={fields} name="title" />
           </label>
           <label>
             Mensagem ({body.length}/240)
-            <textarea required minLength={2} maxLength={240} rows={3} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Hoje às 19h. Traga sua família!" />
+            <textarea required minLength={2} maxLength={240} rows={3} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Hoje às 19h. Traga sua família!" {...invalidProps(fields, 'body')} />
+            <FieldError fields={fields} name="body" />
           </label>
           <div className="push-preview" aria-label="Prévia da notificação">
             <b>{title || 'Título da notificação'}</b>
@@ -375,7 +391,7 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
           {link.screen === 'event' && (
             <label>
               Evento
-              <select required value={link.id || ''} onChange={(e) => setLink({screen: 'event', id: e.target.value})}>
+              <select required value={link.id || ''} onChange={(e) => setLink({screen: 'event', id: e.target.value})} {...invalidProps(fields, 'link.id')}>
                 <option value="">Escolha…</option>
                 {options.events.map((ev) => (
                   <option key={ev.id} value={ev.id}>
@@ -383,6 +399,7 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
                   </option>
                 ))}
               </select>
+              <FieldError fields={fields} name="link.id" />
             </label>
           )}
         </div>
@@ -397,6 +414,7 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
               </label>
             ))}
           </div>
+          <FieldError fields={fields} name="targets" />
         </fieldset>
 
         <fieldset>
@@ -408,7 +426,8 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
             </label>
             <label>
               Idade máxima
-              <input type="number" min={0} max={120} value={audience.ageMax ?? ''} onChange={(e) => setFilter('ageMax', e.target.value === '' ? undefined : Number(e.target.value))} />
+              <input type="number" min={0} max={120} value={audience.ageMax ?? ''} onChange={(e) => setFilter('ageMax', e.target.value === '' ? undefined : Number(e.target.value))} {...invalidProps(fields, 'audience.ageMax')} />
+              <FieldError fields={fields} name="audience.ageMax" />
             </label>
             {!!options.genders.length && (
               <label>
@@ -473,7 +492,8 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
             {mode === 'schedule' && (
               <label>
                 Data e hora
-                <input type="datetime-local" required value={sendAt} onChange={(e) => setSendAt(e.target.value)} />
+                <input type="datetime-local" required value={sendAt} onChange={(e) => setSendAt(e.target.value)} {...invalidProps(fields, 'sendAt')} />
+                <FieldError fields={fields} name="sendAt" />
               </label>
             )}
             {mode !== 'draft' && (
@@ -491,7 +511,8 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
             {mode !== 'draft' && recurrence !== 'none' && (
               <label>
                 Repetir até (opcional)
-                <input type="datetime-local" value={until} onChange={(e) => setUntil(e.target.value)} />
+                <input type="datetime-local" value={until} onChange={(e) => setUntil(e.target.value)} {...invalidProps(fields, 'recurrenceUntil')} />
+                <FieldError fields={fields} name="recurrenceUntil" />
               </label>
             )}
           </div>

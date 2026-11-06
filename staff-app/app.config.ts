@@ -1,4 +1,5 @@
 import type {ExpoConfig} from 'expo/config';
+import pkg from './package.json';
 
 // Vinha Equipe: one app, published once in the Vinha store accounts, used by every ministry's team.
 const applicationId = process.env.STAFF_ANDROID_APPLICATION_ID;
@@ -12,7 +13,8 @@ const config: ExpoConfig = {
   name: 'Vinha Equipe',
   slug: 'vinha-equipe',
   scheme: 'vinha-equipe',
-  version: '0.1.0',
+  // Single source: package.json (also sent to the platform in x-vinha-client and /api/app/compat).
+  version: pkg.version,
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
   icon: './assets/icon.png',
@@ -25,6 +27,8 @@ const config: ExpoConfig = {
   android: {
     package: applicationId || 'com.vinha.equipe.preview',
     permissions: ['CAMERA'],
+    // Expo adds these by default; Vinha Equipe uses none of them (keeps the Play Store data form honest).
+    blockedPermissions: ['android.permission.READ_EXTERNAL_STORAGE', 'android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.SYSTEM_ALERT_WINDOW'],
     allowBackup: false,
     adaptiveIcon: {
       foregroundImage: './assets/android-icon-foreground.png',
@@ -37,7 +41,9 @@ const config: ExpoConfig = {
     ['expo-camera', {cameraPermission: 'A câmera lê o QR Code dos ingressos e das retiradas na entrada do evento.', recordAudioAndroid: false}],
   ],
   runtimeVersion: {policy: 'appVersion'},
-  ...(process.env.EXPO_PROJECT_ID ? {updates: {url: 'https://u.expo.dev/' + process.env.EXPO_PROJECT_ID, checkAutomatically: 'ON_LOAD', fallbackToCacheTimeout: 0}} : {}),
+  ...(process.env.EXPO_PROJECT_ID
+    ? {updates: {url: 'https://u.expo.dev/' + process.env.EXPO_PROJECT_ID, checkAutomatically: 'ON_LOAD', fallbackToCacheTimeout: 0}}
+    : {}),
   extra: {...(process.env.EXPO_PROJECT_ID ? {eas: {projectId: process.env.EXPO_PROJECT_ID}} : {})},
 };
 export default config;

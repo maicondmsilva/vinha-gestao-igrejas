@@ -44,6 +44,9 @@ jobs:
       - name: Validar build
         run: pnpm run build
 
+      - name: Verificar formatacao (Prettier) do codigo compartilhado
+        run: pnpm run format:check
+
       - name: Verificar segredos e botoes
         run: |
           pnpm run check:secrets
@@ -64,6 +67,7 @@ jobs:
       - name: Validar regras de avisos financeiros
         run: |
           node --experimental-strip-types --test scripts/kids-foundation.test.mjs
+          node --experimental-strip-types --test scripts/shared-contract.test.mjs
           node --experimental-strip-types --test scripts/finance-records.test.mjs
           node --experimental-strip-types --test scripts/finance-f5.test.mjs scripts/finance-f5-route.test.mjs
           node --experimental-strip-types --test scripts/finance-f6.test.mjs scripts/finance-f6-route.test.mjs
