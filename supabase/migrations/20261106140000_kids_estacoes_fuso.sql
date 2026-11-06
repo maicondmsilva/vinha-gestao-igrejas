@@ -3,7 +3,7 @@ set local lock_timeout='5s';
 -- Etapa 3 · PR 3: Kids pronto para o modo estação do Vinha Equipe e no fuso de cada igreja.
 -- Estação = tablet ou celular da recepção registrado pela coordenação; desativar encerra o login daquele aparelho.
 
-create function pg_temp.patch(p_fn regprocedure,p_old text,p_new text,p_expected integer default 1) returns void language plpgsql as $$
+create or replace function pg_temp.patch(p_fn regprocedure,p_old text,p_new text,p_expected integer default 1) returns void language plpgsql as $$
 declare d text:=pg_get_functiondef(p_fn);n integer:=(length(d)-length(replace(d,p_old,'')))/greatest(length(p_old),1);
 begin
  if n<>coalesce(p_expected,greatest(n,1)) then raise exception 'patch %: esperado % ocorrência(s) de [%], encontrado %',p_fn,p_expected,p_old,n;end if;
