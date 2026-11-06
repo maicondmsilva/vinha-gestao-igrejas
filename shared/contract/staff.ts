@@ -46,7 +46,17 @@ export const staffScopeLabel: Record<StaffScope, string> = {
   push: 'Push para o app',
 };
 /** One church in `staff_access('mine')`: what the signed-in person can do there. */
-export type StaffUnitAccess = Unit & {timezone: string; agenda: boolean; checkin: boolean; publishing: boolean; push: boolean};
+export type StaffUnitAccess = Unit & {
+  timezone: string;
+  agenda: boolean;
+  checkin: boolean;
+  publishing: boolean;
+  push: boolean;
+  /** Kids: coordination, administrative reading or a team assignment in an open or upcoming session. */
+  kids?: boolean;
+  /** May register and turn off reception stations (Kids coordination or session supervisor). */
+  kidsStations?: boolean;
+};
 export type StaffTeamMember = {user: string; role: string; name: string; email: string; units: string[]; grants: Record<string, StaffScope[]>};
 export type StaffAccessList = {
   ok: true;
