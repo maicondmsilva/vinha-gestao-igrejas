@@ -70,4 +70,3 @@ end $$;
 revoke all on function private.finance_f6(uuid,uuid[],text,jsonb),private.finance_f6_before_components(uuid,uuid[],text,jsonb) from public,anon,authenticated,service_role;
 -- The public invoker RPC continues to call the guarded private function.
 grant execute on function private.finance_f6(uuid,uuid[],text,jsonb) to authenticated;
-
