@@ -1,6 +1,7 @@
 import {timingSafeEqual} from 'node:crypto';
 import {supabaseAdminClient} from '../../../lib/supabase/server-admin';
 import {processPushQueue} from '../../../lib/push-campaigns';
+import {syncYoutubeLives} from '../../../lib/live-detection';
 
 export const maxDuration = 60;
 
@@ -23,8 +24,14 @@ async function run(request: Request) {
       if (r.error) throw Error('Push operation failed');
       return r.data;
     };
+    // Lives first: a live that just started creates its push campaign, sent in this same tick.
+    const live = await syncYoutubeLives(async (action, data = {}) => {
+      const r = await client.rpc('live_engine', {p_action: action, p_data: data});
+      if (r.error) throw Error('Live operation failed');
+      return r.data;
+    }, process.env.YOUTUBE_API_KEY).catch(() => ({enabled: true, changed: 0, failed: true}));
     const summary = await processPushQueue(rpc, {accessToken: process.env.EXPO_ACCESS_TOKEN});
-    return Response.json(summary, {headers: {'Cache-Control': 'no-store'}});
+    return Response.json({...summary, live}, {headers: {'Cache-Control': 'no-store'}});
   } catch {
     return Response.json({error: 'Processamento não confirmado.'}, {status: 503});
   }

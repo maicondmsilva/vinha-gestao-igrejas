@@ -97,7 +97,8 @@ export default function PushCampaigns({unit}: {unit: string}) {
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [editor, setEditor] = useState<Campaign | null | false>(false),
-    [detail, setDetail] = useState<Campaign | null>(null);
+    [detail, setDetail] = useState<Campaign | null>(null),
+    [automations, setAutomations] = useState(false);
   useEffect(() => {
     let alive = true;
     const q = new URLSearchParams({unit, page: String(page), size: '20', ...(status ? {status} : {})});
@@ -147,6 +148,9 @@ export default function PushCampaigns({unit}: {unit: string}) {
         <div className="program-actions">
           <button type="button" disabled={loading} onClick={refresh}>
             ↻ Atualizar
+          </button>
+          <button type="button" onClick={() => setAutomations(true)}>
+            ⚙ Automações
           </button>
           <button type="button" className="program-primary" disabled={!options} onClick={() => setEditor(null)}>
             ＋ Nova campanha
@@ -242,6 +246,7 @@ export default function PushCampaigns({unit}: {unit: string}) {
           saved={(message) => (setEditor(false), setNotice(message), refresh())}
         />
       )}
+      {automations && <Automations unit={unit} close={() => setAutomations(false)} saved={(m) => (setAutomations(false), setNotice(m))} />}
       {detail && (
         <Modal title={detail.title} close={() => setDetail(null)}>
           <div className="program-detail">
@@ -522,5 +527,91 @@ function Chips({label, items, selected, toggle}: {label: string; items: {id: str
         ))}
       </div>
     </div>
+  );
+}
+
+type Automation = {birthdays: boolean; birthdayTitle: string; birthdayBody: string; livePush: boolean; version: number; canEdit: boolean};
+
+/** Automatic pushes: birthdays (daily at 9h) and the start of a YouTube live. */
+function Automations({unit, close, saved}: {unit: string; close: () => void; saved: (m: string) => void}) {
+  const [a, setA] = useState<Automation | null>(null),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState('');
+  useEffect(() => {
+    fetch(settingsUrl('/api/push/automations?' + new URLSearchParams({unit})))
+      .then(async (r) => {
+        const d = (await r.json()) as Automation & {error?: string};
+        if (!r.ok) throw Error(d.error || 'Automações indisponíveis.');
+        setA(d);
+      })
+      .catch((e) => setError((e as Error).message));
+  }, [unit]);
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!a || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const r = await fetch(settingsUrl('/api/push/automations'), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({unit, version: a.version, data: {birthdays: a.birthdays, livePush: a.livePush, birthdayTitle: a.birthdayTitle, birthdayBody: a.birthdayBody}}),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw Error((d as {error?: string}).error || 'Sem confirmação.');
+      saved('Automações salvas.');
+    } catch (x) {
+      setError((x as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Modal title="Automações de push" close={close} busy={busy}>
+      {!a ? (
+        <p className={error ? 'program-error' : 'program-empty'}>{error || 'Carregando…'}</p>
+      ) : (
+        <form className="program-form push-automation" onSubmit={submit}>
+          <fieldset disabled={!a.canEdit || busy}>
+            <label className="program-check">
+              <input type="checkbox" checked={a.livePush} onChange={(e) => setA({...a, livePush: e.target.checked})} />
+              <span>Avisar quando uma transmissão do YouTube começar (a live muda para &ldquo;ao vivo&rdquo; sozinha)</span>
+            </label>
+            <label className="program-check">
+              <input type="checkbox" checked={a.birthdays} onChange={(e) => setA({...a, birthdays: e.target.checked})} />
+              <span>Enviar parabéns no aniversário, todo dia às 9h, para quem tem o app</span>
+            </label>
+            {a.birthdays && (
+              <>
+                <label>
+                  Título ({a.birthdayTitle.length}/65)
+                  <input required minLength={2} maxLength={65} value={a.birthdayTitle} onChange={(e) => setA({...a, birthdayTitle: e.target.value})} />
+                </label>
+                <label>
+                  Mensagem ({a.birthdayBody.length}/240)
+                  <textarea required minLength={2} maxLength={240} rows={3} value={a.birthdayBody} onChange={(e) => setA({...a, birthdayBody: e.target.value})} />
+                </label>
+              </>
+            )}
+          </fieldset>
+          {!a.canEdit && <p className="publishing-help">Somente dono, pastor ou administração altera as automações.</p>}
+          {error && (
+            <p className="program-error" role="alert">
+              {error}
+            </p>
+          )}
+          <footer className="program-form-footer">
+            <button type="button" onClick={close} disabled={busy}>
+              Voltar
+            </button>
+            {a.canEdit && (
+              <button type="submit" className="program-primary" disabled={busy}>
+                {busy ? 'Salvando…' : 'Salvar automações'}
+              </button>
+            )}
+          </footer>
+        </form>
+      )}
+    </Modal>
   );
 }

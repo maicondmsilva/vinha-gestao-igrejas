@@ -15,3 +15,9 @@
 .push-chips>div{display:flex;flex-wrap:wrap;gap:6px}
 .push-chips button{padding:6px 12px;border-radius:999px;border:1px solid #c6d5ca;background:#fff;font:inherit;font-size:13px;cursor:pointer}
 .push-chips button[aria-pressed="true"]{background:var(--ve-primary,#285c45);border-color:var(--ve-primary,#285c45);color:#fff}
+.metric-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:16px 0 24px}
+.metric-tiles>div{display:flex;flex-direction:column;gap:4px;padding:16px 18px;border:1px solid #dce6df;border-radius:16px;background:#fff}
+.metric-tiles span{font-size:13px;color:#5f6f64}
+.metric-tiles b{font-size:28px;color:#183d2c}
+.metric-tiles small{font-size:12px;color:#5f6f64}
+.push-automation{display:grid;gap:12px}
