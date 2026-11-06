@@ -270,10 +270,10 @@ begin
    select m.id from private.push_messages m join private.member_push_devices d on d.id=m.device_id
    where m.state='queued' and d.enabled order by m.created_at limit lim for update of m skip locked),
   upd as(update private.push_messages m set state='sending',attempts=m.attempts+1,updated_at=clock_timestamp() from picked where m.id=picked.id returning m.*)
-  select coalesce(jsonb_agg(jsonb_build_object('id',u.id,'token',d.token,'project',a.project_id,'title',c.title,'body',c.body,
-    'data',c.link||jsonb_build_object('campaign',c.id,'message',u.id)) order by a.project_id),'[]') into items
+  select coalesce(jsonb_agg(jsonb_build_object('id',u.id,'token',d.token,'project',a.project_id,'title',camp.title,'body',camp.body,
+    'data',camp.link||jsonb_build_object('campaign',camp.id,'message',u.id)) order by a.project_id),'[]') into items
   from upd u join private.member_push_devices d on d.id=u.device_id join private.push_runs r on r.id=u.run_id
-  join private.push_campaigns c on c.id=r.campaign_id join private.member_push_apps a on a.organization_id=d.organization_id;
+  join private.push_campaigns camp on camp.id=r.campaign_id join private.member_push_apps a on a.organization_id=d.organization_id;
   -- Messages whose device lost its app registration are closed instead of looping.
   update private.push_messages m set state='cancelled',updated_at=clock_timestamp() from private.member_push_devices d
    where d.id=m.device_id and m.state='queued' and not d.enabled;
