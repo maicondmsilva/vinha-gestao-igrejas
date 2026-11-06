@@ -10,6 +10,9 @@ export function selectActiveMembership<T extends { organization_id: string; orga
 
 export function trustedSessionRequest(request: Request): boolean {
  if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return true;
+ // A bearer token is never attached by the browser on its own, so it carries no CSRF risk. It is only
+ // honoured without cookies (createSupabaseRequestClient), so a cookie session still needs the origin check.
+ if (!request.headers.get('cookie') && /^Bearer [A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(request.headers.get('authorization') || '')) return true;
  if (request.headers.get('sec-fetch-site') === 'cross-site') return false;
  // Browser session writes require an exact origin; no forwarded/host-header trust.
  return request.headers.get('origin') === new URL(request.url).origin;

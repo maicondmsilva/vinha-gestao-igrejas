@@ -1,3 +1,4 @@
+import {pushTarget,reportPushOpened} from './push-routing';
 import AccountDeletion from './AccountDeletion';
 import NativeMediaLibrary from './NativeMediaLibrary';
 import NativeMediaPlayer from './NativeMediaPlayer';
@@ -32,7 +33,7 @@ export default function MemberExperience({accountNotice,config,rpc,profile,authe
  const c=useMemberChurch(rpc,config.id,authenticated),dark=useColorScheme()==='dark';
  const palette={bg:dark?'#080f15':'#f2f6f8',surface:dark?'#111e28':'#ffffff',text:dark?'#eff6fa':'#172d3b',muted:dark?'#adc0cc':'#4e6472',line:dark?'#2c414f':'#d8e3e9',brand:brandColor(config.primary||'#087FA3')};
  const [tab,setTab]=useState<MainTab>('home'),[detail,setDetail]=useState<Detail>(null),[postId,setPostId]=useState(''),[query,setQuery]=useState(''),[filter,setFilter]=useState('all'),[linkError,setLinkError]=useState('');
- useEffect(()=>{if(!authenticated)return;let live=true;const open=(r:Notifications.NotificationResponse|null)=>{if(live&&r?.notification.request.content.data?.screen==='inbox'){setDetail('inbox');void Notifications.clearLastNotificationResponseAsync()}};const listener=Notifications.addNotificationResponseReceivedListener(open);void Notifications.getLastNotificationResponseAsync().then(open).catch(()=>{});return()=>{live=false;listener.remove()}},[authenticated]);
+ useEffect(()=>{if(!authenticated)return;let live=true;const open=(r:Notifications.NotificationResponse|null)=>{const data=r?.notification.request.content.data,target=pushTarget(data);if(!live||!target)return;reportPushOpened(data);if(target.kind==='detail'){setDetail(target.detail)}else{setDetail(null);setTab(target.tab);if(target.event)setFocusEvent(target.event)}void Notifications.clearLastNotificationResponseAsync()};const listener=Notifications.addNotificationResponseReceivedListener(open);void Notifications.getLastNotificationResponseAsync().then(open).catch(()=>{});return()=>{live=false;listener.remove()}},[authenticated]);
  const [past,setPast]=useState(false),[focusEvent,setFocusEvent]=useState(''),[active,setActive]=useState(AppState.currentState==='active');
  const [familyKind,setFamilyKind]=useState<FamilyKind>('kids');
  const [communityKind,setCommunityKind]=useState<CommunityKind>('prayers');
