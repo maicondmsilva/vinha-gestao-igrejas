@@ -69,6 +69,8 @@ Já entregue nesta branch: padronização de layout de Comunicação e Ao vivo (
 
 ### Fase 1 — Financeiro no dia a dia (2 a 3 PRs, esforço M cada)
 
+**Entregue em 06/11/2026.** Abas em dois grupos (Operação; Cadastros e recebimentos), com nomes curtos também no menu lateral e endereços `secao=` preservados. O seletor interno virou "Abrangência" (somente a igreja do cabeçalho ou consolidado), visível apenas para quem tem mais de uma igreja. Botão Receber/Pagar em cada título em aberto, com valor em aberto, conta, data e observação preenchidos e ajustes recolhidos; o servidor continua exigindo a observação. Datas na tela em `dd/mm/aaaa` e meses como `jun/2026`, sem alterar campos de data nem exportações. Novo lançamento com Entrada/Saída em botões, conta preenchida quando há uma só ou com a última usada neste navegador, e competência, centro de custo e repetição em "Mais opções". Atalhos Vencidas (últimos 12 meses), Vencem em 7 dias, Este mês e Mês passado, com os demais filtros em "Mais filtros". Suíte 643/643.
+
 | Item | Solução | Aceite |
 | --- | --- | --- |
 | F4 Navegação | Separar as 13 abas em dois grupos. **Operação:** Visão geral, Lançamentos, Contas a receber, Contas a pagar, Conciliação, Fechamento, Relatórios. **Cadastros:** Contas bancárias e caixas, Categorias, Centros de custo, Fornecedores, Contas recebedoras, Recebimentos digitais. Abas roláveis com indicação visual no celular. Rotas atuais preservadas. | Nenhuma aba cortada a 1440 px; links antigos (`secao=…`) continuam abrindo a mesma tela. |

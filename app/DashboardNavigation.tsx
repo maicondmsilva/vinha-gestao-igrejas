@@ -2,7 +2,7 @@
 import {useEffect,useState,type MouseEvent} from 'react';
 import {useMinistryLanguage} from './MinistryLanguage';
 import {cellSections,type LanguageKey} from './lib/ministry-language';
-import {financeSections} from './lib/finance-f1';
+import {financeSections,financeLabel} from './lib/finance-f1';
 import {communicationPages,kidsPages,dashboardGroup,dashboardHref} from '../shared/dashboard-menu';
 type Entry={label:string;page:string;section?:string};
 export default function DashboardNavigation({active,navigate}:{active:string;navigate:(label:string,section?:string)=>void}){
@@ -17,7 +17,7 @@ export default function DashboardNavigation({active,navigate}:{active:string;nav
   {label:'Células',icon:'⌾',key:'celulas',children:cellSections.map(section=>({label:t(('celulas.'+section) as LanguageKey),page:'celulas',section}))},
   {label:'Escalas',icon:'✓',key:'escalas'},{label:'Louvor',icon:'♫',key:'louvor'},
   {label:'Comunicação',icon:'◌',key:'comunicacao',children:communicationPages.map(([section,label])=>({label,page:'comunicacao',section}))},
-  {label:'Financeiro',icon:'R$',key:'financeiro',children:financeSections.map(([section,label])=>({label,page:'financeiro',section}))},
+  {label:'Financeiro',icon:'R$',key:'financeiro',children:financeSections.map(([section])=>({label:financeLabel(section),page:'financeiro',section}))},
   {label:'Relatórios',icon:'▤',key:'relatorios'},
   {label:'Configurações',icon:'⚙',key:'configuracoes',children:[['identidade','Identidade e cadastro'],['igrejas','Igrejas e unidades'],['usuarios','Usuários e permissões'],['servicos','Serviços e segurança']].map(([section,label])=>({label,page:'configuracoes',section}))}
  ];

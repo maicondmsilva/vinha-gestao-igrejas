@@ -54,3 +54,64 @@
  .f1-workspace table.f1-cards .f1-card-status .f1-status{justify-self:end;width:auto}
  .f1-workspace .f1-card .f1-card.f2-titles{padding:0;border:0;box-shadow:none;background:transparent}
 }
+
+/* Abas em dois grupos: Operação (uso diário) e Cadastros e recebimentos, um por linha. */
+.f1-workspace .f1-tab-groups{display:grid;gap:6px;overflow:visible;padding-bottom:12px}
+.f1-workspace .f1-tab-group{display:grid;grid-template-columns:190px minmax(0,1fr);align-items:center;gap:12px;min-width:0}
+.f1-workspace .f1-tab-group>span{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7d71}
+.f1-workspace .f1-tab-group>div{display:flex;flex-wrap:wrap;gap:4px}
+.f1-workspace .f1-tab-group a{font-size:14px;padding:9px 13px;min-height:42px}
+.f1-workspace .f1-tab-group:not(.current) a:not(:hover){color:#5f7267}
+.f1-workspace .f1-tab-group:not(.current)>div a{font-size:13px}
+@media(max-width:900px){
+ .f1-workspace .f1-tab-group{grid-template-columns:minmax(0,1fr);gap:4px}
+ .f1-workspace .f1-tab-group+.f1-tab-group{padding-top:8px;border-top:1px solid #e3eae5}
+ .f1-workspace .f1-tab-group>div{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:4px}
+ .f1-workspace .f1-tab-group a{flex:none}
+}
+.f1-workspace .f1-filters.f1-filters-dates{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+@media(max-width:600px){.f1-workspace .f1-filters.f1-filters-dates{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Receber/Pagar direto e ajustes recolhidos na baixa. */
+.f1-workspace .f2-settle-now{min-width:110px}
+.f1-workspace details.f2-adjust{border:1px solid #dfe8e1;border-radius:12px;padding:4px 16px;background:#fafcf9}
+.f1-workspace details.f2-adjust>summary{cursor:pointer;font-weight:600;font-size:14px;padding:10px 0;color:#285c45}
+.f1-workspace details.f2-adjust[open]>summary{margin-bottom:8px}
+.f1-workspace details.f2-adjust>.f1-form-grid{padding-bottom:12px}
+
+/* Novo lançamento: tipo em botões e opções raras recolhidas. */
+.f1-workspace fieldset.f1-kind-choice{border:0;padding:0;margin:0}
+.f1-workspace fieldset.f1-kind-choice>legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
+.f1-workspace .f1-kind-choice>div{display:flex;flex-wrap:wrap;gap:8px}
+.f1-workspace .f1-kind-choice label{position:relative;flex:1 1 150px;display:flex;margin:0;cursor:pointer}
+.f1-workspace .f1-kind-choice label.f1-kind-minor{flex:0 1 auto}
+.f1-workspace .f1-kind-choice input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.f1-workspace .f1-kind-choice span{flex:1;display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px 16px;border:1px solid #cfdcd3;border-radius:12px;background:#fff;font-size:15px;font-weight:600;color:#3d5446}
+.f1-workspace .f1-kind-choice .f1-kind-minor span{min-height:48px;font-size:13px;font-weight:500;color:#5f7267}
+.f1-workspace .f1-kind-choice input:focus-visible+span{outline:3px solid #95b894;outline-offset:2px}
+.f1-workspace .f1-kind-choice .f1-kind-income input:checked+span{background:#e6f3ea;border-color:#2f7a4f;color:#1f5c3a;box-shadow:inset 0 0 0 1px #2f7a4f}
+.f1-workspace .f1-kind-choice .f1-kind-expense input:checked+span{background:#fbece8;border-color:#b4533a;color:#8a3420;box-shadow:inset 0 0 0 1px #b4533a}
+.f1-workspace .f1-kind-choice .f1-kind-minor input:checked+span{background:#eef3f0;border-color:#6d8576;color:#2c4636}
+.f1-workspace details.f1-more-options{grid-column:1/-1;width:100%;box-sizing:border-box;align-self:stretch;margin:16px 0;border:1px solid #dfe8e1;border-radius:12px;padding:4px 16px;background:#fafcf9}
+.f1-workspace details.f1-more-options>summary{cursor:pointer;font-weight:600;font-size:14px;padding:12px 0;color:#285c45}
+.f1-workspace details.f1-more-options[open]{padding-bottom:14px}
+.f1-workspace details.f1-more-options .f2-frequency{margin-top:12px}
+
+/* Atalhos de período e filtros detalhados recolhidos. */
+.f1-workspace .f1-quick-row{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 18px;margin:4px 0 12px}
+.f1-workspace .f1-quick-filters{display:flex;flex-wrap:wrap;gap:8px}
+.f1-workspace .f1-quick-filters button{min-height:40px;padding:8px 14px;border-radius:999px;font-size:13px}
+.f1-workspace .f1-quick-filters button[aria-pressed=true]{background:var(--tenant,#285c45);color:#fff;border-color:var(--tenant,#285c45)}
+.f1-workspace .f1-quick-search{flex:1 1 260px;max-width:420px}
+.f1-workspace details.f1-filter-more{margin:0 0 16px}
+.f1-workspace details.f1-filter-more>summary{cursor:pointer;font-weight:600;font-size:14px;padding:8px 0;color:#285c45;width:max-content}
+.f1-workspace details.f1-filter-more[open]>summary{margin-bottom:10px}
+@media(max-width:600px){.f1-workspace .f1-quick-filters{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;width:100%}.f1-workspace .f1-quick-filters button{flex:none}.f1-workspace .f1-quick-search{max-width:none}}
+
+/* Computador: valores, títulos de coluna e ações sem quebra no meio. */
+@media(min-width:761px){
+ .f1-workspace table.f1-cards th{white-space:nowrap}
+ .f1-workspace table.f1-cards :is(td.f1-card-amount,td[data-label=Original],td.f1-card-date){white-space:nowrap}
+ .f1-workspace table.f1-cards td.f1-card-actions{white-space:nowrap}
+ .f1-workspace table.f1-cards td.f1-card-actions>button+button{margin-left:6px}
+}

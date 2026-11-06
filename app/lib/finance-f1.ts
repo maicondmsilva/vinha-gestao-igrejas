@@ -1,8 +1,18 @@
 import {uuidPattern} from './private-files.ts';
-export const financeSections=[['geral','Visão geral'],['lancamentos','Lançamentos'],['receber','Contas a receber'],['pagar','Contas a pagar'],['recebimentos','Contas recebedoras'],['arrecadacao','Recebimentos digitais'],['conciliacao','Conciliação'],['fechamento','Fechamento mensal'],['relatorios','Relatórios e prestação de contas'],['contas','Contas bancárias e caixas'],['categorias','Categorias e subcategorias'],['centros','Centros de custo'],['fornecedores','Fornecedores']] as const;
+export const financeSections=[['geral','Visão geral'],['lancamentos','Lançamentos'],['receber','Contas a receber'],['pagar','Contas a pagar'],['conciliacao','Conciliação'],['fechamento','Fechamento mensal'],['relatorios','Relatórios e prestação de contas'],['contas','Contas bancárias e caixas'],['categorias','Categorias e subcategorias'],['centros','Centros de custo'],['fornecedores','Fornecedores'],['recebimentos','Contas recebedoras'],['arrecadacao','Recebimentos digitais']] as const;
+/** Day-to-day work first; registrations and payment setup apart, so the person finds the task without scanning 13 tabs. */
+export const financeGroups:readonly {title:string;sections:readonly FinanceSection[]}[]=[{title:'Operação',sections:['geral','lancamentos','receber','pagar','conciliacao','fechamento','relatorios']},{title:'Cadastros e recebimentos',sections:['contas','categorias','centros','fornecedores','recebimentos','arrecadacao']}];
+/** Short names for tabs and the side menu; the page title keeps the full name. */
+export const financeShortLabels:Record<string,string>={relatorios:'Relatórios',contas:'Contas e caixas',categorias:'Categorias'};
+export const financeLabel=(id:string)=>financeShortLabels[id]||financeSections.find(([x])=>x===id)?.[1]||'';
 export type FinanceSection=typeof financeSections[number][0];
 export function financeSection(value:string|null):FinanceSection{return financeSections.find(([id])=>id===value)?.[0]||'geral'}
 export function financeMoney(cents:string|bigint){const n=BigInt(cents),abs=(n<BigInt(0)?-n:n).toString().padStart(3,'0');return `${n<BigInt(0)?'− ':''}R$ ${abs.slice(0,-2).replace(/\B(?=(\d{3})+(?!\d))/g,'.')},${abs.slice(-2)}`}
+/** On-screen dates: "2026-11-05" becomes "05/11/2026". Exports and date inputs keep the ISO form. */
+export function financeDay(value:unknown){if(typeof value!=='string')return '';const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(value);return m?`${m[3]}/${m[2]}/${m[1]}`:value}
+const monthNames=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+/** On-screen months: "2026-06" becomes "jun/2026". */
+export function financeMonth(value:unknown){if(typeof value!=='string')return '';const m=/^(\d{4})-(\d{2})$/.exec(value);return m&&Number(m[2])>=1&&Number(m[2])<=12?`${monthNames[Number(m[2])-1]}/${m[1]}`:value}
 export function financeDate(value:unknown){if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||!Number.isFinite(Date.parse(value+'T12:00:00Z'))||new Date(value+'T12:00:00Z').toISOString().slice(0,10)!==value)throw Error('Informe uma data válida.');return value}
 /**
  * Reads money the way people type it in Brazil and returns the canonical "1234,56" form, or null.
