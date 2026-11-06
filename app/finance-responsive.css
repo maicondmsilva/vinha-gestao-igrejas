@@ -29,3 +29,28 @@
 @media(max-width:600px){.f1-workspace .f2-frequency>div:first-of-type label{flex:0 0 auto;padding:12px}}
 
 .f1-payment-breakdown{margin:24px 0;padding:20px;border:1px solid #d5e3d9;border-radius:16px;background:#f6f9f5}.f1-payment-breakdown h3{margin:0 0 18px}.f1-payment-breakdown input[readonly]{font-weight:600;background:white}.f1-payment-breakdown details{margin-top:12px}.f1-payment-breakdown li{margin:10px 0;overflow-wrap:anywhere}.f1-table-scroll caption{caption-side:bottom;text-align:left;padding:14px 4px}.f1-table-scroll td small{white-space:normal}
+
+/* Celular: lançamentos e contas viram cartões. Valor, situação e ação sempre visíveis, sem rolagem lateral. */
+@media(max-width:760px){
+ .f1-workspace .f1-table-scroll:has(>table.f1-cards){overflow:visible}
+ .f1-workspace table.f1-cards{min-width:0;font-size:14px;display:block}
+ .f1-workspace table.f1-cards thead{display:none}
+ .f1-workspace table.f1-cards tbody{display:flex;flex-direction:column;gap:12px}
+ .f1-workspace table.f1-cards tr{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;row-gap:8px;padding:16px;border:1px solid #dce6df;border-radius:14px;background:#fff;box-shadow:0 2px 10px #1d42370a}
+ .f1-workspace table.f1-cards td{display:block;padding:0;border:0;min-width:0}
+ .f1-workspace table.f1-cards td small{display:block;font-size:12px;margin-top:2px}
+ .f1-workspace table.f1-cards .f1-card-title{grid-column:1;grid-row:1}
+ .f1-workspace table.f1-cards .f1-card-title b{font-size:15px;line-height:1.4}
+ .f1-workspace table.f1-cards .f1-card-amount{grid-column:2;grid-row:1;text-align:right;font-size:16px;font-weight:700;white-space:nowrap}
+ .f1-workspace table.f1-cards .f1-card-amount small{font-weight:400;white-space:normal;max-width:150px;margin-left:auto}
+ .f1-workspace table.f1-cards td[data-label]{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:14px;align-items:baseline;padding-top:8px;border-top:1px solid #edf2ee;text-align:right}
+ .f1-workspace table.f1-cards td[data-label]::before{content:attr(data-label);grid-column:1;grid-row:1/span 4;font-size:12px;font-weight:600;color:#5f6f64;text-align:left}
+ .f1-workspace table.f1-cards td[data-label]>*{grid-column:2}
+ .f1-workspace table.f1-cards td.f1-card-amount[data-label]{grid-column:2;grid-row:1;border:0;padding:0;display:block}
+ .f1-workspace table.f1-cards td.f1-card-amount[data-label]::before{display:block;font-weight:400;text-align:right}
+ .f1-workspace table.f1-cards .f1-card-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding-top:6px}
+ .f1-workspace table.f1-cards .f1-card-actions>button{flex:1 1 140px;min-height:44px;font-size:14px}
+ .f1-workspace table.f1-cards caption{display:block;padding:0 0 12px}
+ .f1-workspace table.f1-cards .f1-card-status .f1-status{justify-self:end;width:auto}
+ .f1-workspace .f1-card .f1-card.f2-titles{padding:0;border:0;box-shadow:none;background:transparent}
+}

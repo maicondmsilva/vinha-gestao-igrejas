@@ -59,6 +59,8 @@ Já entregue nesta branch: padronização de layout de Comunicação e Ao vivo (
 
 ### Fase 0 — Correções críticas (1 PR, esforço M)
 
+**Entregue em 06/11/2026.** Valor aceita `R$ 1.234,56`, `1.234,56`, `1234,56`, `1234` e `12.50`, com formatação ao sair do campo, no navegador e no servidor (`financeMoneyInput` e `financeMoneyField` em `app/lib/finance-f1.ts`), nos lançamentos, edição, contas a receber e pagar (incluindo juros, multa, desconto e taxa), recebimentos digitais, orçamento e filtros de relatório. Lançamentos e Contas a receber/pagar viram cartões até 760 px. `SectionErrorBoundary` protege cada módulo do painel e as seções do Financeiro; a Conciliação deixou de cair com resposta incompleta. Verificado no navegador com dados fictícios e com a suíte de testes (641/641).
+
 | Item | Solução | Aceite |
 | --- | --- | --- |
 | F1 Valor em reais | Normalizar a entrada antes de validar, no cliente e no servidor: remover `R$` e espaços, aceitar ponto de milhar válido (`1.234,56`) e vírgula decimal. Rejeitar formatos ambíguos (`1.23,4`). Campo com máscara ao sair do foco (`1.234,56`). | `R$ 1.234,56`, `1.234,56`, `1234,56` e `1234` resultam no mesmo valor; testes unitários em `scripts/` cobrindo casos válidos e inválidos. |

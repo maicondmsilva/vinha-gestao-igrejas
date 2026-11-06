@@ -23,7 +23,7 @@ export default function FinanceReconciliation({unit,catalog,from,to,closing=fals
  const positive=message.startsWith('Operação registrada')||message.startsWith('Extrato conferido')||message.startsWith('Movimento retirado')||message.startsWith('Movimento restaurado');
  const recovery=<>{message&&<p role={positive?'status':'alert'} className={positive?'f1-notice':'f1-alert'}>{message}</p>}{pending&&!busy&&<button type="button" className="f1-secondary" onClick={()=>void send(pending,true)}>Conferir / reenviar o mesmo pedido</button>}</>;
  function command(action:string,fields:Record<string,unknown>){void send({unitId:unit,action,data:{id:crypto.randomUUID(),...fields}})}
- const bank=data?.bank.filter(t=>!t.ignored)||[],book=data?.book||[],selectedBank=bank.filter(x=>bankIds.includes(x.id)),selectedBook=book.filter(x=>bookIds.includes(x.id)),bankTotal=sum(selectedBank),bookTotal=sum(selectedBook);
+ const bank=(data?.bank||[]).filter(t=>!t.ignored),book=data?.book||[],selectedBank=bank.filter(x=>bankIds.includes(x.id)),selectedBook=book.filter(x=>bookIds.includes(x.id)),bankTotal=sum(selectedBank),bookTotal=sum(selectedBook);
  const toggle=(id:string,values:string[],change:(v:string[])=>void)=>change(values.includes(id)?values.filter(x=>x!==id):[...values,id]);
  function open(value:typeof modal){setMessage('');setModal(value)}
  if(!unit)return <article className="f1-card"><h2>Selecione uma igreja</h2><p>A conciliação e o fechamento são realizados por unidade, com o acesso financeiro já autorizado.</p></article>;

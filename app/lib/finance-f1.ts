@@ -4,7 +4,26 @@ export type FinanceSection=typeof financeSections[number][0];
 export function financeSection(value:string|null):FinanceSection{return financeSections.find(([id])=>id===value)?.[0]||'geral'}
 export function financeMoney(cents:string|bigint){const n=BigInt(cents),abs=(n<BigInt(0)?-n:n).toString().padStart(3,'0');return `${n<BigInt(0)?'− ':''}R$ ${abs.slice(0,-2).replace(/\B(?=(\d{3})+(?!\d))/g,'.')},${abs.slice(-2)}`}
 export function financeDate(value:unknown){if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||!Number.isFinite(Date.parse(value+'T12:00:00Z'))||new Date(value+'T12:00:00Z').toISOString().slice(0,10)!==value)throw Error('Informe uma data válida.');return value}
-export function financeCents(value:unknown){if(typeof value!=='string'||!/^\d{1,10}(?:,\d{1,2})?$/.test(value))throw Error('Informe o valor sem separador de milhar, por exemplo 1234,56.');const [a,b='']=value.split(','),n=BigInt(a)*BigInt(100)+BigInt(b.padEnd(2,'0'));if(n<BigInt(1)||n>BigInt('999999999999'))throw Error('Valor fora do limite.');return n.toString()}
+/**
+ * Reads money the way people type it in Brazil and returns the canonical "1234,56" form, or null.
+ * Accepts "R$ 1.234,56", "1.234,56", "1234,56", "1234", "1.234" (thousands) and "12.50" (dot as decimal,
+ * only when one dot is followed by 1–2 digits and there is no comma). Ambiguous input ("1.23,4", "1,000.50") is null.
+ */
+export function financeMoneyInput(value:unknown){
+ if(typeof value!=='string')return null;
+ const clean=value.replace(/^\s*R\$/i,'').replace(/[\s\u00a0]/g,'');
+ if(!clean)return null;
+ let int:string,dec='';
+ if(clean.includes(',')){const parts=clean.split(',');if(parts.length!==2||!/^\d{1,2}$/.test(parts[1]))return null;[int,dec]=parts}
+ else if(/^\d+\.\d{1,2}$/.test(clean)){[int,dec]=clean.split('.')}
+ else int=clean;
+ if(/^\d{1,3}(?:\.\d{3})+$/.test(int))int=int.replace(/\./g,'');
+ if(!/^\d{1,10}$/.test(int))return null;
+ return dec?int+','+dec:int;
+}
+/** Canonical display for a money field after the person leaves it: "1.234,56". Invalid input is returned unchanged. */
+export function financeMoneyField(value:string){const canonical=financeMoneyInput(value);if(canonical===null)return value;const [a,b='']=canonical.split(','),int=BigInt(a).toString();return int.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+','+b.padEnd(2,'0')}
+export function financeCents(value:unknown){const canonical=financeMoneyInput(value);if(canonical===null)throw Error('Informe um valor válido, por exemplo 1.234,56.');const [a,b='']=canonical.split(','),n=BigInt(a)*BigInt(100)+BigInt(b.padEnd(2,'0'));if(n<BigInt(1)||n>BigInt('999999999999'))throw Error('Valor fora do limite.');return n.toString()}
 function id(value:unknown,optional=false){if(optional&&(value===''||value==null))return '';if(typeof value!=='string'||!uuidPattern.test(value))throw Error('Selecione um cadastro válido.');return value.toLowerCase()}
 function text(value:unknown,max:number,min=0){if(typeof value!=='string'||value.trim().length<min||value.length>max)throw Error('Revise os campos informados.');return value.trim()}
 function exact(data:Record<string,unknown>,fields:string[]){if(Object.keys(data).some(k=>!fields.includes(k)))throw Error('Campo não permitido.');}
