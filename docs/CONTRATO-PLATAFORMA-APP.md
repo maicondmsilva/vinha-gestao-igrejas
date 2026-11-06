@@ -33,3 +33,11 @@ Os dois `metro.config.cjs` incluem `../shared` e resolvem os pacotes importados 
 - **O que cada pessoa pode fazer:** `GET /api/staff-access?action=mine` responde, por igreja, `{agenda, checkin, publishing, push, timezone}`. O Vinha Equipe mostra só as ações liberadas.
 - **Fuso por ministério e por igreja:** em `private.church_timezones`, lido por `private.unit_timezone(unit)`, com Brasília como padrão. Programação (criação, edição, calendário e retirada de vendas), métricas de evento, filtro de aniversário e aniversários automáticos usam o fuso da igreja. As leituras de `/api/programming` respondem `timezone`, e o painel mostra e edita os horários nesse fuso (`shared/timezone.ts`). Kids, células e financeiro continuam em Brasília até as próximas etapas.
 - A configuração financeira dos eventos (contas recebedoras, finalidades e conferência de pagamentos) continua exclusiva da administração.
+
+## Kids: estações e fuso (Etapa 3 · PR 3)
+
+- O contrato do Kids (`shared/contract/kids.ts`) é o mesmo para o painel e o Vinha Equipe. O `app/lib/kids-operations.ts` apenas o reexporta.
+- **Estação de recepção:** tablet ou celular registrado pela coordenação do Kids ou pela supervisão de uma sessão (`/api/kids-station`: `register`, `heartbeat`, `revoke`, lista no GET). Desativar uma estação apaga a sessão de login daquele aparelho, e o Kids passa a recusar o token restante (`private.session_alive`). O painel mostra as estações em Kids → Estações de recepção.
+- O Kids do painel, as respostas da API e as funções do banco (entrada, retirada, relatórios e idade) usam o fuso da igreja.
+- `staff_access('mine')` informa `kids` e `kidsStations` por igreja. O Vinha Equipe já tem as chamadas prontas em `staff-app/src/kids.ts`; as telas entram na próxima etapa do app.
+- Retirada continua exigindo internet e conferência do adulto autorizado. Não há retirada offline.

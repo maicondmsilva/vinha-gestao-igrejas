@@ -36,11 +36,6 @@ test('painel mostra a agenda no fuso da igreja carregada', () => {
   assert.equal(eventsOnDay([ev], '2027-03-10', 'America/Sao_Paulo').length, 0);
   setPanelTimezone('Mars/Olympus');
   assert.equal(panelTimezone(), 'America/Sao_Paulo', 'valor inválido volta para Brasília');
-  assert.match(
-    readFileSync(new URL('../app/KidsDesk.tsx', import.meta.url), 'utf8'),
-    /localDay\(new Date\(\),'America\/Sao_Paulo'\)/,
-    'Kids continua em Brasília até a etapa do Kids',
-  );
 });
 
 test('comandos de permissão: escopos conhecidos e campos indicados', () => {
