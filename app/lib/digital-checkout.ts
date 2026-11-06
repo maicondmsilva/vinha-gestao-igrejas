@@ -39,12 +39,13 @@ function enabled(c:DigitalConnection){
  if(c.provider!=='mercado_pago'||(c.environment==='production'&&!(c.paymentsEnabled===true&&c.webhookConfigured===true&&Array.isArray(c.methods)&&c.methods.length>0&&c.methods.every(m=>['pix','boleto','card'].includes(m)))))throw Error('Checkout não habilitado para esta igreja e ambiente.');
 }
 /** Exactly one POST. The durable reservation must already be in dispatching state. */
-export async function createDigitalPreference(c:DigitalConnection,r:CheckoutReservation,origin:string,transport:typeof fetch=fetch){
+export async function createDigitalPreference(c:DigitalConnection,r:CheckoutReservation,origin:string,transport:typeof fetch=fetch,returnPath?:string){
  enabled(c);origin=checkoutOrigin(origin);receiverId(r.id);receiverId(r.order);receiverId(r.receiver);
  if(r.state!=='dispatching'||!/^\d{1,9}$/.test(r.gross))throw Error('Tentativa não reservada.');
  const secret=openReceiver<{access_token:string;user_id:string}>(c.sealed,receiverContext(c.org,c.unit,c.provider,c.environment));
  if(secret.user_id!==c.externalId||!secret.access_token)throw Error('Titular divergente.');
- const returns=origin+'/pagamento/retorno?pedido='+encodeURIComponent(r.order);
+ // Event checkouts return with the ticket order id, so the buyer lands back on their own order.
+ const returns=origin+(returnPath&&/^\/pagamento\/retorno\?pedido=[0-9a-f-]{36}$/.test(returnPath)?returnPath:'/pagamento/retorno?pedido='+encodeURIComponent(r.order));
  const base=mercadoPreferencePayload({orderId:r.order,title:r.title,amountCents:Number(r.gross),name:r.name,email:r.email,callback:origin+'/api/finance-digital/webhook/'+r.receiver+'?environment='+c.environment,success:returns,pending:returns,failure:returns,expiresAt:Date.parse(r.expiresAt)});
  let restrictions:{excluded_payment_types:{id:string}[];excluded_payment_methods:{id:string}[]}|undefined;
  if(c.methods){
