@@ -22,3 +22,5 @@ Entrega de 07/11/2026. A publicação de uma escala cria convites internos indiv
 ## Limites
 
 A etapa S4 continua responsável por comunicação externa homologada, integrações adicionais, exportações e relatórios avançados. O código Android foi atualizado e validado; não equivale a publicação na loja nem a instalação em aparelho. Endpoints legados permanecem contidos.
+
+Auditoria posterior à instalação: nenhum novo aviso de segurança. Dois índices complementares cobrem as chaves de serviço dos convites e de integrante das habilitações, incluindo histórico inativo; os avisos de índices ausentes retornam ao patamar anterior da plataforma.
