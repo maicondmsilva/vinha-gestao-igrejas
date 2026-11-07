@@ -57,8 +57,8 @@
 
 /* Abas em dois grupos: Operação (uso diário) e Cadastros e recebimentos, um por linha. */
 .f1-workspace .f1-tab-groups{display:grid;gap:6px;overflow:visible;padding-bottom:12px}
-.f1-workspace .f1-tab-group{display:grid;grid-template-columns:190px minmax(0,1fr);align-items:center;gap:12px;min-width:0}
-.f1-workspace .f1-tab-group>span{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7d71}
+.f1-workspace .f1-tab-group{display:grid;grid-template-columns:230px minmax(0,1fr);align-items:center;gap:12px;min-width:0}
+.f1-workspace .f1-tab-group>span{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7d71}
 .f1-workspace .f1-tab-group>div{display:flex;flex-wrap:wrap;gap:4px}
 .f1-workspace .f1-tab-group a{font-size:14px;padding:9px 13px;min-height:42px}
 .f1-workspace .f1-tab-group:not(.current) a:not(:hover){color:#5f7267}
@@ -135,3 +135,21 @@
 .f1-overlay .f1-form-problems p{margin:0 0 8px;font-size:14px;font-weight:600}
 .f1-overlay .f1-form-problems>div{display:flex;flex-wrap:wrap;gap:6px}
 .f1-overlay .f1-form-problems button{min-height:34px;padding:6px 12px;border-radius:999px;border:1px solid #d9a99b;background:#fff;color:#8a3420;font-size:13px}
+.f1-workspace .f1-filters.f1-filters-noperiod{grid-template-columns:minmax(0,420px) auto;justify-content:start}
+.f1-workspace .f1-filters.f1-filters-noperiod>small{grid-column:1/-1}
+@media(max-width:600px){.f1-workspace .f1-filters.f1-filters-noperiod{grid-template-columns:1fr}}
+
+/* Juros, multa e taxa no novo lançamento já pago/recebido. */
+.f1-workspace fieldset.f1-adjustments,.f1-overlay fieldset.f1-adjustments{grid-column:1/-1;margin:14px 0;padding:14px 16px;border:1px solid #dfe8e1;border-radius:12px;background:#fafcf9;min-width:0}
+.f1-overlay fieldset.f1-adjustments>legend{font-size:14px;font-weight:650;color:#234635;padding:0 6px}
+.f1-overlay fieldset.f1-adjustments .f1-form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.f1-overlay .f1-adjust-fee{margin-top:10px}
+.f1-overlay .f1-adjust-fee>p{margin:0 0 6px;font-size:13px;font-weight:600}
+.f1-overlay .f1-adjust-summary{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#e6f3ea;color:#1f5c3a;font-size:14px;font-weight:600;line-height:1.5}
+@media(max-width:600px){.f1-overlay fieldset.f1-adjustments .f1-form-grid{grid-template-columns:1fr}}
+/* Frequência sempre visível, em largura total. */
+.f1-overlay fieldset.f2-frequency{grid-column:1/-1;width:100%;box-sizing:border-box;min-width:0}
+.f1-overlay fieldset.f2-frequency>div:first-of-type{display:flex;flex-wrap:wrap;gap:8px}
+.f1-overlay fieldset.f2-frequency>div:first-of-type label{flex:1 1 150px;writing-mode:horizontal-tb}
+.f1-overlay fieldset.f2-frequency p{font-size:13px;line-height:1.5}
+@media(max-width:600px){.f1-overlay fieldset.f2-frequency>div:first-of-type{flex-direction:column}.f1-overlay fieldset.f2-frequency>div:first-of-type label{flex:0 0 auto;min-height:48px}}
