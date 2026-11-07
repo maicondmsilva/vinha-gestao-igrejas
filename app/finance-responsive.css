@@ -115,3 +115,14 @@
  .f1-workspace table.f1-cards td.f1-card-actions{white-space:nowrap}
  .f1-workspace table.f1-cards td.f1-card-actions>button+button{margin-left:6px}
 }
+
+/* Igreja/Filial diferente da igreja do topo: aviso com retorno em um clique. */
+.f1-workspace .f1-scope-notice{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:-8px 0 20px;padding:12px 16px;border:1px solid #d7c58f;border-left:4px solid #b08a2e;border-radius:12px;background:#fdf8ea;color:#5b4714;font-size:14px;font-weight:600}
+.f1-workspace .f1-scope-notice button{min-height:40px;font-size:13px}
+
+/* Confirmação antes de descartar uma janela preenchida. */
+.f1-workspace .f1-discard,.f1-overlay .f1-discard{position:sticky;top:0;z-index:3;margin:0 0 16px;padding:14px 16px;border:1px solid #e3c2b6;border-left:4px solid #b4533a;border-radius:12px;background:#fdf3ef;color:#5c2f22;box-shadow:0 8px 24px #4a1f1220}
+.f1-overlay .f1-discard p{margin:0 0 12px;font-size:14px;line-height:1.5}
+.f1-overlay .f1-discard>div{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.f1-overlay .f1-discard button{min-height:42px}
+.f1-overlay .f1-danger{background:#b4533a;border-color:#b4533a;color:#fff}

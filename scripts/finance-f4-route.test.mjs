@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import ts from 'typescript';
+import test from 'node:test';import {financeReason} from '../app/lib/finance-errors.ts';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import ts from 'typescript';
 import {financeDate} from '../app/lib/finance-f1.ts';
 import {boundedBody} from '../app/lib/private-files.ts';import {receiverId} from '../app/lib/finance-receivers.ts';import {digitalCommand} from '../app/lib/finance-f4.ts';
 const unit='af400000-0000-4000-8000-000000000001';
@@ -6,7 +6,7 @@ function route(config={}){
  const calls=[],client={rpc:async(name,args)=>{calls.push({name,args});return{data:{ok:true,items:[],purposes:[],receivers:[]},error:config.error||null}}};
  const auth=async()=>config.denied?{response:Response.json({}, {status:401})}:{access:{userId:'trusted-user',membership:{organization_id:'trusted-org',role:config.role||'owner',units:config.units||[{id:unit}]},client}};
  const src=ts.transpileModule(readFileSync(new URL('../app/api/finance-digital/route.ts',import.meta.url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/^import .*;\r?\n/gm,'').replaceAll('export const ','const ');
- const deps={authorizeSupabaseChurch:auth,supabaseAdminClient:()=>client,boundedBody,receiverId,financeDate,digitalCommand,digitalConnection:async()=>config.connection||{org:'trusted-org',beneficiaries:[unit],environment:'sandbox'},digitalSync:async()=>{calls.push({provider:true});return{ok:true}}};
+ const deps={financeReason,authorizeSupabaseChurch:auth,supabaseAdminClient:()=>client,boundedBody,receiverId,financeDate,digitalCommand,digitalConnection:async()=>config.connection||{org:'trusted-org',beneficiaries:[unit],environment:'sandbox'},digitalSync:async()=>{calls.push({provider:true});return{ok:true}}};
  return{...new Function(...Object.keys(deps),src+';return{GET,POST}')( ...Object.values(deps)),calls};
 }
 const cmd={unit,action:'sync',data:{receiver:unit,environment:'sandbox',externalId:'123'}};
