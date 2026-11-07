@@ -4,6 +4,9 @@
     "incremental": false
   },
   "include": [
+    "app/ScalesOperations.tsx",
+    "app/MemberVolunteerScales.tsx",
+    "app/api/scales-operations/route.ts",
     "app/ScalesWorkspace.tsx",
     "app/api/scales-planning/route.ts",
     "app/ScalesFoundation.tsx",
