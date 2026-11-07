@@ -11,6 +11,7 @@ insert into public.organization_memberships(id,organization_id,user_id,default_u
  select pg_temp.ch(t||'-m'),pg_temp.ch('org'),pg_temp.ch(t),pg_temp.ch('unit'),case t when 'owner' then 'owner' when 'leader' then 'leader' else 'member' end::public.membership_role,'active'
  from unnest(array['owner','ana','bia','caio','teen','leader','r3'])t;
 insert into public.organization_memberships(id,organization_id,user_id,default_unit_id,role,status) values(pg_temp.ch('outsider-m'),pg_temp.ch('org2'),pg_temp.ch('outsider'),pg_temp.ch('unit2'),'owner','active');
+insert into public.membership_unit_access(membership_id,unit_id,access_level) values(pg_temp.ch('leader-m'),pg_temp.ch('unit'),'read');
 insert into public.people(id,organization_id,unit_id,auth_user_id,full_name,birth_date,status)
  select pg_temp.ch(t||'-p'),pg_temp.ch('org'),pg_temp.ch('unit'),pg_temp.ch(t),initcap(t)||' da Silva Fictícia',case t when 'teen' then current_date-interval '15 years' else current_date-interval '30 years' end,'active'
  from unnest(array['ana','bia','caio','teen','leader','r3'])t;
