@@ -7,13 +7,16 @@ import {icsCalendar, icsFold, icsText, icsFileName} from '../shared/ics.ts';
 import {programmingCommand} from '../app/lib/programming-command.ts';
 
 test('recorrência: mesmas contas do banco', () => {
-  assert.deepEqual(recurrenceCount({startsLocal: '2030-03-01T19:00', repeat: 'weekly', ends: 'until', until: '2030-03-31'}), {count: 5});
-  assert.deepEqual(recurrenceCount({startsLocal: '2030-01-31T19:00', repeat: 'monthly', ends: 'never'}), {count: 12});
-  assert.deepEqual(recurrenceCount({startsLocal: '2030-01-01T19:00', repeat: 'daily', ends: 'never'}), {count: maxOccurrences});
-  assert.deepEqual(recurrenceCount({startsLocal: '2030-06-10T19:00', repeat: 'yearly', ends: 'until', until: '2034-12-31'}), {count: 5});
-  assert.equal(recurrenceCount({startsLocal: '2030-01-01T19:00', repeat: 'daily', ends: 'until', until: '2031-01-01'}).field, 'until');
-  assert.equal(recurrenceCount({startsLocal: '2030-01-01T19:00', repeat: 'weekly', ends: 'until', until: '2029-12-01'}).field, 'until');
-  assert.equal(recurrenceCount({startsLocal: '2030-01-01T19:00', repeat: 'weekly', ends: 'count', count: 200}).field, 'count');
+  const now = Date.parse('2029-12-01T12:00:00Z');
+  assert.deepEqual(recurrenceCount({startsLocal: '2030-03-01T19:00', repeat: 'weekly', ends: 'until', until: '2030-03-31', now}), {count: 5});
+  assert.deepEqual(recurrenceCount({startsLocal: '2030-01-31T19:00', repeat: 'monthly', ends: 'never', now}), {count: 12});
+  assert.deepEqual(recurrenceCount({startsLocal: '2030-01-01T19:00', repeat: 'daily', ends: 'never', now}), {count: maxOccurrences});
+  assert.deepEqual(recurrenceCount({startsLocal: '2030-06-10T19:00', repeat: 'yearly', ends: 'until', until: '2031-12-31', now}), {count: 2});
+  assert.equal(recurrenceCount({startsLocal: '2030-06-10T19:00', repeat: 'yearly', ends: 'count', count: 4, now}).field, 'count', 'horizonte de 2 anos');
+  assert.deepEqual(recurrenceCount({startsLocal: '2031-06-10T19:00', repeat: 'monthly', ends: 'never', now}), {count: 6}, 'sem término para no horizonte');
+  assert.equal(recurrenceCount({startsLocal: '2030-01-01T19:00', repeat: 'daily', ends: 'until', until: '2031-01-01', now}).field, 'until');
+  assert.equal(recurrenceCount({startsLocal: '2030-01-01T19:00', repeat: 'weekly', ends: 'until', until: '2029-12-01', now}).field, 'until');
+  assert.equal(recurrenceCount({startsLocal: '2030-01-01T19:00', repeat: 'weekly', ends: 'count', count: 200, now}).field, 'count');
   assert.deepEqual(occurrences('2030-01-31T19:00', 'monthly', 3), ['2030-01-31T19:00', '2030-02-28T19:00', '2030-03-31T19:00']);
   assert.deepEqual(occurrences('2032-02-29T09:00', 'yearly', 2), ['2032-02-29T09:00', '2033-02-28T09:00']);
 });

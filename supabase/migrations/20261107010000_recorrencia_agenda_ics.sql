@@ -11,26 +11,35 @@ begin
 end $$;
 
 -- ── Recorrência ──────────────────────────────────────────────────────────────
--- Converte "termina em uma data" ou "sem término" (12 meses, até 120 datas) na quantidade de encontros.
+-- Converte "termina em uma data" ou "sem término" (12 meses, até 120 datas) na quantidade de encontros
+-- e confere o horizonte de 2 anos da agenda.
 -- Mesma regra de shared/recurrence.ts.
-create function private.programming_repeat_count(p_data jsonb) returns jsonb language plpgsql immutable set search_path='' as $$
+create function private.programming_repeat_count(p_data jsonb) returns jsonb language plpgsql stable set search_path='' as $$
 declare s timestamp;stp interval;lim timestamp;n integer;
 begin
  if p_data->>'ends' not in('count','until','never') or (p_data->>'ends'='until')<>(p_data ? 'until') or (p_data ? 'until' and coalesce(p_data->>'until','') !~ '^\d{4}-\d{2}-\d{2}$')
   or p_data->>'ends'<>'count' and p_data ? 'count' then raise exception 'invalid_member_agenda' using errcode='22023';end if;
  if coalesce(p_data->>'repeat','none')='none' then return (p_data-array['ends','until'])||'{"count":1}'::jsonb;end if;
- if p_data->>'ends'='count' then return p_data-array['ends','until'];end if;
- begin
-  s:=(p_data->>'startsLocal')::timestamp;
-  lim:=case when p_data->>'ends'='until' then ((p_data->>'until')::date+1)::timestamp else s+interval '12 months' end;
- exception when others then raise exception 'invalid_member_agenda' using errcode='22023';
- end;
  stp:=case p_data->>'repeat' when 'daily' then interval '1 day' when 'weekly' then interval '7 days' when 'monthly' then interval '1 month' when 'yearly' then interval '1 year' end;
  if stp is null then raise exception 'invalid_member_agenda' using errcode='22023';end if;
- select count(*) into n from generate_series(0,120) i where s+stp*i<lim;
- if n<1 then raise exception 'programming_repeat_until' using errcode='22023';end if;
- if p_data->>'ends'='until' and n>120 then raise exception 'programming_repeat_too_long' using errcode='22023';end if;
- return (p_data-array['ends','until'])||jsonb_build_object('count',least(n,120));
+ begin
+  s:=(p_data->>'startsLocal')::timestamp;
+  lim:=case p_data->>'ends' when 'until' then ((p_data->>'until')::date+1)::timestamp when 'never' then s+interval '12 months' end;
+  n:=case when p_data->>'ends'='count' then (p_data->>'count')::integer end;
+ exception when others then raise exception 'invalid_member_agenda' using errcode='22023';
+ end;
+ if p_data->>'ends'<>'count' then
+  select count(*) into n from generate_series(0,120) i where s+stp*i<lim;
+  if n<1 then raise exception 'programming_repeat_until' using errcode='22023';end if;
+  if p_data->>'ends'='until' and n>120 then raise exception 'programming_repeat_too_long' using errcode='22023';end if;
+  n:=least(n,120);
+  -- Sem término respeita o horizonte da agenda (2 anos à frente): para antes, sem erro.
+  if p_data->>'ends'='never' then select count(*) into n from generate_series(0,n-1) i where s+stp*i<=(now() at time zone 'UTC')+interval '2 years';end if;
+ end if;
+ if n is null or n not between 1 and 120 then raise exception 'invalid_member_agenda' using errcode='22023';end if;
+ -- A agenda aceita datas até 2 anos à frente (member_agenda_admin): avisa com o motivo certo.
+ if s+stp*(n-1)>(now() at time zone 'UTC')+interval '2 years' then raise exception 'programming_repeat_horizon' using errcode='22023';end if;
+ return (p_data-array['ends','until'])||jsonb_build_object('count',n);
 end $$;
 revoke all on function private.programming_repeat_count(jsonb) from public,anon,authenticated,service_role;
 

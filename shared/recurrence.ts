@@ -31,29 +31,44 @@ export function occurrences(startsLocal: string, rule: RepeatRule, count: number
   return Array.from({length: count}, (_, i) => new Date(shift(startsLocal, rule, i)).toISOString().slice(0, 16));
 }
 
-export type RecurrenceInput = {startsLocal: string; repeat: RepeatRule; ends?: RepeatEnd; count?: number; until?: string};
+export type RecurrenceInput = {startsLocal: string; repeat: RepeatRule; ends?: RepeatEnd; count?: number; until?: string; now?: number};
+/** The agenda accepts dates up to 2 years ahead (member_agenda_admin). */
+export const horizonYears = 2;
 
 /** How many dates the rule creates, or an error message to show next to the field. */
 export function recurrenceCount(r: RecurrenceInput): {count: number} | {error: string; field: 'count' | 'until' | 'repeat'} {
   if (!repeatRules.includes(r.repeat)) return {error: 'Escolha como o evento se repete.', field: 'repeat'};
   if (r.repeat === 'none') return {count: 1};
-  const ends = r.ends || 'count';
-  if (ends === 'count') {
-    const n = Number(r.count);
-    return Number.isInteger(n) && n >= 2 && n <= maxOccurrences ? {count: n} : {error: `Use de 2 a ${maxOccurrences} encontros.`, field: 'count'};
-  }
   if (!localPattern.test(r.startsLocal)) return {error: 'Informe o início do primeiro encontro.', field: 'repeat'};
-  let limit: number;
-  if (ends === 'until') {
-    if (!r.until || !dayPattern.test(r.until)) return {error: 'Escolha a data do último encontro.', field: 'until'};
-    const [y, m, d] = r.until.split('-').map(Number);
-    limit = Date.UTC(y, m - 1, d + 1);
-  } else limit = shift(r.startsLocal, 'monthly', 12);
-  let n = 0;
-  while (n <= maxOccurrences && shift(r.startsLocal, r.repeat, n) < limit) n++;
-  if (n < 1) return {error: 'A data final precisa ser depois do primeiro encontro.', field: 'until'};
-  if (ends === 'never') return {count: Math.min(n, maxOccurrences)};
-  return n > maxOccurrences ? {error: `Essa repetição passa de ${maxOccurrences} encontros. Escolha uma data mais próxima.`, field: 'until'} : {count: n};
+  const ends = r.ends || 'count',
+    now = new Date(r.now ?? Date.now()),
+    horizon = Date.UTC(now.getUTCFullYear() + horizonYears, now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes());
+  let n: number;
+  if (ends === 'count') {
+    n = Number(r.count);
+    if (!Number.isInteger(n) || n < 2 || n > maxOccurrences) return {error: `Use de 2 a ${maxOccurrences} encontros.`, field: 'count'};
+  } else {
+    let limit: number;
+    if (ends === 'until') {
+      if (!r.until || !dayPattern.test(r.until)) return {error: 'Escolha a data do último encontro.', field: 'until'};
+      const [y, m, d] = r.until.split('-').map(Number);
+      limit = Date.UTC(y, m - 1, d + 1);
+    } else limit = shift(r.startsLocal, 'monthly', 12);
+    n = 0;
+    while (n <= maxOccurrences && shift(r.startsLocal, r.repeat, n) < limit) n++;
+    if (n < 1) return {error: 'A data final precisa ser depois do primeiro encontro.', field: 'until'};
+    if (ends === 'until' && n > maxOccurrences)
+      return {error: `Essa repetição passa de ${maxOccurrences} encontros. Escolha uma data mais próxima.`, field: 'until'};
+    n = Math.min(n, maxOccurrences);
+    // "Sem término" stops at the agenda horizon instead of failing.
+    if (ends === 'never') while (n > 1 && shift(r.startsLocal, r.repeat, n - 1) > horizon) n--;
+  }
+  if (shift(r.startsLocal, r.repeat, n - 1) > horizon)
+    return {
+      error: `A agenda aceita datas até ${horizonYears} anos à frente. Diminua a quantidade ou escolha uma data mais próxima.`,
+      field: ends === 'until' ? 'until' : 'count',
+    };
+  return {count: n};
 }
 
 /** Shape check used by the panel API before the database (which repeats every rule). */
