@@ -45,7 +45,7 @@ const reasons: Record<string, string> = {
   finance_access_denied: 'Você não tem acesso financeiro a esta igreja.',
   finance_scope_denied: 'Você não tem acesso financeiro a todas as igrejas escolhidas.',
   ledger_access_denied: 'Você não tem acesso financeiro a esta igreja.',
-  select_one_unit: 'Escolha uma igreja na Abrangência para fazer esta operação.',
+  select_one_unit: 'Escolha uma única igreja em Igreja/Filial para fazer esta operação.',
   report_limit_reduce_period: 'Período muito grande para este relatório. Reduza o intervalo de datas.',
   receiver_unavailable: 'A conta recebedora não está ativa. Confira em Contas recebedoras.',
   receiver_not_ready: 'A conta recebedora ainda não está pronta para receber. Confira em Contas recebedoras.',

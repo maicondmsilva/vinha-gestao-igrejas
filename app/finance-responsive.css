@@ -116,7 +116,7 @@
  .f1-workspace table.f1-cards td.f1-card-actions>button+button{margin-left:6px}
 }
 
-/* Abrangência diferente da igreja do topo: aviso com retorno em um clique. */
+/* Igreja/Filial diferente da igreja do topo: aviso com retorno em um clique. */
 .f1-workspace .f1-scope-notice{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:-8px 0 20px;padding:12px 16px;border:1px solid #d7c58f;border-left:4px solid #b08a2e;border-radius:12px;background:#fdf8ea;color:#5b4714;font-size:14px;font-weight:600}
 .f1-workspace .f1-scope-notice button{min-height:40px;font-size:13px}
 
