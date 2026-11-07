@@ -4,6 +4,7 @@ import PublishingWorkspace from './PublishingWorkspace';
 import PushCampaigns from './PushCampaigns';
 import CommunicationMetrics from './CommunicationMetrics';
 import TeamAccess from './TeamAccess';
+import CommunityChat from './CommunityChat';
 import type {PublishingKind} from '../shared/publishing';
 import {currentDashboardQuery} from '../shared/dashboard-route';
 export default function CommunicationWorkspace({unitId}:{unitId:string}){
@@ -13,5 +14,6 @@ export default function CommunicationWorkspace({unitId}:{unitId:string}){
  if(section==='push')return <PushCampaigns key={unitId} unit={unitId}/>;
  if(section==='metricas')return <CommunicationMetrics key={unitId} unit={unitId}/>;
  if(section==='equipe')return <TeamAccess/>;
+ if(section==='chat')return <CommunityChat key={unitId} unit={unitId}/>;
   return <PublishingWorkspace key={unitId+section} unit={unitId} kind={kinds[section]||'notice'}/>;
 }
