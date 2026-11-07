@@ -1,0 +1,102 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select no_plan();
+insert into auth.users(id,instance_id,aud,role,email,email_confirmed_at,created_at,updated_at)
+select ('a5100000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','scale-'||i||'@example.test',now(),now(),now() from generate_series(1,4)i;
+insert into public.organizations(id,name,slug,status) values('b5100000-0000-4000-8000-000000000001','Escalas fictício','scale-synthetic','active'),('b5100000-0000-4000-8000-000000000002','Outro ministério fictício','scale-other','active');
+insert into public.organization_units(id,organization_id,name,slug,unit_type) values('c5100000-0000-4000-8000-000000000001','b5100000-0000-4000-8000-000000000001','Igreja A fictícia','scale-a','headquarters'),('c5100000-0000-4000-8000-000000000002','b5100000-0000-4000-8000-000000000001','Igreja B fictícia','scale-b','campus'),('c5100000-0000-4000-8000-000000000003','b5100000-0000-4000-8000-000000000002','Outra igreja fictícia','scale-c','headquarters');
+insert into public.organization_memberships(id,organization_id,user_id,role,status,default_unit_id)
+select ('d5100000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid,'b5100000-0000-4000-8000-000000000001',('a5100000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid,(case i when 1 then 'owner' else 'member' end)::public.membership_role,'active','c5100000-0000-4000-8000-000000000001' from generate_series(1,3)i;
+insert into public.membership_unit_access(membership_id,unit_id,access_level) values('d5100000-0000-4000-8000-000000000002','c5100000-0000-4000-8000-000000000001','read'),('d5100000-0000-4000-8000-000000000003','c5100000-0000-4000-8000-000000000001','read');
+insert into public.people(id,organization_id,unit_id,full_name,auth_user_id) values
+ ('e5100000-0000-4000-8000-000000000001','b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000001','Líder fictício','a5100000-0000-4000-8000-000000000002'),
+ ('e5100000-0000-4000-8000-000000000002','b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000001','Integrante sem conta fictício',null),
+ ('e5100000-0000-4000-8000-000000000003','b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000002','Pessoa de outra igreja',null);
+create function pg_temp.sc(a text,d jsonb default '{}') returns jsonb language sql as $$select public.scale_foundation('b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000001',a,case when a in('team','role','member','grant') then jsonb_build_object('request',extensions.gen_random_uuid(),'version',0,'active',true)||d else d end)$$;
+select ok(not has_table_privilege('authenticated','private.scale_teams','insert'),'cliente não altera tabela diretamente');
+select ok(not has_function_privilege('anon','public.scale_foundation(uuid,uuid,text,jsonb)','execute'),'visitante não acessa Escalas');
+select ok(not has_function_privilege('authenticated','private.scale_allowed(uuid,uuid,uuid,text)','execute'),'helper de autorização não é exposto');
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"a5100000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select is(pg_temp.sc('list')->>'total','0','consulta não cria equipes automaticamente');
+select lives_ok($$select pg_temp.sc('team','{"id":"f5100000-0000-4000-8000-000000000001","name":"Recepção"}')$$,'admin cria equipe local');
+select lives_ok($$select pg_temp.sc('team','{"id":"f5100000-0000-4000-8000-000000000002","name":"Louvor"}')$$,'segunda equipe independente');
+select throws_ok($$select pg_temp.sc('team','{"id":"f5100000-0000-4000-8000-000000000003","name":" recepção "}')$$,'23505',null,'nome normalizado não duplica');
+select lives_ok($$select pg_temp.sc('role','{"id":"f5200000-0000-4000-8000-000000000001","team":"f5100000-0000-4000-8000-000000000001","name":"Recepcionar","requiredCount":2}')$$,'função e vagas gravadas');
+select throws_ok($$select pg_temp.sc('role','{"id":"f5200000-0000-4000-8000-000000000002","team":"f5100000-0000-4000-8000-000000000001","name":"Inválida","requiredCount":0}')$$,'23514',null,'quantidade inválida negada no banco');
+select lives_ok($$select pg_temp.sc('member','{"id":"f5300000-0000-4000-8000-000000000001","team":"f5100000-0000-4000-8000-000000000001","person":"e5100000-0000-4000-8000-000000000001","role":"f5200000-0000-4000-8000-000000000001"}')$$,'integrante com identidade canônica');
+select lives_ok($$select pg_temp.sc('member','{"id":"f5300000-0000-4000-8000-000000000002","team":"f5100000-0000-4000-8000-000000000001","person":"e5100000-0000-4000-8000-000000000002"}')$$,'integrante sem conta não cria usuário');
+select throws_ok($$select pg_temp.sc('member','{"id":"f5300000-0000-4000-8000-000000000003","team":"f5100000-0000-4000-8000-000000000001","person":"e5100000-0000-4000-8000-000000000003"}')$$,'22023',null,'pessoa de outra igreja não é vinculada');
+select throws_ok($$select pg_temp.sc('grant','{"id":"f5400000-0000-4000-8000-000000000002","team":"f5100000-0000-4000-8000-000000000001","member":"f5300000-0000-4000-8000-000000000002","capabilities":["manage"]}')$$,'22023',null,'pessoa sem conta não recebe permissão');
+select lives_ok($$select pg_temp.sc('grant','{"id":"f5400000-0000-4000-8000-000000000001","team":"f5100000-0000-4000-8000-000000000001","member":"f5300000-0000-4000-8000-000000000001","capabilities":["read","manage","assign"]}')$$,'admin delega somente equipe selecionada');
+select set_config('request.jwt.claims','{"sub":"a5100000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+select is(pg_temp.sc('list')->>'total','1','líder vê somente sua equipe');
+select throws_ok($$select pg_temp.sc('detail','{"team":"f5100000-0000-4000-8000-000000000002"}')$$,'42501',null,'detalhe de outra equipe é negado');
+select throws_ok($$select pg_temp.sc('team','{"id":"f5100000-0000-4000-8000-000000000004","name":"Nova equipe"}')$$,'42501',null,'líder não cria equipe nem amplia escopo');
+select throws_ok($$select pg_temp.sc('grant','{"id":"f5400000-0000-4000-8000-000000000003","team":"f5100000-0000-4000-8000-000000000001","member":"f5300000-0000-4000-8000-000000000001","capabilities":["publish"]}')$$,'42501',null,'líder não concede permissões');
+select lives_ok($$select pg_temp.sc('role','{"id":"f5200000-0000-4000-8000-000000000003","team":"f5100000-0000-4000-8000-000000000001","name":"Acolhimento"}')$$,'líder administra funções da própria equipe');
+select is(jsonb_array_length(pg_temp.sc('people','{"team":"f5100000-0000-4000-8000-000000000001","search":"fictício"}')->'people'),2,'busca retorna somente nomes e vínculo da igreja autorizada');
+select is(pg_temp.sc('detail','{"team":"f5100000-0000-4000-8000-000000000001"}')->'grants','[]'::jsonb,'líder não lê administração de permissões');
+select throws_ok($$select public.scale_foundation('b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000002','list','{}')$$,'42501',null,'igreja sem acesso negada');
+select throws_ok($$select public.scale_foundation('b5100000-0000-4000-8000-000000000002','c5100000-0000-4000-8000-000000000003','list','{}')$$,'42501',null,'outro ministério negado');
+select throws_ok($$select pg_temp.sc(null,'{"id":"f5400000-0000-4000-8000-000000000003","request":"f5500000-0000-4000-8000-000000000001","team":"f5100000-0000-4000-8000-000000000001"}')$$,'22023',null,'ação ausente não assume administração de permissões');
+reset role;
+update public.organization_memberships set status='suspended' where id='d5100000-0000-4000-8000-000000000002';
+set local role authenticated;
+select throws_ok($$select pg_temp.sc('list')$$,'42501',null,'suspensão retira acesso imediatamente');
+reset role;
+update public.organization_memberships set status='active' where id='d5100000-0000-4000-8000-000000000002';
+update private.scale_members set active=false where id='f5300000-0000-4000-8000-000000000001';
+set local role authenticated;
+select throws_ok($$select pg_temp.sc('list')$$,'42501',null,'integrante desativado perde a delegação');
+reset role;
+update private.scale_members set active=true where id='f5300000-0000-4000-8000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"a5100000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select set_config('scale.retry',jsonb_build_object('id','f5200000-0000-4000-8000-000000000004','team','f5100000-0000-4000-8000-000000000001','name','Função idempotente','request','f5500000-0000-4000-8000-000000000001')::text,true);
+select lives_ok($$select pg_temp.sc('role',current_setting('scale.retry')::jsonb)$$,'primeira solicitação idempotente');
+select lives_ok($$select pg_temp.sc('role',current_setting('scale.retry')::jsonb)$$,'repetição retorna confirmação sem duplicar');
+select throws_ok($$select pg_temp.sc('role',current_setting('scale.retry')::jsonb||'{"name":"Mudou"}')$$,'40001',null,'mesma solicitação com dados diferentes não sobrescreve');
+select throws_ok($$select pg_temp.sc('role','{"id":"f5200000-0000-4000-8000-000000000001","team":"f5100000-0000-4000-8000-000000000001","name":"Versão antiga","version":0}')$$,'40001',null,'edição desatualizada não sobrescreve');
+select is(pg_temp.sc('detail','{"team":"f5100000-0000-4000-8000-000000000001"}')->>'membersTotal','2','integrantes totais independem da paginação');
+reset role;
+select is((select count(*)::integer from private.scale_roles where id='f5200000-0000-4000-8000-000000000004'),1,'idempotência não duplica função');
+select is((select count(*)::integer from public.organization_memberships where organization_id='b5100000-0000-4000-8000-000000000001'),3,'cadastros não criam novos acessos administrativos');
+select throws_ok($$update private.scale_history set action='alterado'$$,'42501',null,'histórico não pode ser sobrescrito');
+select throws_ok($$delete from private.scale_requests$$,'42501',null,'recibos de idempotência não são apagados');
+
+update private.scale_grants set active=false where id='f5400000-0000-4000-8000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"a5100000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+select throws_ok($$select pg_temp.sc('list')$$,'42501',null,'revogação da delegação retira acesso imediatamente');
+reset role;
+select is((select role::text from public.organization_memberships where id='d5100000-0000-4000-8000-000000000002'),'member','delegação não transforma membro em administrador');
+update private.scale_grants set active=true where id='f5400000-0000-4000-8000-000000000001';
+update public.people set unit_id='c5100000-0000-4000-8000-000000000002' where id='e5100000-0000-4000-8000-000000000001';
+set local role authenticated;
+select throws_ok($$select pg_temp.sc('list')$$,'42501',null,'pessoa transferida não mantém gestão na igreja anterior');
+reset role;
+update public.people set unit_id='c5100000-0000-4000-8000-000000000001' where id='e5100000-0000-4000-8000-000000000001';
+insert into public.people(id,organization_id,unit_id,full_name)
+select ('e5100000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid,'b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000001','Paginação fictícia '||i from generate_series(10,45)i;
+insert into private.scale_members(id,organization_id,unit_id,team_id,person_id)
+select ('f5300000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid,'b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000001','f5100000-0000-4000-8000-000000000001',('e5100000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid from generate_series(10,45)i;
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"a5100000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select is(jsonb_array_length(pg_temp.sc('detail','{"team":"f5100000-0000-4000-8000-000000000001"}')->'members'),30,'primeira página de integrantes tem limite real no banco');
+select is(jsonb_array_length(pg_temp.sc('detail','{"team":"f5100000-0000-4000-8000-000000000001","page":2}')->'members'),8,'segunda página não repete a primeira');
+select is(pg_temp.sc('detail','{"team":"f5100000-0000-4000-8000-000000000001","page":2}')->>'membersTotal','38','total de integrantes preservado entre páginas');
+select is(jsonb_array_length(pg_temp.sc('people','{"team":"f5100000-0000-4000-8000-000000000001","search":"Paginação"}')->'people'),20,'busca de pessoas não exporta o diretório completo');
+select ok(not (pg_temp.sc('people','{"team":"f5100000-0000-4000-8000-000000000001","search":"fictício"}')->'people'->0 ? 'email'),'busca não expõe email, CPF ou telefone');
+reset role;
+
+insert into public.saas_unit_contracts(organization_id,unit_id,payer_unit_id,plan_id,status,module_decisions) select 'b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000001',id,'active','{"scales":false,"people":true}' from public.saas_plans where billing_cycle='monthly' limit 1;
+set local role authenticated;
+select throws_ok($$select pg_temp.sc('list')$$,'42501',null,'contrato bloqueado impede Escalas mesmo para administrador');
+reset role;
+update public.saas_unit_contracts set module_decisions='{"scales":true,"people":false}' where organization_id='b5100000-0000-4000-8000-000000000001';
+set local role authenticated;
+select throws_ok($$select pg_temp.sc('people','{"team":"f5100000-0000-4000-8000-000000000001","search":"fictício"}')$$,'42501',null,'bloqueio de Pessoas não pode ser contornado pela busca de integrantes');
+reset role;
+select * from finish();
+rollback;

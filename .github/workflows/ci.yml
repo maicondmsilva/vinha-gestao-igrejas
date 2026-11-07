@@ -66,6 +66,7 @@ jobs:
 
       - name: Validar regras de avisos financeiros
         run: |
+          node --experimental-strip-types --test scripts/scales-foundation.test.mjs
           node --experimental-strip-types --test scripts/kids-foundation.test.mjs
           node --experimental-strip-types --test scripts/shared-contract.test.mjs scripts/staff-access.test.mjs scripts/kids-station.test.mjs scripts/dashboard-route.test.mjs scripts/recurrence-ics.test.mjs scripts/rich-text.test.mjs
           node --experimental-strip-types --test scripts/finance-records.test.mjs
