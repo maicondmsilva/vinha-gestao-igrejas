@@ -13,7 +13,7 @@ create function pg_temp.fields(extra jsonb) returns jsonb language sql as $$sele
 create function pg_temp.starts(series_of uuid) returns text[] language sql security definer set search_path='' as $$select array_agg(to_char(starts_at at time zone 'America/Sao_Paulo','YYYY-MM-DD') order by starts_at) from private.church_app_events where series_id=(select series_id from private.church_app_events where id=series_of)$$;
 
 create temp table made(id uuid);grant all on made to authenticated;
-create temp table tok(t text);grant all on tok to authenticated;
+create temp table tok(t text);grant all on tok to authenticated,anon;
 
 -- Regra pura, igual a shared/recurrence.ts
 select is((private.programming_repeat_count((replace(replace(replace(replace('{"repeat":"weekly","ends":"until","until":"2030-03-31","startsLocal":"2030-03-01T19:00"}','2029',(extract(year from now())::int+1+(-1))::text),'2030',(extract(year from now())::int+1+(0))::text),'2031',(extract(year from now())::int+1+(1))::text),'2034',(extract(year from now())::int+1+(4))::text))::jsonb)->>'count')::int,5,'semanal até 31/03: 5 encontros');
