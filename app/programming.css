@@ -3,3 +3,11 @@
 @media(max-width:1250px){.program-agenda-layout{grid-template-columns:270px minmax(0,1fr)}.program-table td,.program-table th{padding:14px 12px}}
 @media(max-width:1000px){.program-agenda-layout{grid-template-columns:1fr}.program-calendar{max-width:400px;width:100%}.program-heading{align-items:flex-start;flex-direction:column}.program-page{padding:24px 20px}.program-calendar-toolbar{align-items:flex-start}.program-card-title{padding:18px}}
 @media(max-width:720px){.program-page{padding:20px 14px}.program-heading h1{font-size:24px}.program-filters{padding:14px;gap:10px}.program-filters label{min-width:calc(50% - 10px)}.program-filters .program-search{min-width:100%}.program-page button,.program-dialog button{min-height:42px}.program-view{gap:5px}.program-view .program-date{margin:6px 0 0;width:100%}.program-form-grid{grid-template-columns:1fr}.program-pager{flex-wrap:wrap;padding:15px}.program-pager>div{gap:8px;flex-wrap:wrap}.program-dialog-head{padding:16px}.program-form,.program-detail{padding:18px 16px}.program-table thead{display:none}.program-table,.program-table tbody,.program-table tr,.program-table td{display:block}.program-table tr{padding:16px;border-bottom:1px solid #dfe7db}.program-table td{border:0;padding:5px 0}.program-table td:last-child button{width:100%;margin-top:8px}.program-table .program-event-name{width:100%}.program-event-name strong{max-width:100%}.program-list-tools{flex-wrap:wrap}.program-attendees li{flex-direction:column}.program-page-size{max-width:180px}}
+.program-form-hint{grid-column:1/-1;margin:0;color:var(--color-vinha-muted);font-size:13px;line-height:1.45}
+.program-subscribe{margin:0 0 16px;border:1px solid var(--color-vinha-line);border-radius:var(--radius-vinha-md);background:var(--color-vinha-surface);padding:12px 16px}
+.program-subscribe summary{cursor:pointer;font-weight:700;color:var(--color-vinha-brand-dark);min-height:28px}
+.program-subscribe p{color:var(--color-vinha-muted);font-size:14px;line-height:1.5}
+.program-subscribe-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.program-subscribe-row input{flex:1 1 260px;min-width:0;font-size:13px}
+.program-subscribe-open{font-weight:700;color:var(--color-vinha-brand)}
+.program-subscribe-notice{color:var(--color-vinha-brand-dark)!important;font-weight:600}

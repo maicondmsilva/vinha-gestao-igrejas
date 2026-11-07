@@ -47,3 +47,9 @@ Os dois `metro.config.cjs` incluem `../shared` e resolvem os pacotes importados 
 - Programação e Comunicação têm endereços próprios, como `/painel/programacao/agenda` e `/painel/comunicacao/push` (`shared/dashboard-route.ts`). Links antigos com `?pagina=eventos&secao=…` continuam funcionando e são reescritos para o novo endereço. Os outros módulos seguem com `?pagina=`.
 - Abas no topo dos dois módulos (`app/ModuleTabs.tsx`): cada aba é um link real, que pode ser compartilhado ou salvo nos favoritos.
 - As cores base do painel (`--green`, `--ink`, `--muted`, `--line` e `--cream`) e as das telas de Programação e Comunicação vêm dos tokens da Vinha. O cinza secundário ficou mais escuro para atingir o contraste AA.
+
+## Recorrência e agenda em calendários (Etapa 4 · PR 1)
+
+- **Recorrência:** diária, semanal, mensal ou anual. Termina após N encontros (até 120), em uma data ou "sem término" (cria as datas dos próximos 12 meses, até 120). A regra está em `shared/recurrence.ts` e é repetida no banco por `private.programming_repeat_count`. Mês sem o dia escolhido usa o último dia (31/01 → 28/02).
+- **Assinatura da agenda:** link secreto por igreja (`/api/agenda/feed?t=…`, também como `webcal://`), criado, trocado ou desativado em Programação → Agenda da igreja por quem gerencia a agenda. Entram só eventos publicados dos últimos 30 dias e dos próximos 12 meses; eventos cancelados aparecem como cancelados.
+- **Adicionar ao calendário:** botão na página pública do evento (`/api/agenda/event?id=…`). A página pública passou a mostrar os horários no fuso da igreja.
