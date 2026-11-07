@@ -1,0 +1,14 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {planningInput,planningError} from '../app/lib/scales-planning.ts';
+import {occurrences} from '../shared/recurrence.ts';
+import {fromLocal,toLocalInput} from '../shared/timezone.ts';
+const id='a5100000-0000-4000-8000-000000000001',unit='c5100000-0000-4000-8000-000000000001';
+const data={title:'Celebração',location:'Auditório',notes:'Chegar antes',startsLocal:'2027-01-31T19:00',arrivalLocal:'2027-01-31T18:30',endsLocal:'2027-01-31T21:00',positions:[{team:id,role:id,ordinal:1,member:null}],request:id,token:'a'.repeat(32),repeat:'monthly',count:3};
+const input=(d=data,action='save')=>planningInput({unit,action,data:d},true);
+test('planning validates unit, operation and unknown fields',()=>{assert.equal(input().unit,unit);assert.throws(()=>planningInput({unit:'bad',action:'list',data:{}},false));assert.throws(()=>input({...data,organization:'other'}));assert.throws(()=>input(data,'publish'));assert.throws(()=>planningInput({unit,action:'save',data},false))});
+test('arrival precedes start and end follows start',()=>{for(const p of [{arrivalLocal:'2027-01-31T20:00'},{endsLocal:'2027-01-31T18:00'},{startsLocal:'wrong'}])assert.throws(()=>input({...data,...p}));assert.equal(input({...data,endsLocal:'2027-02-01T01:00'}).action,'save')});
+test('positions must be bounded and refer to canonical UUIDs',()=>{for(const positions of [[],Array(501).fill(data.positions[0]),[{team:id,role:id,ordinal:0}],[{team:'bad',role:id,ordinal:1}]])assert.throws(()=>input({...data,positions}));assert.equal(input({...data,positions:[{...data.positions[0],member:id}]}).data.positions.length,1)});
+test('writes require preview and stable request identity',()=>{for(const p of [{request:''},{request:'bad'},{token:''},{token:'stale'}])assert.throws(()=>input({...data,...p}));assert.equal(input({id,scope:'following',operation:'cancel',request:id,token:'f'.repeat(32)},'cancel').action,'cancel')});
+test('monthly recurrence anchors the original day instead of drifting',()=>{assert.deepEqual(occurrences('2027-01-31T19:00','monthly',3),['2027-01-31T19:00','2027-02-28T19:00','2027-03-31T19:00'])});
+test('church wall time round trips independently of server timezone',()=>{for(const zone of ['America/Sao_Paulo','America/Manaus','America/Rio_Branco']){const instant=fromLocal(data.startsLocal,zone);assert.equal(toLocalInput(new Date(instant),zone),data.startsLocal)}});
+test('errors describe corrective action without exposing database details',()=>{assert.equal(planningError('42501').status,403);assert.equal(planningError('40001').status,409);assert.match(planningError('22023','scale_person_duplicate').error,/mais de uma vaga/);assert.doesNotMatch(planningError('XX000','secret relation').error,/secret relation/)});
