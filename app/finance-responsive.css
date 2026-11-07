@@ -153,3 +153,65 @@
 .f1-overlay fieldset.f2-frequency>div:first-of-type label{flex:1 1 150px;writing-mode:horizontal-tb}
 .f1-overlay fieldset.f2-frequency p{font-size:13px;line-height:1.5}
 @media(max-width:600px){.f1-overlay fieldset.f2-frequency>div:first-of-type{flex-direction:column}.f1-overlay fieldset.f2-frequency>div:first-of-type label{flex:0 0 auto;min-height:48px}}
+
+/* Visão geral: vencimentos, gráfico de 6 meses e atalho para lançamentos. */
+.f1-workspace .f1-upcoming ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.f1-workspace .f1-upcoming li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #e8eee9}
+.f1-workspace .f1-upcoming li:last-child{border-bottom:0}
+.f1-workspace .f1-upcoming li>span{min-width:0}
+.f1-workspace .f1-upcoming li b{display:block;font-size:14px;font-weight:600;color:#234635;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f1-workspace .f1-upcoming li small{display:block;font-size:13px;color:#5f6f64;margin-top:2px}
+.f1-workspace .f1-upcoming li.late small{color:#a23b26;font-weight:600}
+.f1-workspace .f1-upcoming li strong{font-size:15px;white-space:nowrap}
+.f1-workspace .f1-upcoming li button{min-height:38px;padding:7px 12px;font-size:13px;white-space:nowrap}
+.f1-workspace .f1-upcoming-more{margin:10px 0 0;font-size:13px;color:#5f6f64}
+.f1-workspace .f1-flowchart{margin-top:22px}
+.f1-workspace .f1-bars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;align-items:end;padding:8px 0 4px}
+.f1-workspace .f1-bar-month{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;text-align:center}
+.f1-workspace .f1-bar-pair{display:flex;align-items:flex-end;justify-content:center;gap:6px;height:150px;width:100%;border-bottom:1px solid #dce6df;margin-bottom:6px}
+.f1-workspace .f1-bar-pair i{display:block;width:min(28px,38%);border-radius:6px 6px 0 0}
+.f1-workspace .f1-bar-pair i.in,.f1-workspace .f1-bar-legend .in::before{background:#3f8a5f}
+.f1-workspace .f1-bar-pair i.out,.f1-workspace .f1-bar-legend .out::before{background:#c9a24a}
+.f1-workspace .f1-bar-month b{font-size:14px;color:#234635}
+.f1-workspace .f1-bar-month small{font-size:12px;white-space:nowrap}
+.f1-workspace .f1-bar-month small.in{color:#2f6b49}
+.f1-workspace .f1-bar-month small.out{color:#8a6a1f}
+.f1-workspace .f1-bar-legend{display:flex;flex-wrap:wrap;gap:16px;margin:12px 0 0;font-size:13px;color:#5f6f64}
+.f1-workspace .f1-bar-legend span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:transparent}
+.f1-workspace .f1-geral-more{display:flex;justify-content:flex-end;margin:16px 0 0}
+@media(max-width:760px){
+ .f1-workspace .f1-upcoming li{grid-template-columns:minmax(0,1fr) auto}
+ .f1-workspace .f1-upcoming li button{grid-column:1/-1;width:100%}
+ .f1-workspace .f1-bars{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:22px}
+ .f1-workspace .f1-bar-pair{height:110px}
+}
+/* Linha inteira abre o lançamento (o botão continua para teclado e leitores de tela). */
+.f1-workspace tr.f1-row-open{cursor:pointer}
+.f1-workspace tr.f1-row-open:hover td{background:#f6faf6}
+/* Conciliação: ações do extrato em uma linha e aviso de conta. */
+.f1-workspace .f5-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.f1-workspace .f5-actions button,.f1-workspace .f5-movement>button{min-height:38px;padding:7px 12px;font-size:13px;justify-self:start;width:auto}
+.f1-workspace .f5-hint{display:block;margin-top:6px;font-size:13px;color:#7f6420;font-weight:600}
+/* Fechamento: pendências levam direto à tela que resolve. */
+.f1-workspace .f5-checklist .f5-check-link{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;background:#fff;color:inherit;border:1px solid #e3c99a;border-left:4px solid #b08a2e;border-radius:14px;padding:16px 18px;cursor:pointer;font:inherit}
+.f1-workspace .f5-checklist .f5-check-link:hover{background:#fffaf0}
+.f1-workspace .f5-checklist .f5-check-link em{font-style:normal;font-size:13px;font-weight:600;color:#285c45;margin-top:4px}
+
+/* Categorias em árvore: Entradas e Saídas, subcategorias recuadas. */
+.f1-workspace .f1-category-tree{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:12px}
+.f1-workspace .f1-category-tree>section{border:1px solid #dce6df;border-radius:14px;padding:14px 16px;background:#fff;min-width:0}
+.f1-workspace .f1-category-tree h3{margin:0 0 8px;font-size:16px;color:#234635}
+.f1-workspace .f1-category-tree h3 small{font-size:13px;font-weight:500;color:#5f6f64;margin-left:6px}
+.f1-workspace .f1-category-tree ul{list-style:none;margin:0;padding:0}
+.f1-workspace .f1-category-tree ul ul{margin:0 0 6px 18px;padding-left:12px;border-left:2px solid #e3ece5}
+.f1-workspace .f1-category-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eef3ef}
+.f1-workspace .f1-category-tree ul ul .f1-category-row b{font-weight:500}
+.f1-workspace .f1-category-row>span:first-child{min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+.f1-workspace .f1-category-row b{font-size:14px;color:#234635;overflow-wrap:anywhere}
+.f1-workspace .f1-category-row em{font-style:normal;font-size:12px;padding:2px 8px;border-radius:999px;background:#eef1ee;color:#5f6f64}
+.f1-workspace .f1-category-row small{font-size:12px;color:#5f6f64}
+.f1-workspace .f1-category-row.inactive b{color:#7a877e}
+.f1-workspace .f1-category-actions{display:flex;gap:6px;flex-shrink:0}
+.f1-workspace .f1-category-actions button{min-height:34px;padding:5px 10px;font-size:13px}
+@media(max-width:760px){.f1-workspace .f1-category-tree{grid-template-columns:1fr}.f1-workspace .f1-category-row{flex-wrap:wrap}.f1-workspace .f1-category-actions{width:100%}.f1-workspace .f1-category-actions button{flex:1}}
+@media(max-width:480px){.f1-workspace .f1-kpis{grid-template-columns:1fr}}
