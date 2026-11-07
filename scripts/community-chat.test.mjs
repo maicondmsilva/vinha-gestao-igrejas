@@ -93,6 +93,7 @@ test('chat: endereço novo, fora do chat antigo, e aba no painel', () => {
   assert.ok(existsSync('app/api/community-chat/route.ts'));
   const route = readFileSync('app/api/community-chat/route.ts', 'utf8');
   assert.ok(route.includes("rpc('chat'") && !route.includes('withLegacyContainment'));
+  assert.ok(route.includes("['action', 'room', 'before', 'id']"), 'ignora tenant e outros parâmetros da URL');
   assert.ok(communicationPages.some(([s]) => s === 'chat'));
   assert.ok(readFileSync('app/CommunicationWorkspace.tsx', 'utf8').includes("section==='chat'"));
 });
