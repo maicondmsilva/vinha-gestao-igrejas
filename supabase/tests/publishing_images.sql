@@ -33,24 +33,24 @@ select is((public.publishing_image_file(pg_temp.pa('i1'))->>'public')::boolean,f
 reset role;
 
 -- Visitante só vê imagem usada em publicação publicada do mesmo ministério
-set local role anon;
+set local role anon;select set_config('request.jwt.claims','{"role":"anon"}',true);
 select is(public.publishing_image_file(pg_temp.pa('i1')),null,'imagem não publicada fica privada');
 reset role;
 insert into private.publishing_items(id,organization_id,owner_unit,kind,title,body,source,scope,targets,status,created_by)
  values(pg_temp.pa('other-post'),pg_temp.pa('org2'),pg_temp.pa('unit2'),'notice','Aviso de outro ministério','![x](img:'||pg_temp.pa('i1')||')','','local',array[pg_temp.pa('unit2')],'published',pg_temp.pa('other'));
-set local role anon;
+set local role anon;select set_config('request.jwt.claims','{"role":"anon"}',true);
 select is(public.publishing_image_file(pg_temp.pa('i1')),null,'outro ministério não libera a imagem');
 reset role;
 insert into private.publishing_items(id,organization_id,owner_unit,kind,title,body,source,scope,targets,status,created_by)
  values(pg_temp.pa('post'),pg_temp.pa('org'),pg_temp.pa('unit'),'notice','Aviso fictício','Texto **forte**'||chr(10)||'![Igreja](img:'||pg_temp.pa('i1')||')','','local',array[pg_temp.pa('unit')],'published',pg_temp.pa('owner'));
-set local role anon;
+set local role anon;select set_config('request.jwt.claims','{"role":"anon"}',true);
 select is((public.publishing_image_file(pg_temp.pa('i1'))->>'public')::boolean,true,'imagem do aviso publicado é pública');
 reset role;
 set local role authenticated;select pg_temp.actor('owner');
 select lives_ok($$select pg_temp.img('archive',pg_temp.pa('i1'))$$,'arquivar');
 select is(jsonb_array_length(pg_temp.img('list')->'items'),0,'arquivada sai do banco de imagens');
 reset role;
-set local role anon;
+set local role anon;select set_config('request.jwt.claims','{"role":"anon"}',true);
 select is((public.publishing_image_file(pg_temp.pa('i1'))->>'public')::boolean,true,'aviso publicado continua com a imagem');
 reset role;
 select * from finish();
