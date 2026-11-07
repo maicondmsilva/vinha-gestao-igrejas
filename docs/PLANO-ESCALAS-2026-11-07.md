@@ -74,3 +74,7 @@ Testes de isolamento entre ministérios e igrejas, escopo do líder, vínculo us
 Homologar com uma igreja e equipes reais autorizadas, incluindo pessoa sem conta, convite aceito/recusado, indisponibilidade posterior, substituição, mudança de horário e encerramento. Liberar somente os novos fluxos aprovados. Os endpoints antigos continuam bloqueados até sua substituição validada; não habilitar o módulo inteiro apenas mudando o catálogo de disponibilidade.
 
 **Concluído quando:** a igreja monta e publica uma escala, o voluntário recebe e responde, o líder resolve a troca, a presença é registrada e os relatórios conferem, sem vazamento entre igrejas ou confirmação fictícia de entrega.
+
+## Progresso da execução — S3
+
+Em 07/11/2026, a operação S3 foi implementada: convites e respostas individuais, disponibilidade, habilitações e conflitos, substituições revalidadas e presença independente. A comunicação externa e os relatórios avançados permanecem no escopo S4. Evidências e limites em `evidencias/RECIBO-ESCALAS-S3-20261107.md`.
