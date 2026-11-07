@@ -10,7 +10,9 @@ import {chatCommandSchema, chatError, chatReadSchema} from '../../../shared/cont
 const json = (data: unknown, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'private, no-store'}});
 
 export async function GET(request: Request) {
-  const q = Object.fromEntries(new URL(request.url).searchParams);
+  // Only the chat keys: the panel also sends `tenant` (and previews add their own params).
+  const params = new URL(request.url).searchParams,
+    q = Object.fromEntries(['action', 'room', 'before', 'id'].flatMap((k) => (params.has(k) ? [[k, params.get(k)]] : [])));
   const c = chatReadSchema.safeParse({action: 'rooms', ...q});
   if (!c.success) return json({error: 'Consulta inválida.', code: 'validation'}, 400);
   const {action, ...data} = c.data;
