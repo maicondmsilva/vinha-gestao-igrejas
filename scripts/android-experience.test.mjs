@@ -1,4 +1,5 @@
 import {test} from 'node:test';
+import {richTextPlain} from '../shared/rich-text.ts';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import ts from 'typescript';
@@ -29,6 +30,7 @@ test('abas navegam, detalhe usa publicação atual e perfil de visitante exige l
  const values=[()=>{},useState,React,...nativeNames,{addEventListener:()=>({remove(){}})},{openURL:async()=>{}},{OS:'android'},{currentHeight:24},()=> 'light','StatusBar',()=>c,{},v=>v.startsWith('https:')?v:null,'ChurchSelect','MemberChurchChoice',model.brandColor,model.firstName,model.mainTabs,model.onBrand,{notice:'Aviso',video:'Vídeo'},model.publicationList];
  args.push('NativeCommunity','NativeLearning','NativeBible','NativeFamily','NativeMediaLibrary','NativeMediaPlayer','mediaSource');values.push('NativeCommunity','NativeLearning','NativeBible','NativeFamily','NativeMediaLibrary','NativeMediaPlayer',()=>null);
  args.push('StyleSheet','AppState','useMemberAgenda','NativeAgenda','NativeTickets','NativeInbox','agendaDate');values.push({create:v=>v},{currentState:'active',addEventListener:()=>({remove(){}})},()=>({events:[],tickets:[],inbox:[],unread:0,loading:false,available:true,error:'',refresh(){}}),'NativeAgenda','NativeTickets','NativeInbox',v=>v);
+ args.push('RichText','richTextPlain');values.push('RichText',richTextPlain);
  const Component=new Function(...args,compile('../android-app/src/MemberExperience.tsx')+';return MemberExperience')(...values);
  const props={config:{id:'org',appName:'Aplicativo fictício',name:'Ministério fictício',primary:'#0099cc',units:[{id:'b',name:'Igreja fictícia B'}]},profile:null,authenticated:false,profilePanel:null,accountNotice:'',profileBusy:false,onLogin:()=>logins++,onSignOut(){},onProfileRefresh(){},rpc:{rpc(){}}};
  const render=()=>{cursor=0;return Component(props)};
