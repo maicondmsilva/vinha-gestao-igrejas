@@ -149,4 +149,16 @@ select ok('overlap'=any(private.scale_conflicts('f5900000-0000-4000-8000-0000000
 update private.scale_teams set travel_minutes=0 where id='f5100000-0000-4000-8000-000000000001';
 select ok(not('overlap'=any(private.scale_conflicts('f5900000-0000-4000-8000-000000000001','f5200000-0000-4000-8000-000000000001','f5300000-0000-4000-8000-000000000002',1))),'removing buffer removes overlap for adjacent different services');
 
+reset role;
+insert into private.scale_services(id,organization_id,unit_id,series_id,title,arrival_at,starts_at,ends_at,timezone,status,created_by)
+values('f5900000-0000-4000-8000-000000000002','b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000001',extensions.gen_random_uuid(),'Duas funções fictícias',now()+interval '10 days',now()+interval '10 days 30 minutes',now()+interval '10 days 1 hour','America/Sao_Paulo','draft','a5100000-0000-4000-8000-000000000001');
+insert into private.scale_positions(service_id,organization_id,unit_id,team_id,role_id,ordinal)
+select 'f5900000-0000-4000-8000-000000000002','b5100000-0000-4000-8000-000000000001','c5100000-0000-4000-8000-000000000001','f5100000-0000-4000-8000-000000000001',id,1 from private.scale_roles where id in('f5200000-0000-4000-8000-000000000001','f5200000-0000-4000-8000-000000000003');
+set local role authenticated;
+select lives_ok($$select pg_temp.op('publish',jsonb_build_object('service','f5900000-0000-4000-8000-000000000002','token',pg_temp.op('view','{"service":"f5900000-0000-4000-8000-000000000002"}')->>'token','request',extensions.gen_random_uuid()))$$,'publish service with two distinct empty functions');
+select lives_ok($$select pg_temp.op('fill',jsonb_build_object('service','f5900000-0000-4000-8000-000000000002','role','f5200000-0000-4000-8000-000000000003','ordinal',1,'member','f5300000-0000-4000-8000-000000000001','version',2,'request',extensions.gen_random_uuid()))$$,'fill selected secondary function instead of member primary role');
+reset role;
+select is((select member_id from private.scale_positions where service_id='f5900000-0000-4000-8000-000000000002' and role_id='f5200000-0000-4000-8000-000000000001'),null::uuid,'other function with same ordinal remains empty');
+select is((select role_id from private.scale_invites where service_id='f5900000-0000-4000-8000-000000000002' and active),'f5200000-0000-4000-8000-000000000003'::uuid,'invitation uses explicitly selected function');
+
 select * from finish();rollback;

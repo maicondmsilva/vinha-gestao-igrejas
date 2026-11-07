@@ -14,7 +14,7 @@ Entrega de 07/11/2026. A publicação de uma escala cria convites internos indiv
 
 ## Verificação
 
-- 68 verificações SQL S3, 37 regressões S2 e 45 S1: aprovadas no Docker local, transações revertidas.
+- 72 verificações SQL S3, 37 regressões S2 e 45 S1: aprovadas no Docker local, transações revertidas.
 - Teste concorrente real: resposta confirmada preservada, revisão com prévia antiga rejeitada; repetição de requisição não duplica histórico.
 - 27 testes JavaScript de Escalas/Android, tipagem web e Android, controles interativos e varredura estática de segredos: aprovados.
 - Homologação visual com a igreja e a conta fictícias locais: publicar → responder na área do membro → conferir confirmação no painel; disponibilidade, solicitação de troca e formulário móvel. Nenhuma escala real foi publicada por este teste.

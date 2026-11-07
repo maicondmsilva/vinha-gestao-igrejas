@@ -112,7 +112,7 @@ create function private.scale_operations(p_org uuid,p_unit uuid,p_action text,p_
 declare sid uuid:=nullif(p_data->>'service','')::uuid;team uuid:=nullif(p_data->>'team','')::uuid;eid uuid:=nullif(p_data->>'id','')::uuid;
  s private.scale_services;i private.scale_invites;case_row private.scale_replacements;member private.scale_members;role_row private.scale_roles;t private.scale_teams;
  targets uuid[];versions jsonb;token text;scope text:=coalesce(p_data->>'scope','current');reason text:=btrim(coalesce(p_data->>'reason',''));items jsonb;result jsonb;before_data jsonb;
- req uuid;fingerprint text;prior private.scale_planning_requests;conflicts text[];candidate uuid:=nullif(p_data->>'member','')::uuid;role_id uuid:=nullif(p_data->>'role','')::uuid;
+ req uuid;fingerprint text;prior private.scale_planning_requests;conflicts text[];candidate uuid:=nullif(p_data->>'member','')::uuid;selected_role uuid:=nullif(p_data->>'role','')::uuid;
  pos record;next_invite uuid;new_response text:=p_data->>'response';new_presence text:=p_data->>'presence';page integer:=coalesce((p_data->>'page')::integer,1);search text:=btrim(coalesce(p_data->>'search',''));
 begin
  perform private.require_confirmed_self_service_email();
@@ -151,17 +151,17 @@ begin
     'requests',coalesce((select jsonb_agg(to_jsonb(x) order by created_at desc,id) from(select c.*,p.full_name suggested_name from private.scale_replacements c join private.scale_invites i on i.id=c.invite_id left join private.scale_members m on m.id=c.suggested_member left join public.people p on p.id=m.person_id where i.service_id=sid order by c.created_at desc,c.id limit 100)x),'[]'));
   end if;
   if p_action='suggest' then
-   select * into role_row from private.scale_roles where id=role_id and organization_id=p_org and unit_id=p_unit;
+   select * into role_row from private.scale_roles where id=selected_role and organization_id=p_org and unit_id=p_unit;
    if role_row.id is null or not private.scale_allowed(p_org,p_unit,role_row.team_id,'assign') then raise exception 'scale_access_denied' using errcode='42501';end if;
    return jsonb_build_object('items',coalesce((select jsonb_agg(to_jsonb(x)) from(select m.id,p.full_name name,
-    private.scale_conflicts(sid,role_id,m.id,coalesce((p_data->>'ordinal')::integer,1)) conflicts,
+    private.scale_conflicts(sid,selected_role,m.id,coalesce((p_data->>'ordinal')::integer,1)) conflicts,
     (select count(*) from private.scale_invites i join private.scale_services ss on ss.id=i.service_id where i.person_id=p.id and i.active and i.response<>'declined' and ss.status<>'cancelled' and ss.starts_at between s.starts_at-interval '30 days' and s.starts_at) recent
-    from private.scale_members m join public.people p on p.id=m.person_id where m.team_id=role_row.team_id and private.scale_qualified(p_org,p_unit,m.id,role_id) and (search='' or strpos(lower(p.full_name),lower(search))>0) order by cardinality(private.scale_conflicts(sid,role_id,m.id,coalesce((p_data->>'ordinal')::integer,1))),recent,p.full_name,m.id limit 20 offset (page-1)*20)x),'[]'));
+    from private.scale_members m join public.people p on p.id=m.person_id where m.team_id=role_row.team_id and private.scale_qualified(p_org,p_unit,m.id,selected_role) and (search='' or strpos(lower(p.full_name),lower(search))>0) order by cardinality(private.scale_conflicts(sid,selected_role,m.id,coalesce((p_data->>'ordinal')::integer,1))),recent,p.full_name,m.id limit 20 offset (page-1)*20)x),'[]'));
   end if;
   if p_action in('publish','revise','cancel','close') then
    if exists(select 1 from unnest(targets)x where not private.scale_service_allowed(p_org,p_unit,x,'publish')) then raise exception 'scale_access_denied' using errcode='42501';end if;
   elsif p_action='fill' then
-   select * into role_row from private.scale_roles where id=role_id and organization_id=p_org and unit_id=p_unit;
+   select * into role_row from private.scale_roles where id=selected_role and organization_id=p_org and unit_id=p_unit;
    if role_row.id is null or not private.scale_allowed(p_org,p_unit,role_row.team_id,'assign') or not private.scale_allowed(p_org,p_unit,role_row.team_id,'publish') then raise exception 'scale_access_denied' using errcode='42501';end if;
   elsif i.id is null or not private.scale_allowed(p_org,p_unit,i.team_id,'assign') then raise exception 'scale_access_denied' using errcode='42501';end if;
  end if;
@@ -171,18 +171,18 @@ begin
  if found then if prior.organization_id<>p_org or prior.unit_id<>p_unit or prior.actor<>auth.uid() or prior.fingerprint<>fingerprint then raise exception 'scale_changed' using errcode='40001';end if;return prior.result;end if;
  if p_action='qualify' then
   select * into member from private.scale_members where id=candidate and team_id=team;
-  if member.id is null or not exists(select 1 from private.scale_roles where id=role_id and team_id=team and active) then raise exception 'scale_role_invalid' using errcode='22023';end if;
+  if member.id is null or not exists(select 1 from private.scale_roles where id=selected_role and team_id=team and active) then raise exception 'scale_role_invalid' using errcode='22023';end if;
   if member.version is distinct from (p_data->>'version')::integer then raise exception 'scale_changed' using errcode='40001';end if;
-  if member.role_id=role_id and not coalesce((p_data->>'active')::boolean,false) then raise exception 'scale_primary_role' using errcode='22023';end if;
-  insert into private.scale_qualifications(organization_id,unit_id,team_id,member_id,role_id,active) values(p_org,p_unit,team,candidate,role_id,coalesce((p_data->>'active')::boolean,true)) on conflict(member_id,role_id) do update set active=excluded.active;
+  if member.role_id=selected_role and not coalesce((p_data->>'active')::boolean,false) then raise exception 'scale_primary_role' using errcode='22023';end if;
+  insert into private.scale_qualifications(organization_id,unit_id,team_id,member_id,role_id,active) values(p_org,p_unit,team,candidate,selected_role,coalesce((p_data->>'active')::boolean,true)) on conflict(member_id,role_id) do update set active=excluded.active;
   update private.scale_members set version=version+1 where id=candidate;
   insert into private.scale_history(organization_id,unit_id,team_id,actor,action,after_data) values(p_org,p_unit,team,auth.uid(),'qualification',p_data-'request');
  elsif p_action='policy' then
-  if role_id is not null then
-   select * into role_row from private.scale_roles where id=role_id and team_id=team;
+  if selected_role is not null then
+   select * into role_row from private.scale_roles where id=selected_role and team_id=team;
    if role_row.id is null then raise exception 'scale_role_invalid' using errcode='22023';end if;
    if role_row.version is distinct from(p_data->>'version')::integer then raise exception 'scale_changed' using errcode='40001';end if;
-   update private.scale_roles set parallel_allowed=coalesce((p_data->>'parallel')::boolean,false),version=version+1 where id=role_id;
+   update private.scale_roles set parallel_allowed=coalesce((p_data->>'parallel')::boolean,false),version=version+1 where id=selected_role;
   else
    select * into t from private.scale_teams where id=team;
    if t.version is distinct from(p_data->>'version')::integer then raise exception 'scale_changed' using errcode='40001';end if;
@@ -213,14 +213,14 @@ begin
   end loop;
  elsif p_action='fill' then
   if s.version is distinct from(p_data->>'version')::integer then raise exception 'scale_changed' using errcode='40001';end if;
-  if s.status<>'published' or s.arrival_at<=now() or not exists(select 1 from private.scale_positions q where q.service_id=sid and q.role_id=role_id and q.ordinal=(p_data->>'ordinal')::integer and q.member_id is null) then raise exception 'scale_state' using errcode='22023';end if;
-  if not private.scale_qualified(p_org,p_unit,candidate,role_id) then raise exception 'scale_qualification' using errcode='22023';end if;
-  conflicts:=private.scale_conflicts(sid,role_id,candidate,(p_data->>'ordinal')::integer);
+  if s.status<>'published' or s.arrival_at<=now() or not exists(select 1 from private.scale_positions q where q.service_id=sid and q.role_id=selected_role and q.ordinal=(p_data->>'ordinal')::integer and q.member_id is null) then raise exception 'scale_state' using errcode='22023';end if;
+  if not private.scale_qualified(p_org,p_unit,candidate,selected_role) then raise exception 'scale_qualification' using errcode='22023';end if;
+  conflicts:=private.scale_conflicts(sid,selected_role,candidate,(p_data->>'ordinal')::integer);
   if 'duplicate'=any(conflicts) then raise exception 'scale_person_duplicate' using errcode='22023';end if;
      if cardinality(conflicts)>0 and(not coalesce((p_data->>'override')::boolean,false) or length(reason)<10) then raise exception 'scale_conflict' using errcode='22023';end if;
-  update private.scale_positions q set member_id=candidate where q.service_id=sid and q.role_id=role_id and q.ordinal=(p_data->>'ordinal')::integer;
+  update private.scale_positions q set member_id=candidate where q.service_id=sid and q.role_id=selected_role and q.ordinal=(p_data->>'ordinal')::integer;
   insert into private.scale_invites(service_id,organization_id,unit_id,team_id,role_id,ordinal,member_id,person_id,deadline)
-   select sid,p_org,p_unit,role_row.team_id,role_id,(p_data->>'ordinal')::integer,m.id,m.person_id,least(s.arrival_at,now()+make_interval(hours=>t.reply_hours)) from private.scale_members m join private.scale_teams t on t.id=m.team_id where m.id=candidate;
+   select sid,p_org,p_unit,role_row.team_id,selected_role,(p_data->>'ordinal')::integer,m.id,m.person_id,least(s.arrival_at,now()+make_interval(hours=>t.reply_hours)) from private.scale_members m join private.scale_teams t on t.id=m.team_id where m.id=candidate;
   update private.scale_services set version=version+1 where id=sid;
   insert into private.scale_service_history(service_id,organization_id,unit_id,actor,action,after_data) values(sid,p_org,p_unit,auth.uid(),'fill',p_data-'request');
  elsif p_action in('reply','replace','presence','decision') then
@@ -338,3 +338,5 @@ revoke all on function private.scale_volunteer(uuid,text,jsonb) from public,anon
 create function public.scale_volunteer(p_org uuid,p_action text,p_data jsonb default '{}') returns jsonb language sql security invoker set search_path='' as $$select private.scale_volunteer(p_org,p_action,p_data)$$;
 revoke all on function public.scale_volunteer(uuid,text,jsonb) from public,anon,service_role;
 grant execute on function private.scale_volunteer(uuid,text,jsonb),public.scale_volunteer(uuid,text,jsonb) to authenticated;
+
+
