@@ -53,3 +53,9 @@ Os dois `metro.config.cjs` incluem `../shared` e resolvem os pacotes importados 
 - **Recorrência:** diária, semanal, mensal ou anual. Termina após N encontros (até 120), em uma data ou "sem término" (cria as datas dos próximos 12 meses, até 120). A regra está em `shared/recurrence.ts` e é repetida no banco por `private.programming_repeat_count`. Mês sem o dia escolhido usa o último dia (31/01 → 28/02).
 - **Assinatura da agenda:** link secreto por igreja (`/api/agenda/feed?t=…`, também como `webcal://`), criado, trocado ou desativado em Programação → Agenda da igreja por quem gerencia a agenda. Entram só eventos publicados dos últimos 30 dias e dos próximos 12 meses; eventos cancelados aparecem como cancelados.
 - **Adicionar ao calendário:** botão na página pública do evento (`/api/agenda/event?id=…`). A página pública passou a mostrar os horários no fuso da igreja.
+
+## Avisos com texto formatado e banco de imagens (Etapa 4 · PR 2)
+
+- **Texto dos avisos:** Markdown simples guardado como texto (`shared/rich-text.ts`): `## título`, `**negrito**`, `*itálico*`, `[link](https://…)`, listas, `> destaque` e `![descrição](img:<id>)`. Avisos antigos, em texto puro, continuam iguais. Painel (`app/RichText.tsx`) e app (`android-app/src/RichText.tsx`) montam os blocos com componentes próprios, sem HTML. Links só `https`, `mailto` e `tel`.
+- **Banco de imagens** (`/api/publishing-images`): JPEG, PNG ou WebP de até 5 MB, identificados pelo conteúdo do arquivo e guardados em bucket privado. A imagem é servida ao público só se estiver em um aviso publicado do mesmo ministério; quem publica naquela igreja também vê a prévia. Arquivar tira a imagem do banco, mas os avisos já publicados continuam mostrando.
+- O editor de avisos tem botões de formatação, prévia, inserir imagem (até 10 por aviso) e "Escolher do banco de imagens" para a capa de avisos e banners.
