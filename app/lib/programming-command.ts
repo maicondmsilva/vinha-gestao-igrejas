@@ -3,6 +3,7 @@ import {eventInfoValid} from '../../shared/event-info.ts';
 import {uuidPattern} from './private-files.ts';
 import {parseAgendaCommand} from './member-agenda-command.ts';
 import {coverUrl} from '../../shared/programming.ts';
+import {maxOccurrences,recurrenceValid} from '../../shared/recurrence.ts';
 export function programmingCommand(value:unknown){
  if(!value||typeof value!=='object'||Array.isArray(value))return null;
  const b=value as Record<string,unknown>,raw=b.data as Record<string,unknown>;if(raw&&typeof raw==='object'&&'information' in raw&&(!['create','edit'].includes(String(b.action))||!eventInfoValid(raw.information)))return null;if(raw&&typeof raw==='object'&&'commerce' in raw&&(!['create','edit'].includes(String(b.action))||!('information' in raw)||!commerceInputValid(raw.commerce)))return null;const data=raw&&typeof raw==='object'?Object.fromEntries(Object.entries(raw).filter(([k])=>k!=='information'&&k!=='commerce')):raw;
@@ -10,11 +11,11 @@ export function programmingCommand(value:unknown){
  const id=typeof b.id==='string'&&uuidPattern.test(b.id)?b.id:null,version=Number.isSafeInteger(b.version)&&Number(b.version)>0?Number(b.version):null;
  if(['create','edit'].includes(b.action)){
   if(raw?.commerce&&((raw.commerce as any).mode==='sale')&&(data.repeat&&data.repeat!=='none'||data.future===true))return null;
-  if(!id||b.action==='edit'&&!version||Object.keys(data).some(k=>!['title','description','kind','startsLocal','endsLocal','location','address','capacity','category','cover','repeat','count','future','versions'].includes(k)))return null;
+  if(!id||b.action==='edit'&&!version||Object.keys(data).some(k=>!['title','description','kind','startsLocal','endsLocal','location','address','capacity','category','cover','repeat','count','ends','until','future','versions'].includes(k)))return null;
   const fields=Object.fromEntries(['title','description','kind','startsLocal','endsLocal','location','address','capacity'].map(k=>[k,data[k]]));
   if(!parseAgendaCommand({action:b.action,unit:b.unit,id,version,data:fields})||!(data.category===''||typeof data.category==='string'&&uuidPattern.test(data.category))||coverUrl(data.cover)===null)return null;
-  if(b.action==='create'&&(!['none','daily','weekly','monthly'].includes(String(data.repeat))||!Number.isInteger(data.count)||Number(data.count)<1||Number(data.count)>52||data.repeat==='none'&&data.count!==1||'future'in data||'versions'in data))return null;
-  if(b.action==='edit'&&(typeof data.future!=='boolean'||!data.versions||typeof data.versions!=='object'||Array.isArray(data.versions)||Object.entries(data.versions).some(([k,v])=>!uuidPattern.test(k)||!Number.isInteger(v)||Number(v)<1)||Object.keys(data.versions).length>52||'repeat'in data||'count'in data))return null;
+  if(b.action==='create'&&(!recurrenceValid(data)||'future'in data||'versions'in data))return null;
+  if(b.action==='edit'&&(typeof data.future!=='boolean'||!data.versions||typeof data.versions!=='object'||Array.isArray(data.versions)||Object.entries(data.versions).some(([k,v])=>!uuidPattern.test(k)||!Number.isInteger(v)||Number(v)<1)||Object.keys(data.versions).length>maxOccurrences||'repeat'in data||'count'in data||'ends'in data||'until'in data))return null;
  }else if(b.action==='category'){
   if(!id||!Number.isInteger(b.version)||Number(b.version)<0||Object.keys(data).sort().join(',')!=='active,color,name'||typeof data.name!=='string'||data.name.trim().length<2||data.name.length>80||typeof data.color!=='string'||!/^#[0-9a-f]{6}$/i.test(data.color)||typeof data.active!=='boolean')return null;
  }else if(['publish','cancel'].includes(b.action)){
