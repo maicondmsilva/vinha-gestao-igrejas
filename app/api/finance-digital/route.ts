@@ -1,4 +1,5 @@
 import {authorizeSupabaseChurch} from '../../lib/supabase/church-access';
+import {financeReason} from '../../lib/finance-errors';
 import {supabaseAdminClient} from '../../lib/supabase/server-admin';
 import type {OperationsClient} from '../../lib/supabase/operations';
 import {boundedBody} from '../../lib/private-files';
@@ -18,7 +19,7 @@ async function run(r:Request,write:boolean){
   const client=a.client as unknown as OperationsClient;
   // First database authorization rechecks unit/module, even for manual provider sync.
   const res=await client.rpc('finance_digital',{p_org:a.membership.organization_id,p_unit:unit,p_action:action==='sync'?'list':action,p_data:action==='sync'?{}:data});
-  if(res.error){const code=res.error.code;return json({error:code==='42501'?'Acesso ou conexão recusado.':code==='40001'?'Registro alterado. Atualize antes de repetir.':code==='22023'||code==='23514'?'Revise classificação, conta de destino e valores.':'Não foi possível confirmar. Confira a lista antes de repetir.'},code==='42501'?403:code==='40001'?409:code==='22023'||code==='23514'?400:503)}
+  if(res.error){const code=res.error.code;return json({error:financeReason(res.error.message)||(code==='42501'?'Acesso ou conexão recusado.':code==='40001'?'Registro alterado. Atualize antes de repetir.':code==='22023'||code==='23514'?'Revise classificação, conta de destino e valores.':'Não foi possível confirmar. Confira a lista antes de repetir.')},code==='42501'?403:code==='40001'?409:code==='22023'||code==='23514'?400:503)}
   if(action==='sync'){const server=supabaseAdminClient(),c=await digitalConnection(server,String(data.receiver));if(c.org!==a.membership.organization_id||!c.beneficiaries.includes(unit)||c.environment!==data.environment)return json({error:'Conexão fora do escopo.'},403);return json(await digitalSync(server,String(data.receiver),c,String(data.externalId)))}
   return json(res.data);
  }catch{return json({error:'Consulta ao provedor não confirmada. Nenhuma cobrança foi criada. Confira a fila de revisão.'},503)}
