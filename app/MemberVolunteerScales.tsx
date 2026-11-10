@@ -1,5 +1,6 @@
 'use client';
 import {useState, type FormEvent} from 'react';
+import ScaleCalendarLink from './ScaleCalendarLink';
 import type {ChurchRpc} from '../shared/member-church';
 import {useVolunteerScales, type VolunteerInvite} from '../shared/use-volunteer-scales';
 import {availabilityDraft, availabilityPayload, minutesText, type AvailabilityDraft} from '../shared/scale-availability';
@@ -55,6 +56,7 @@ export default function MemberVolunteerScales({rpc, org}: {rpc: ChurchRpc; org: 
           Atualizar escalas
         </button>
       </nav>
+      <ScaleCalendarLink rpc={rpc} org={org}/>
       {m.loading && <p role="status">Consultando suas escalas…</p>}
       {m.error && <p role="alert">{m.error}</p>}
       {error && <p role="alert">{error}</p>}

@@ -27,7 +27,7 @@ export const icsText = (v: string) =>
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n');
+    .replace(/\r\n?|\n/g, '\\n');
 
 /** Folds lines at 75 octets (UTF-8), continuation lines start with a space. */
 export function icsFold(line: string) {
