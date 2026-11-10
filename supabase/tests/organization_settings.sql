@@ -1,0 +1,68 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select no_plan();
+create function pg_temp.si(t text) returns uuid language sql immutable as $$select md5('organization-settings-test-'||t)::uuid$$;
+create function pg_temp.actor(t text) returns text language sql as $$select set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.si(t),'role','authenticated')::text,true)$$;
+insert into auth.users(id,instance_id,aud,role,email,email_confirmed_at,created_at,updated_at)
+select pg_temp.si(t),'00000000-0000-0000-0000-000000000000','authenticated','authenticated',t||'-settings@example.invalid',case when t='unconfirmed' then null else now() end,now(),now() from unnest(array['owner','viewer','outsider','unconfirmed']) t;
+insert into public.organizations(id,name,slug,status) values(pg_temp.si('org'),'Ministério fictício','settings-test','active'),(pg_temp.si('foreign'),'Outra organização fictícia','settings-foreign','active');
+insert into public.organization_units(id,organization_id,name,slug,unit_type,address) values
+(pg_temp.si('unit'),pg_temp.si('org'),'Sede fictícia','sede','headquarters','{"city":"Cidade original","postal_code":"12345678"}'),
+(pg_temp.si('foreignunit'),pg_temp.si('foreign'),'Outra sede fictícia','sede','headquarters','{}');
+insert into public.organization_units(id,organization_id,parent_unit_id,name,slug,unit_type,legal_name,tax_id,pastor_name,email,phone,address)
+values(pg_temp.si('sibling'),pg_temp.si('org'),pg_temp.si('unit'),'Igreja irmã fictícia','irma','campus','Razão social independente','11222333000181','Responsável da igreja irmã','irma@example.invalid','11999990000','{"city":"Outra cidade","street":"Outra rua"}');
+insert into public.organization_memberships(id,organization_id,user_id,role,status,default_unit_id)
+select pg_temp.si(t||'-membership'),pg_temp.si('org'),pg_temp.si(t),case when t='viewer' then 'viewer'::public.membership_role else 'owner'::public.membership_role end,'active',pg_temp.si('unit') from unnest(array['owner','viewer','unconfirmed']) t;
+create function pg_temp.payload() returns jsonb language sql as $$select jsonb_build_object('updatedAt',o.updated_at,'name','Ministério atualizado','appName','Aplicativo local','seniorPastorName','Responsável fictício','legalName','Razão fictícia','taxId','','primaryColor','#285c45','accentColor','#d8b769') from public.organizations o where id=pg_temp.si('org')$$;
+create function pg_temp.unit_payload() returns jsonb language sql as $$select jsonb_build_object('updatedAt',u.updated_at,'name','Sede atualizada','pastorName','Pastor fictício','legalName','','taxId','','email','sede@example.invalid','phone','','address',jsonb_build_object('city','Cidade nova','street','Rua fictícia','number','123')) from public.organization_units u where id=pg_temp.si('unit')$$;
+create function pg_temp.logo() returns text language sql immutable as $$select 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aSioAAAAASUVORK5CYII='$$;
+select ok(not has_table_privilege('authenticated','private.church_branding','select'),'marcas sem leitura direta');
+select ok(not has_function_privilege('anon','public.organization_settings_save(uuid,uuid,jsonb)','execute'),'visitante não grava');
+select ok(not has_function_privilege('anon','public.church_branding_read(uuid)','execute'),'visitante não consulta');
+select ok(not (select prosecdef from pg_proc where oid='public.organization_settings_save(uuid,uuid,jsonb)'::regprocedure),'fachada invocadora');
+set local role authenticated;
+select pg_temp.actor('owner');
+select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||jsonb_build_object('logo',pg_temp.logo()))$$,'salva identidade e logo');
+select is((select name from public.organizations where id=pg_temp.si('org')),'Ministério atualizado','nome atualizado na base canônica');
+select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('org')::text,pg_temp.logo(),'logo consultada na fonte única');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"updatedAt":"2000-01-01T00:00:00Z"}')$$,'40001','settings_changed','versão antiga não sobrescreve');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"status":"active"}')$$,'22023','invalid_settings','não altera contrato/status');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"registration_code":"999"}')$$,'22023','invalid_settings','código protegido');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"logo":"https://example.invalid/logo.svg"}')$$,'22023','invalid_logo','não busca URL remota nem aceita SVG');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),pg_temp.si('foreignunit'),pg_temp.unit_payload())$$,'42501','settings_access_denied','unidade estrangeira recusada');
+select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),pg_temp.si('unit'),pg_temp.unit_payload()||jsonb_build_object('logo',pg_temp.logo()))$$,'edita cadastro da sede');
+select is((select address->>'street' from public.organization_units where id=pg_temp.si('unit')),'Rua fictícia','endereço completo salvo');
+select is((select address->>'postal_code' from public.organization_units where id=pg_temp.si('unit')),'12345678','campos preexistentes preservados');
+select is((select name from public.organization_units where id=pg_temp.si('sibling')),'Igreja irmã fictícia','nome de outra igreja do mesmo ministério não muda');
+select is((select legal_name from public.organization_units where id=pg_temp.si('sibling')),'Razão social independente','razão social permanece própria de cada igreja');
+select is((select tax_id from public.organization_units where id=pg_temp.si('sibling')),'11222333000181','CNPJ não é propagado entre igrejas');
+select is((select pastor_name from public.organization_units where id=pg_temp.si('sibling')),'Responsável da igreja irmã','pastor local não é substituído pelo titular do ministério');
+select is((select email from public.organization_units where id=pg_temp.si('sibling')),'irma@example.invalid','contato institucional permanece separado');
+select is((select address->>'street' from public.organization_units where id=pg_temp.si('sibling')),'Outra rua','endereço não se propaga às outras igrejas');
+select is((select name from public.organizations where id=pg_temp.si('org')),'Ministério atualizado','editar igreja não sobrescreve cadastro do ministério');
+select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('sibling')::text,null,'logo local não é copiada para outra igreja');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),pg_temp.si('unit'),pg_temp.unit_payload()||'{"parent_unit_id":"fake"}')$$,'22023','invalid_settings','edição cadastral não muda hierarquia');
+select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"logo":""}')$$,'remove logo com fallback');
+select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('org')::text,null,'remoção persiste');
+select pg_temp.actor('viewer');
+select lives_ok($$select public.church_branding_read(pg_temp.si('org'))$$,'leitor consulta identidade');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,'{}')$$,'42501','settings_access_denied','leitor não altera');
+select pg_temp.actor('outsider');
+select throws_ok($$select public.church_branding_read(pg_temp.si('org'))$$,'42501','settings_access_denied','outra organização não consulta marca');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,'{}')$$,'42501','settings_access_denied','outra organização não grava');
+select pg_temp.actor('unconfirmed');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,'{}')$$,'42501',null,'e-mail não confirmado não altera');
+reset role;
+select ok(exists(select 1 from public.audit_logs where organization_id=pg_temp.si('org') and action='settings.profile.updated'),'cadastro auditado na mesma transação');
+select ok(not exists(select 1 from public.audit_logs where organization_id=pg_temp.si('org') and metadata::text like '%base64%'),'auditoria não replica imagem');
+set local role authenticated;
+select pg_temp.actor('owner');
+select lives_ok($$select public.save_organization_onboarding(pg_temp.si('org'),pg_temp.payload()||jsonb_build_object('step','identity','logo',pg_temp.logo()))$$,'cadastro inicial salva a mesma marca');
+select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('org')::text,pg_temp.logo(),'onboarding e configurações compartilham fonte');
+reset role;
+update public.organization_memberships set status='suspended' where id=pg_temp.si('owner-membership');
+set local role authenticated;
+select pg_temp.actor('owner');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,'{}')$$,'42501','settings_access_denied','suspensão revoga gravação');
+select * from finish();
+rollback;

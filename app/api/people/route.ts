@@ -4,6 +4,8 @@ import {resolveUnitSelection} from '../../lib/unit-integrity';
 
 import {memberWriteInput} from '../../lib/member-write';
 import type {Json} from '../../lib/supabase/database.types';
+import {peopleQuery,peopleSearchFilter} from '../../lib/people-query';
+import type {OperationsClient} from '../../lib/supabase/operations';
 
 function displayPostgresDate(value:string|null){
  if(!value)return 'Hoje';
@@ -19,9 +21,19 @@ async function resolveUnit(access:SupabaseChurchAccess,campus?:string){
 async function supabaseGET(request:Request){
  const auth=await authorizeSupabaseChurch(request,'people.read');if(!auth||auth.response)return auth?.response||NextResponse.json({error:'Supabase indisponível.'},{status:503});
  const access=auth.access!,organizationId=access.membership.organization_id;
- const {data:people,error}=await access.client.from('people').select('*').eq('organization_id',organizationId).order('created_at',{ascending:false});
+ let parameters:ReturnType<typeof peopleQuery>;
+ try{parameters=peopleQuery(request)}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Filtros inválidos.'},{status:400})}
+ let query=access.client.from('people').select('*',{count:'exact'}).eq('organization_id',organizationId);
+ if(parameters.unitId)query=query.eq('unit_id',parameters.unitId);
+ if(parameters.id)query=query.eq('id',parameters.id);
+ if(parameters.status)query=query.eq('journey_status',parameters.status);
+ if(parameters.group)query=query.eq('group_name',parameters.group);
+ if(parameters.q)query=query.or(peopleSearchFilter(parameters.q));
+ const {data:people,error,count}=await query.order('created_at',{ascending:false}).order('id',{ascending:false}).range(parameters.from,parameters.to);
  if(error)return NextResponse.json({error:'Não foi possível carregar os membros.'},{status:500});
  const ids=(people||[]).map(person=>person.id);
+ const numbering=ids.length?await(access.client as unknown as OperationsClient).rpc('record_numbering',{p_org:organizationId,p_action:'people',p_data:{ids}}):{data:{codes:{}},error:null};
+ if(numbering.error)return NextResponse.json({error:'Não foi possível consultar os códigos de cadastro.'},{status:503});
  const empty:any[]=[];
  const [addresses,contacts,notes,units,consents]=await Promise.all([
   ids.length?access.client.from('person_addresses').select('*').eq('organization_id',organizationId).in('person_id',ids):Promise.resolve({data:empty,error:null}),
@@ -36,14 +48,15 @@ async function supabaseGET(request:Request){
  const consentByPerson=new Map<string,boolean>();for(const item of consents.data||[]){const key=item.person_id+':'+item.consent_type;if(!consentByPerson.has(key))consentByPerson.set(key,item.granted)}
  const noteByPerson=new Map<string,any>();for(const item of notes.data||[])if(!noteByPerson.has(item.person_id))noteByPerson.set(item.person_id,item);
  const unitNames=new Map((units.data||[]).map(unit=>[unit.id,unit.name]));
- return NextResponse.json((people||[]).map(person=>{const address=addressByPerson.get(person.id),contact=contactByPerson.get(person.id),note=noteByPerson.get(person.id);return{
-  id:person.id,name:person.full_name,email:person.email||'',phone:person.phone||'',status:person.journey_status,group:person.group_name||'Sem grupo',
+ const records=(people||[]).map(person=>{const address=addressByPerson.get(person.id),contact=contactByPerson.get(person.id),note=noteByPerson.get(person.id);return{
+  id:person.id,code:numbering.data?.codes?.[person.id]||null,name:person.full_name,email:person.email||'',phone:person.phone||'',status:person.journey_status,group:person.group_name||'Sem grupo',
   initials:person.full_name.split(' ').map(part=>part[0]).join('').slice(0,2).toUpperCase(),since:displayPostgresDate(person.joined_at),
   birthDate:person.birth_date||'',gender:person.gender||'',maritalStatus:person.marital_status||'',cpf:person.cpf||'',campusId:person.unit_id||'',firstVisit:person.first_visit_at?.slice(0,10)||'',joined:person.joined_at?.slice(0,10)||'',campus:person.unit_id?unitNames.get(person.unit_id)||'':'',
   baptized:person.baptized?'Sim':'Não',baptismDate:person.baptism_date||'',tags:(person.tags||[]).join(', '),access:person.app_role||'member',
   address:address?.street||'',number:address?.number||'',extra:address?.complement||'',district:address?.district||'',city:address?.city||'',state:address?.state||'',zip:address?.postal_code||'',
   emergencyName:contact?.name||'',emergencyPhone:contact?.phone||'',notes:note?.content||'',privacy:consentByPerson.get(person.id+':privacy'),imageConsent:consentByPerson.get(person.id+':image'),messages:consentByPerson.get(person.id+':messages'),
- }}));
+ }});
+ return NextResponse.json({people:records,pagination:{page:parameters.page,limit:parameters.limit,total:count||0,pages:Math.max(1,Math.ceil((count||0)/parameters.limit))}},{headers:{'Cache-Control':'no-store'}});
 }
 
 function saveFailure(code?:string){

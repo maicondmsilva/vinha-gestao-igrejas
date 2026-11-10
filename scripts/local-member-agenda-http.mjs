@@ -1,0 +1,22 @@
+import {localSupabaseConfig} from './local-supabase-config.mjs';
+import {createServerClient} from '@supabase/ssr';
+import assert from 'node:assert/strict';
+if(process.argv[2]!=='--local-synthetic')throw Error('Somente banco local fictício.');
+const c=localSupabaseConfig();assert.equal(c.API_URL,'http://127.0.0.1:54321');
+const cookies=new Map(),origin='http://127.0.0.1:4100',slug='kids-visual-0ccf07ad-7ce7-4332-9725-7444ec231911',org='9af12a97-7a0d-454f-8c08-1c0858b0d6bf',unit='687d9605-ecae-40bc-bf14-bd0ce7bef88a';
+const client=createServerClient(c.API_URL,c.PUBLISHABLE_KEY||c.ANON_KEY,{cookies:{getAll:()=>[...cookies].map(([name,value])=>({name,value})),setAll:rows=>{for(const r of rows)cookies.set(r.name,r.value)}}});
+assert.equal((await client.auth.signInWithPassword({email:'visual-kids-k2-20261024-b@example.invalid',password:'Kids-K2-Local-Synthetic-Only-2026!'})).error,null);
+const headers=()=>({origin,cookie:[...cookies].map(([k,v])=>k+'='+encodeURIComponent(v)).join('; '),'Content-Type':'application/json'});
+async function request(body,status=200){const r=await fetch(origin+'/api/member-agenda-admin?tenant='+slug+'&unit='+unit,{method:body?'POST':'GET',headers:headers(),...(body?{body:JSON.stringify({...body,unit})}:{})}),d=await r.json();assert.equal(r.status,status,JSON.stringify(d));assert.match(r.headers.get('cache-control'),/no-store/);return d;}
+const start=new Date(Date.now()+3600000),end=new Date(Date.now()+7200000),local=d=>new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(d).replace(' ','T');
+await request({action:'create',id:null,version:null,data:{title:'Encontro fictício — validação da agenda',description:'Evento exclusivamente local para testar inscrição e ticket. Nenhum convite real.',kind:'event',startsLocal:local(start),endsLocal:local(end),location:'Sede fictícia',address:'Endereço de demonstração',capacity:2}});
+const list=await request(),event=list.items.find(e=>e.title==='Encontro fictício — validação da agenda'&&e.status==='draft');assert.ok(event);
+await request({action:'publish',id:event.id,version:event.version});
+const reg=await client.rpc('member_agenda_self',{p_org:org,p_unit:unit,p_action:'register',p_id:event.id});assert.equal(reg.error,null);assert.equal(reg.data.ok,true);
+const own=await client.rpc('member_agenda_self',{p_org:org,p_action:'tickets'});assert.equal(own.error,null);const ticket=own.data.items.find(t=>t.event_id===event.id);assert.ok(ticket?.code);
+await request({action:'checkin',id:event.id,data:{code:ticket.code}});
+const inbox=await client.rpc('member_agenda_self',{p_org:org,p_unit:unit,p_action:'inbox'});assert.equal(inbox.error,null);assert.ok(inbox.data.items.length);
+const read=await client.rpc('member_agenda_self',{p_org:org,p_unit:unit,p_action:'read',p_data:{keys:inbox.data.items.map(n=>n.message_key)}});assert.equal(read.error,null);
+await request({action:'publish',id:event.id,version:event.version},409);
+await request({action:'create',organization:org},400);
+console.log('Agenda HTTP local: sessão, rascunho, publicação, inscrição, ticket, check-in, leitura e versão conflitante aprovados. Somente dados fictícios.');

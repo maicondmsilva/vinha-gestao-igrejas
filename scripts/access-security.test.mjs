@@ -31,6 +31,13 @@ test('session writes require exact origin, independent of forged identity or for
  assert.equal(trustedSessionRequest(request({origin:'https://app.vinhaigrejas.com.br'})),true);
  assert.equal(trustedSessionRequest(new Request('https://example.invalid/api/session')),true);
 });
+test('native staff app: bearer token without cookies is accepted; a cookie session still needs the origin',()=>{
+ const jwt='Bearer aaa.bbb.ccc',request=(headers={})=>new Request('https://app.vinhaigrejas.com.br/api/push/campaigns',{method:'POST',headers});
+ assert.equal(trustedSessionRequest(request({authorization:jwt})),true);
+ assert.equal(trustedSessionRequest(request({authorization:jwt,cookie:'sb-access=1'})),false);
+ assert.equal(trustedSessionRequest(request({authorization:'Bearer not-a-jwt'})),false);
+ assert.equal(trustedSessionRequest(request({authorization:'Basic abc'})),false);
+});
 function client({role='owner',level='aal2',user={id:'verified-user',email:'operator@example.invalid'},userError=null,rpcError=null,aalError=null,operators}={}){
  return {auth:{getUser:async()=>({data:{user},error:userError}),mfa:{getAuthenticatorAssuranceLevel:async()=>({data:{currentLevel:level},error:aalError})}},
  rpc:async()=>({data:operators||[{role,full_name:'Operator'}],error:rpcError})};

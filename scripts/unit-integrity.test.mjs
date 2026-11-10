@@ -3,6 +3,7 @@ import {test} from 'node:test';
 import {readFileSync} from 'node:fs';
 import ts from 'typescript';
 import {resolveUnitSelection,validUnitParent,unitPreference} from '../app/lib/unit-integrity.ts';
+import {unitWriteError} from '../app/lib/unit-write-error.ts';
 
 const units=[
  {id:'sede',name:'Sede',parent_unit_id:null},
@@ -60,8 +61,8 @@ function route(name,responses){
  const js=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText
   .replace(/^import .*;\r?\n/gm,'')
   .replace(/export \{[\s\S]*?\};/,'return {PATCH:supabasePATCH};');
- const handlers=new Function('NextResponse','authorizeSupabaseChurch','supabaseAudit','resolveUnitSelection','validUnitParent',js)(
-  {json:Response.json},async()=>({access,response:null}),async()=>{audits++},resolveUnitSelection,validUnitParent);
+ const handlers=new Function('NextResponse','authorizeSupabaseChurch','supabaseAudit','resolveUnitSelection','validUnitParent','unitWriteError',js)(
+  {json:Response.json},async()=>({access,response:null}),async()=>{audits++},resolveUnitSelection,validUnitParent,unitWriteError);
  return {handlers,calls,audits:()=>audits};
 }
 const request=body=>new Request('https://app.example.invalid/api',{method:'PATCH',body:JSON.stringify(body)});
@@ -91,6 +92,26 @@ test('units: circular reparenting stops before update',async()=>{
  assert.equal(response.status,400);
  assert.equal(r.calls.length,1);
  assert.equal(r.audits(),0);
+});
+test('units: headquarters denial is explained and never audited as success',async()=>{
+ const r=route('units',[{data:units,error:null},{data:null,error:{code:'42501',message:'unit_headquarters_classification_immutable'}}]);
+ const response=await r.handlers.PATCH(request({id:'filha',name:'Filha',type:'headquarters',parentUnitId:null}));
+ assert.equal(response.status,400);assert.match((await response.json()).error,/classificação da sede/);assert.equal(r.audits(),0);
+});
+test('units: suspended ministry denial is explained without exposing database details',async()=>{
+ const r=route('units',[{data:units,error:null},{data:null,error:{code:'42501',message:'unit_organization_unavailable'}}]);
+ const response=await r.handlers.PATCH(request({id:'filha',name:'Filha',type:'campus',parentUnitId:'sede'}));
+ assert.equal(response.status,400);assert.match((await response.json()).error,/Central/);assert.equal(r.audits(),0);
+});
+test('units: only known write failures are translated',()=>{
+ assert.match(unitWriteError('unit_headquarters_exists','Falha'),/já está cadastrada/);
+ assert.match(unitWriteError('unit_headquarters_parent_denied','Falha'),/subordinada/);
+ assert.equal(unitWriteError('sensitive SQL detail','Falha'),'Falha');
+});
+test('units: partial headquarters edit preserves its existing type',async()=>{
+ const r=route('units',[{data:[{id:'sede',name:'Sede',parent_unit_id:null,unit_type:'headquarters'}],error:null},{data:{id:'sede'},error:null}]);
+ const response=await r.handlers.PATCH(request({id:'sede',name:'Sede atualizada'}));
+ assert.equal(response.status,200);assert.equal(r.calls[1].value.unit_type,'headquarters');assert.equal(r.calls[1].value.parent_unit_id,null);assert.equal(r.audits(),1);
 });
 for(const name of ['units']){
  test(name+': database failure stops editing without audit',async()=>{

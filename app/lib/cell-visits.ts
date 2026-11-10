@@ -1,0 +1,16 @@
+import {cellUuid} from './cell-directory';
+export type CellVisit={id:string;cell_id:string;person_id:string|null;visitor_name:string;visit_date:string;status:'recorded'|'cancelled';version:number};
+function object(v:unknown):Record<string,unknown>{if(!v||typeof v!=='object'||Array.isArray(v))throw Error('invalid_visit');return v as Record<string,unknown>}
+function exact(v:Record<string,unknown>,keys:string[]){if(Object.keys(v).sort().join(',')!==[...keys].sort().join(','))throw Error('invalid_visit')}
+export function visitUuid(v:unknown):string{if(typeof v!=='string'||!cellUuid.test(v))throw Error('invalid_visit');return v}
+export function visitDate(v:unknown):string{if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v)||v<'1900-01-01'||v>'2200-12-31'||!Number.isFinite(Date.parse(v+'T12:00:00Z'))||new Date(v+'T12:00:00Z').toISOString().slice(0,10)!==v)throw Error('invalid_visit');return v}
+export function visitData(value:unknown){const v=object(value);exact(v,['person_id','visitor_name','visit_date','status']);
+ if(v.person_id!==null)visitUuid(v.person_id);
+ if(typeof v.visitor_name!=='string'||v.visitor_name.trim().length<2||v.visitor_name.length>120||/[\x00-\x1f\x7f]/.test(v.visitor_name)||typeof v.status!=='string'||!['recorded','cancelled'].includes(v.status))throw Error('invalid_visit');
+ return {person_id:v.person_id as string|null,visitor_name:v.visitor_name.trim(),visit_date:visitDate(v.visit_date),status:v.status as CellVisit['status']};
+}
+export function visitCommand(value:unknown){const v=object(value);exact(v,['id','cellId','version','data']);if(!Number.isSafeInteger(v.version)||Number(v.version)<0)throw Error('invalid_visit');return {id:visitUuid(v.id),cellId:visitUuid(v.cellId),version:v.version as number,data:visitData(v.data)}}
+export function visitQuery(request:Request){const p=new URL(request.url).searchParams;for(const key of ['unitId','cellId','from','to','after'])if(p.getAll(key).length>1)throw Error('invalid_visit');const from=visitDate(p.get('from')),to=visitDate(p.get('to'));if(to<from||(Date.parse(to)-Date.parse(from))/86400000>365)throw Error('invalid_visit');return {unitId:visitUuid(p.get('unitId')),cellId:p.has('cellId')?visitUuid(p.get('cellId')):null,from,to,after:p.has('after')?visitUuid(p.get('after')):null}}
+export function visitPage(value:unknown){const v=object(value);exact(v,['unitId','cellId','items','nextCursor','canManage']);const unitId=visitUuid(v.unitId),cellId=v.cellId===null?null:visitUuid(v.cellId),nextCursor=v.nextCursor===null?null:visitUuid(v.nextCursor);if(typeof v.canManage!=='boolean'||!Array.isArray(v.items)||v.items.length>100)throw Error('invalid_visit');
+ const items=v.items.map(raw=>{const r=object(raw);exact(r,['id','cell_id','person_id','visitor_name','visit_date','status','version']);if(!Number.isSafeInteger(r.version)||Number(r.version)<1)throw Error('invalid_visit');const {id,cell_id,version,...data}=r;const item={id:visitUuid(id),cell_id:visitUuid(cell_id),version:version as number,...visitData(data)};if(cellId&&item.cell_id!==cellId)throw Error('invalid_visit');return item});if(new Set(items.map(i=>i.id)).size!==items.length||items.some((item,i)=>i>0&&item.id<=items[i-1].id)||nextCursor&&(items.length!==100||nextCursor!==items.at(-1)?.id))throw Error('invalid_visit');return {unitId,cellId,items,nextCursor,canManage:v.canManage};
+}

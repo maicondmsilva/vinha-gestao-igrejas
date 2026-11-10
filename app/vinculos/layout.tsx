@@ -1,6 +1,4 @@
-import { UnavailableFeature } from '../PilotAvailability';
-
-// Do not mount legacy client pages while their operations are unavailable.
-export default function ContainedLegacyLayout({ children: _children }: { children: React.ReactNode }) {
-  return <UnavailableFeature/>;
+// Requests and metadata only; operational cross-ministry sharing remains blocked.
+export default function HierarchyLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }

@@ -1,0 +1,90 @@
+.f1-form-grid .f4-active{display:flex;align-items:center;gap:10px;align-self:end;min-height:44px;flex-direction:row}
+.f1-dialog .f1-dialog-foot{display:flex;justify-content:flex-end;gap:12px;border-top:1px solid #e0e9e2;padding-top:20px;margin-top:24px}
+.f1-dialog .f1-actions>a{display:inline-flex;align-items:center;background:var(--tenant,#285c45);color:white;padding:11px 16px;border-radius:10px;text-decoration:none;font-size:14px}
+.f1-entry-receipt{margin-top:18px;padding:16px;background:#f3f7f4;border:1px dashed #becfc3;border-radius:12px}
+.f1-entry-receipt small{font-weight:400;line-height:1.6;color:#61766a}
+.sidebar-signout{padding:12px 18px}.sidebar-signout button{width:100%;padding:12px;border:1px solid #ffffff38;border-radius:9px;background:transparent;color:#fff;text-align:left;cursor:pointer}.sidebar-signout small{display:block;color:#ffdba8;margin-top:8px}
+@media(max-width:600px){.f1-dialog .f1-dialog-foot{flex-direction:column-reverse}.f1-dialog .f1-dialog-foot button{width:100%}}
+.f1-form-grid .f4-active input[type=checkbox]{width:18px;height:18px;min-height:18px;flex:0 0 18px;margin:0;accent-color:#245c48}
+.f1-entry-link{background:transparent!important;color:var(--ink,#174b3b)!important;border:0!important;padding:4px 0!important;text-align:left;box-shadow:none!important;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.f1-entry-link:focus-visible{outline:2px solid #24765a;outline-offset:3px}
+.f1-entry-summary{display:grid;grid-template-columns:minmax(120px,1fr) 2fr;gap:10px 18px;padding:18px;background:#f3f7f4;border:1px solid #dfe8e1;border-radius:14px;margin:0 0 18px}.f1-entry-summary dt{color:#66796f;font-size:13px}.f1-entry-summary dd{margin:0;font-weight:600;overflow-wrap:anywhere}@media(max-width:520px){.f1-entry-summary{grid-template-columns:1fr;gap:4px}.f1-entry-summary dd{margin-bottom:9px}}
+
+/* Recebimentos digitais: hierarchy, amounts and details remain readable at every width. */
+.f1-workspace .digital-receipts{display:grid;gap:20px;min-width:0;color:#214638}
+.digital-receipts .digital-intro{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:4px 0}
+.digital-receipts .digital-eyebrow{font-size:13px;font-weight:700;letter-spacing:.15em;color:#668375;margin:0 0 8px}
+.digital-receipts .digital-intro h2{font:600 clamp(23px,2.5vw,30px)/1.25 Georgia,serif;margin:0 0 8px;letter-spacing:-.02em;color:#183f31}
+.digital-receipts .digital-intro p:not(.digital-eyebrow){margin:0;font-size:14px;line-height:1.6;color:#687d71}
+.f1-workspace .digital-receipts button{background:#245b44;border:1px solid #245b44;border-radius:9px;min-height:42px;padding:10px 15px;font-size:13px;line-height:1.45;white-space:normal;word-break:normal;box-shadow:none}
+.f1-workspace .digital-receipts button.f1-secondary{color:#315c46;border-color:#ceddd3;background:#fff}
+.digital-receipts button:not(:disabled):hover{filter:brightness(.97)}
+.digital-receipts .digital-intro>button{flex-shrink:0}
+.digital-receipts .f1-alert,.digital-receipts .f1-notice{margin:0}
+.digital-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.digital-metric{min-width:0;border:1px solid #dae4dd;background:#fff;padding:21px 20px 18px;border-radius:14px;display:flex;flex-direction:column;gap:12px;box-shadow:0 3px 12px #173b2704}
+.digital-metric>span{font-size:12px;font-weight:600;line-height:1.5;color:#587160}
+.digital-metric strong{font:600 clamp(21px,2vw,29px)/1.2 Georgia,serif;letter-spacing:-.025em;color:#244e38;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.digital-metric>small{font-size:13px;line-height:1.6;color:#647667;margin-top:auto}
+.digital-metric.net{background:#eaf1eb;border-color:#c9dbce}.digital-metric.negative strong{color:#a34e3c}
+.digital-receipts .digital-summary-note{margin:-9px 2px 0;font-size:13px;line-height:1.6;color:#647667}
+.digital-payments{background:#fff;border:1px solid #dae4dd;border-radius:16px;min-width:0;overflow:hidden}
+.digital-section-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 22px 18px}
+.digital-receipts h3{font-size:17px;line-height:1.4;margin:0;font-weight:650;color:#254a38;letter-spacing:-.015em}
+.digital-section-head p{margin:5px 0 0;color:#647667;font-size:12px;line-height:1.5}
+.digital-filters{display:flex;align-items:flex-end;gap:14px;padding:0 22px 18px;flex-wrap:wrap}
+.digital-filters>label:first-child{flex:1 1 280px}.digital-filters>label:nth-child(2){flex:0 1 220px}
+.f1-workspace .digital-filters label{min-width:0;font-size:13px;gap:6px;font-weight:600;color:#5c7264}
+.f1-workspace .digital-filters input,.f1-workspace .digital-filters select{min-height:42px;font-size:13px;border-color:#d4dfd7;background:#fcfdfb}
+.digital-receipts .digital-ledger-note{margin:0;padding:12px 22px;background:#f7f9f5;border-top:1px solid #e8ede6;border-bottom:1px solid #e3eae2;font-size:13px;color:#647667;line-height:1.6}
+.digital-table-wrap{max-width:100%;overflow:auto}
+.f1-workspace .digital-table{width:100%;min-width:0;table-layout:auto;border-collapse:collapse;font-size:12px}
+.f1-workspace .digital-table th{background:#fafbf8;letter-spacing:.045em;font-weight:600;font-size:13px;line-height:1.6;color:#647667;padding:15px 16px;vertical-align:middle;text-align:left;border-bottom:1px solid #e4eae3}
+.f1-workspace .digital-table th:nth-child(1){width:25%}.f1-workspace .digital-table th:nth-child(2){width:16%}.f1-workspace .digital-table th:nth-child(3){width:11%}.f1-workspace .digital-table th:nth-child(4){width:17%}.f1-workspace .digital-table th:nth-child(5){width:12%}.f1-workspace .digital-table th:nth-child(6){width:19%}
+.f1-workspace .digital-table td{padding:20px 16px;vertical-align:top;border-bottom:1px solid #e7ece6;overflow-wrap:anywhere;line-height:1.6}
+.f1-workspace .digital-table tbody tr:last-child td{border-bottom:0}.digital-table tbody tr:hover{background:#fafcf9}
+.digital-table .digital-person{display:block;font-size:13px;font-weight:650;line-height:1.55;color:#254736}
+.digital-purpose{display:block;color:#647667;font-size:13px;line-height:1.6;margin-top:5px}
+.digital-order-ref{display:block;font-size:13px;line-height:1.65;color:#647667;margin-top:8px;font-variant-numeric:tabular-nums}
+.digital-test-label{display:inline-block;color:#89692d;font-size:13px;margin-top:7px}
+.digital-status{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:5px 9px;border-radius:6px;background:#f0f2ee;color:#687568;font-size:13px;font-weight:600;line-height:1.4;white-space:normal}
+.digital-status:before{content:'';height:5px;width:5px;background:currentColor;border-radius:50%;flex:0 0 5px}
+.digital-status.approved{color:#37794b;background:#e8f3e7}.digital-status.refunded,.digital-status.partially_refunded{color:#626e87;background:#edf0f6}.digital-status.processing,.digital-status.pending{background:#fcf3df;color:#8a6c36}.digital-status.disputed,.digital-status.rejected{background:#f9ede8;color:#a76248}
+.digital-payment-meta{display:block;margin-top:8px;font-size:13px;color:#647667;line-height:1.55}
+.f1-workspace .digital-table .digital-amount{font-weight:600;font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right;overflow-wrap:normal;color:#34573e}
+.f1-workspace .digital-table th:nth-child(3),.f1-workspace .digital-table th:nth-child(5){text-align:right}
+.f1-workspace .digital-table .digital-negative{color:#a45b43}
+.digital-costs{margin:0;display:grid;gap:9px;font-size:13px}.digital-costs>div{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.digital-costs dt{color:#647667}.digital-costs dd{margin:0;color:#5d725b;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13px}
+.digital-bank-state{display:block;font-size:13px;color:#647667;line-height:1.5}.digital-bank-state.reconciled{color:#407e4e}
+.digital-receipts .digital-review-reason{font-size:13px;line-height:1.6;color:#a16c33;margin:8px 0}
+.f1-workspace .digital-receipts .digital-record-details{max-width:none;margin-top:10px}
+.digital-record-details summary{font-size:13px;font-weight:600;color:#386648;line-height:1.5;padding:3px 0}
+.digital-record-details[open] summary{margin-bottom:12px}.digital-record-details dl{display:grid;gap:12px;margin:0 0 12px;font-size:13px}.digital-record-details dt{color:#647667;margin-bottom:3px}.digital-record-details dd{margin:0;color:#596f56;overflow-wrap:anywhere;line-height:1.7}
+.digital-record-details button{margin:5px 0;width:100%;font-size:13px!important;padding:8px 10px!important;min-height:36px!important}
+.digital-history{display:grid;gap:8px}.f1-workspace .digital-history small{max-width:none;font-size:13px;line-height:1.6;margin:0}
+.digital-fee-detail p{font-size:13px;color:#647667;line-height:1.7}
+.digital-pagination{border-top:1px solid #e4eae0;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;color:#647667;font-size:13px}.digital-pagination>div{display:flex;gap:8px}.digital-pagination button{font-size:13px!important;min-height:36px!important;padding:8px 12px!important}
+.digital-empty{text-align:center;padding:45px 22px;color:#647667}.digital-empty>span{font-size:24px;color:#b7c8ab}.digital-empty h4{font-size:15px;color:#607b50;margin:12px 0 8px}.digital-empty p{font-size:12px;line-height:1.7;margin:0;color:#647667}
+.digital-loading{padding:28px;text-align:center;font-size:13px;color:#647667}
+.f1-workspace .digital-receipts .digital-advanced{max-width:none;border:1px solid #dae4dd;border-radius:14px;background:#fff;padding:0;margin:0;overflow:hidden}
+.digital-advanced>summary{padding:19px 22px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:14px;color:#31523d;cursor:pointer}.digital-advanced>summary::-webkit-details-marker{display:none}.digital-advanced>summary strong{display:block;font-size:13px;line-height:1.5;font-weight:600}.digital-advanced>summary small{display:block;font-size:13px;color:#647667;margin-top:3px;line-height:1.6}
+.digital-disclosure-icon{font-size:21px;font-weight:300;color:#647667;transition:transform .15s}.f1-workspace .digital-receipts .digital-advanced[open]>summary{margin-bottom:0}.digital-advanced[open]>summary .digital-disclosure-icon{transform:rotate(45deg)}
+.digital-advanced-body{border-top:1px solid #e4eae0;padding:22px}.digital-advanced-head{display:flex;gap:20px;justify-content:space-between;align-items:center;flex-wrap:wrap}.digital-advanced-head p{font-size:12px;color:#647667;line-height:1.7;margin:0;max-width:560px}.digital-advanced .f1-actions{gap:8px}.digital-advanced .f1-actions button{font-size:12px}
+.digital-purpose-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}.digital-purpose-grid>article{border:1px solid #e0e8dc;border-radius:10px;padding:18px;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:12px}.digital-purpose-top{display:flex;justify-content:space-between;gap:10px;align-items:center;width:100%;font-size:13px;color:#647667}.digital-purpose-grid h4{font-size:14px;font-weight:600;line-height:1.5;margin:0;color:#415e35;overflow-wrap:anywhere}.digital-purpose-grid dl{display:grid;gap:12px;font-size:13px;margin:0 0 4px}.digital-purpose-grid dt{color:#647667;margin-bottom:3px}.digital-purpose-grid dd{margin:0;color:#647667;line-height:1.6;overflow-wrap:anywhere}.digital-purpose-grid button{margin-top:auto}
+.f1-workspace .digital-destinations>.f1-card{border:0;border-top:1px solid #e4eae0;border-radius:0;margin:0;padding:22px;box-shadow:none}.digital-destinations>.f1-card>h3{display:none}.digital-destinations>.f1-card>p{font-size:12px;line-height:1.7;margin:0 0 16px}.digital-destinations>.f1-card>small{font-size:13px;line-height:1.7;color:#647667;display:block;margin-top:16px}
+@media(max-width:1250px){.digital-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.f1-workspace .digital-table th,.f1-workspace .digital-table td{padding-left:12px;padding-right:12px}.digital-purpose-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1050px){.digital-receipts .digital-intro{align-items:flex-start}.digital-record-details[open]{min-width:0}}
+@media(max-width:850px){.f1-workspace .digital-table,.f1-workspace .digital-table tbody{display:block;width:100%}.f1-workspace .digital-table thead{display:none}.f1-workspace .digital-table tbody{padding:0 18px}.f1-workspace .digital-table tr{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;padding:22px 0;border-bottom:1px solid #dfe7da}.f1-workspace .digital-table tr:last-child{border:0}.f1-workspace .digital-table td{display:block;padding:0;border:0;min-width:0}.f1-workspace .digital-table td:before{content:attr(data-label);display:block;text-align:left;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#647667;margin-bottom:7px;font-weight:500}.f1-workspace .digital-table td:first-child{grid-column:1/-1}.f1-workspace .digital-table .digital-amount{text-align:left}.digital-costs{gap:7px}.digital-costs>div{justify-content:flex-start;gap:12px}.digital-order-ref{margin-top:6px}.digital-record-details[open]{padding:12px;background:#f7f9f4;border:1px solid #e4eadd;border-radius:8px}.digital-table tbody tr:hover{background:transparent}}
+@media(max-width:600px){.f1-workspace .digital-receipts{gap:16px}.digital-receipts .digital-intro{flex-direction:column;gap:16px}.digital-receipts .digital-intro>button{width:100%}.digital-metrics{gap:10px}.digital-metric{padding:16px 13px;gap:9px;border-radius:11px}.digital-metric>span{font-size:13px}.digital-metric strong{font-size:22px}.digital-metric>small{font-size:13px;line-height:1.6}.digital-section-head{padding:18px 16px;gap:10px}.digital-section-head h3{font-size:16px}.digital-section-head p{font-size:13px}.digital-section-head>button{font-size:13px!important;padding:8px 11px!important;min-height:36px!important}.digital-filters{padding:0 16px 16px;gap:12px}.digital-filters>label:first-child,.digital-filters>label:nth-child(2){flex:1 1 100%;width:100%}.f1-workspace .digital-filters input,.f1-workspace .digital-filters select{font-size:16px}.digital-filters>button{width:100%}.digital-receipts .digital-ledger-note{padding:12px 16px;font-size:13px}.digital-pagination{padding:16px;align-items:flex-start;flex-direction:column;gap:12px}.digital-pagination>div{width:100%}.digital-pagination>div>button{flex:1}.digital-advanced>summary{padding:17px 16px}.digital-advanced-body{padding:16px}.digital-purpose-grid{grid-template-columns:1fr}.digital-purpose-grid>article{padding:16px}.f1-workspace .digital-destinations>.f1-card{padding:16px}.digital-destinations .f1-actions{flex-direction:column}.digital-destinations .f1-actions button{width:100%}.digital-destinations .f1-table-scroll{margin-top:16px}.digital-record-details button{width:auto;max-width:100%}}
+@media(max-width:370px){.digital-metrics{grid-template-columns:1fr}.f1-workspace .digital-table tr{grid-template-columns:1fr}.f1-workspace .digital-table td:first-child{grid-column:auto}.digital-section-head{align-items:flex-start;flex-direction:column}}
+
+.digital-receipts .digital-intro{background:transparent;border:0;box-shadow:none}
+@media(max-width:850px){.f1-workspace .digital-destination-table,.f1-workspace .digital-destination-table tbody{min-width:0;width:100%;display:block}.digital-destination-table thead{display:none}.digital-destination-table tr{display:grid;gap:14px;padding:18px 0;border-bottom:1px solid #dde7d8}.f1-workspace .digital-destination-table td{display:block;padding:0;border:0;overflow-wrap:anywhere;font-size:12px}.digital-destination-table td:before{content:attr(data-label);display:block;font-size:13px;font-weight:600;color:#647667;margin-bottom:5px}.digital-destination-table td:last-child:empty{display:none}}
+.f1-workspace .digital-table .digital-detail-button{display:block;background:none;color:#386648;border:0;text-align:left;text-decoration:underline;text-underline-offset:3px;padding:8px 0;min-height:34px;font-size:13px;line-height:1.5}
+.digital-table td:last-child>.f1-secondary{display:block;font-size:13px!important;padding:8px 10px!important;min-height:36px!important;max-width:100%;margin-top:5px}
+.digital-detail-panel>header{background:transparent;border:0;box-shadow:none;padding:0;display:block;margin-bottom:20px}.digital-detail-panel>header h3{font-size:18px;line-height:1.5;margin:0;overflow-wrap:anywhere}.digital-detail-panel>header p{margin:5px 0 12px;color:#647667;font-size:13px;line-height:1.7}
+.digital-detail-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:20px;background:#f6f9f4;border:1px solid #dfe7db;border-radius:12px;margin:0 0 20px}.digital-detail-fields>div{min-width:0}.digital-detail-fields .digital-detail-wide{grid-column:1/-1}.digital-detail-fields dt{font-size:13px;line-height:1.5;color:#647667;margin-bottom:5px}.digital-detail-fields dd{font-size:14px;color:#31553e;margin:0;overflow-wrap:anywhere;line-height:1.6;font-variant-numeric:tabular-nums}.digital-detail-history{border-top:1px solid #e0e8da;padding-top:20px;margin-top:20px}.digital-detail-history h3{margin-bottom:12px;font-size:15px}.digital-detail-history .digital-history>button{justify-self:start}.digital-history small{max-width:100%!important;font-size:12px!important;color:#647667!important;line-height:1.7}
+@media(max-width:420px){.digital-detail-fields{grid-template-columns:1fr;padding:16px;gap:16px}.digital-detail-fields .digital-detail-wide{grid-column:auto}.digital-detail-panel>header h3{font-size:16px}}
+
+.f1-workspace .digital-receipts .f1-dialog-head button{font-size:22px;width:38px;height:38px;min-height:38px;padding:0;line-height:1;background:#f1f5ef;color:#526c56;border:1px solid #d7e3d5}
+.digital-receipts .digital-intro,.digital-receipts .digital-section-head,.digital-detail-panel>header{height:auto;min-height:0;max-height:none;flex-shrink:0}
+@media(max-width:850px){.f1-workspace .digital-table thead,.f1-workspace .digital-destination-table thead{display:table-header-group;position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}

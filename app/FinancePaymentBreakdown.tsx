@@ -1,0 +1,6 @@
+import {financeMoney} from './lib/finance-f1';
+import type {DigitalPayment} from './lib/finance-origin';
+const labels:Record<string,string>={gross:'Recebimento confirmado',fee:'Taxa administrativa',refund:'Devolução confirmada',fee_credit:'Taxa devolvida'};
+export default function FinancePaymentBreakdown({payment}:{payment:DigitalPayment}){
+ return <section className="f1-payment-breakdown"><h3>Composição do recebimento</h3><div className="f1-form-grid">{[['Valor principal',payment.principal],['Juros',payment.interest],['Multa',payment.fine],['Desconto',payment.discount],['Bruto confirmado',payment.gross],['Taxas administrativas',payment.fee],['Devolvido ao comprador',payment.refund],['Saldo após taxas e devoluções',payment.net]].map(([label,value])=><label key={label}>{label}<input readOnly value={financeMoney(value)}/></label>)}</div><p className="f1-note">Valores informados pelo provedor. Na devolução, a taxa só volta se o provedor devolver.</p><details><summary>Histórico dos valores confirmados</summary><ul>{payment.history.map((item,i)=><li key={i}>{item.date?.split('-').reverse().join('/')} · {labels[item.kind]||item.kind}: {financeMoney(item.amount)}</li>)}</ul></details></section>;
+}

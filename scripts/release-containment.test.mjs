@@ -15,9 +15,13 @@ function files(dir) {
 
 test('catalog fails closed for unknown views and distinguishes pilot from completed product', () => {
   assert.equal(new Set(releaseCatalog.map(x => x.id)).size, releaseCatalog.length);
-  for (const id of ['inicio', 'pessoas', 'igrejas', 'configuracoes']) assert.equal(pilotViewAllowed(id), true);
-  for (const id of ['financeiro', 'kids', 'eventos', 'louvor', 'usuarios', 'missing', '']) assert.equal(pilotViewAllowed(id), false);
-  assert.equal(releaseCatalog.some(x => x.status === 'ready'), false);
+  for (const id of ['inicio', 'pessoas', 'igrejas', 'configuracoes','usuarios','financeiro','eventos','comunicacao','transmissoes']) assert.equal(pilotViewAllowed(id), true);
+  for (const id of ['louvor', 'missing', '']) assert.equal(pilotViewAllowed(id), false);
+  assert.equal(pilotViewAllowed('kids'),true);
+  assert.equal(releaseCatalog.find(x=>x.id==='kids').status,'validation');
+  assert.equal(releaseCatalog.find(x=>x.id==='financeiro').status,'validation');
+  assert.deepEqual(releaseCatalog.filter(x => x.status === 'ready').map(x=>x.id), ['celulas']);
+  assert.equal(pilotViewAllowed('celulas'),true);
 });
 
 test('containment never executes legacy code, parses a body or requires credentials', async () => {
@@ -37,7 +41,7 @@ test('containment never executes legacy code, parses a body or requires credenti
   assert.equal(calls, 0);
 });
 
-test('all 50 legacy-only endpoints have guarded exports; core adapters remain separate', () => {
+test('remaining legacy-only endpoints have guarded exports; reviewed migrations have no legacy path', () => {
   const exceptions = new Set(['app/api/people/route.ts', 'app/api/units/route.ts']);
   const apiFiles = files(join(rootPath, 'app/api')).filter(p => p.endsWith('route.ts'));
   let routes = 0, methods = 0;
@@ -73,16 +77,20 @@ test('all 50 legacy-only endpoints have guarded exports; core adapters remain se
     }
     assert.ok(exported > 0, name + ': no guarded method');
   }
-  assert.equal(routes, 50);
-  assert.equal(methods, 91);
+  assert.equal(routes, 44);
+  assert.equal(methods, 80);
+  for(const route of ['onboarding/members-import','hierarchy/overview'])assert.doesNotMatch(readFileSync(join(rootPath,'app/api',route,'route.ts'),'utf8'),/env\.DB|withLegacyContainment/);
 });
 
 test('legacy page entrypoints are contained and the dashboard gates mounting', () => {
-  for (const path of ['app-chat', 'app-notificacoes', 'app-voluntario', 'escalas', 'eventos', 'convite', 'vinculos', 'onboarding/importar-membros', 'configuracoes/notificacoes', 'configuracoes/equipe-inicial']) {
+  const events=readFileSync(join(rootPath,'app/eventos/layout.tsx'),'utf8');assert.match(events,/canonicalEventPath\(location.pathname\)/);assert.match(events,/if\(!allowed\)return <UnavailableFeature/);
+  for (const path of ['app-chat', 'app-notificacoes', 'app-voluntario', 'escalas', 'configuracoes/notificacoes', 'configuracoes/equipe-inicial']) {
     const content = readFileSync(join(rootPath, 'app', path, 'layout.tsx'), 'utf8');
     assert.match(content, /return <UnavailableFeature/);
     assert.doesNotMatch(content, /\{children\}/);
   }
+  for(const path of ['vinculos','onboarding/importar-membros'])assert.doesNotMatch(readFileSync(join(rootPath,'app',path,'layout.tsx'),'utf8'),/UnavailableFeature/);
+  assert.match(readFileSync(join(rootPath,'app/vinculos/permissoes/layout.tsx'),'utf8'),/UnavailableFeature/);
   const dashboard = readFileSync(join(rootPath, 'app/DashboardApp.tsx'), 'utf8');
   assert.match(dashboard, /<PilotModuleBoundary view=\{viewSlug\[active\]/);
   assert.match(dashboard, /<\/PilotModuleBoundary>/);

@@ -1,0 +1,5 @@
+'use client';
+export default function FinancePagination({page,size,total,onPage,onSize,disabled=false,label='registros'}:{page:number;size:number;total:number;onPage:(n:number)=>void;onSize:(n:number)=>void;disabled?:boolean;label?:string}){
+ const pages=Math.max(1,Math.ceil(total/size)),current=Math.min(page,pages);
+ return <nav className="f1-pagination finance-pagination" aria-label={'Páginas de '+label}><label>Por página<select aria-label={label+' por página'} value={size} disabled={disabled} onChange={e=>{onSize(Number(e.target.value));onPage(1)}}>{[15,30,50,100,150].map(n=><option key={n} value={n}>{n}</option>)}</select></label><span>{total?`${(current-1)*size+1}–${Math.min(current*size,total)} de ${total}`:'Nenhum registro'}</span><div><button type="button" className="f1-secondary" disabled={disabled||current<=1} onClick={()=>onPage(current-1)}>Anterior</button><span>Página {current} de {pages}</span><button type="button" className="f1-secondary" disabled={disabled||current>=pages} onClick={()=>onPage(current+1)}>Próxima</button></div></nav>;
+}

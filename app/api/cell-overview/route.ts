@@ -1,0 +1,7 @@
+import {NextResponse} from 'next/server';
+import {authorizeSupabaseChurch} from '../../lib/supabase/church-access';
+import type {OperationsClient} from '../../lib/supabase/operations';
+import {cellUuid} from '../../lib/cell-directory';
+import {cellOverview,overviewMonth} from '../../lib/cell-overview';
+const headers={'Cache-Control':'private, no-store'};
+export async function GET(request:Request){const auth=await authorizeSupabaseChurch(request,'units.read');if(!auth||auth.response)return auth?.response||NextResponse.json({error:'Acesso indisponível.'},{status:503,headers});const p=new URL(request.url).searchParams;let unitId,month;try{unitId=p.get('unitId')||'';if(p.getAll('unitId').length!==1||!cellUuid.test(unitId)||p.getAll('month').length!==1)throw Error();month=overviewMonth(p.get('month')||'')}catch{return NextResponse.json({error:'Unidade ou mês inválido.'},{status:400,headers})}if(!auth.access!.membership.units.some(u=>u.id===unitId))return NextResponse.json({error:'Unidade sem acesso.'},{status:403,headers});try{const client=auth.access!.client as unknown as OperationsClient;const {data,error}=await client.rpc('cell_overview',{p_organization:auth.access!.membership.organization_id,p_unit:unitId,p_month:month});if(error)return NextResponse.json({error:'Não foi possível consultar os indicadores desta unidade.'},{status:error.code==='42501'?403:503,headers});return NextResponse.json(cellOverview(data,unitId,month),{headers})}catch{return NextResponse.json({error:'Indicadores temporariamente indisponíveis.'},{status:503,headers})}}

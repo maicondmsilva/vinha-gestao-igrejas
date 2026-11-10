@@ -1,0 +1,11 @@
+# Campos brasileiros — aplicativo e membros
+
+Apresentação compartilhada em `shared/brazil-registration.ts`: telefone fixo/celular com DDD, prefixo +55 preservado quando existente, CPF e CEP com pontuação, nascimento DD/MM/AAAA no aplicativo e controle de data no navegador. Gênero: Masculino/Feminino; estado civil: os mesmos quatro valores do cadastro de membros; UF: 26 estados e Distrito Federal. Valores antigos fora das listas não são apagados silenciosamente.
+
+Antes da gravação, CPF/CEP são normalizados em números, telefone tem máscara removida e nascimento é convertido para ISO sem conversão de fuso. Os fluxos de pessoa, usuário, vínculo, revisão administrativa e permissões existentes são mantidos. Não foram adicionadas tabelas ou migrações. Máscara de CPF não é declaração de validação de titularidade ou dígitos verificadores.
+
+CEP: consulta automática ao completar oito números, após pequeno intervalo, enviando somente o CEP para HTTPS ViaCEP. Resposta deve corresponder ao CEP e conter UF válida. Requisições antigas são canceladas/ignoradas; alterações manuais realizadas durante a consulta são preservadas, assim como número e complemento. CEP inexistente, resposta inválida e falta de rede permitem preenchimento manual. A consulta muda apenas o formulário; gravação ocorre no fluxo normal e, no autoatendimento, após revisão da igreja.
+
+Login social: verificação somente de leitura nas configurações públicas de autenticação em 25/10/2026 confirmou Google=false e Apple=false. O usuário informou não possuir ainda projeto Google Cloud/conta Apple Developer. Não foram criados botões inoperantes, credenciais, provedores nem contas externas. Próxima etapa: configurar contas oficiais do titular, consentimento/domínios, clientes OAuth/Service ID, retornos autorizados e identidade exclusiva por aplicativo. Segredos permanecem no servidor; nunca no APK ou chat. Revisão de identidade continua necessária, especialmente quando Apple usar endereço privado; não promover papéis nem vincular pessoas automaticamente por nome.
+
+Referências oficiais: https://viacep.com.br/ ; https://supabase.com/docs/guides/auth/social-sign-in/auth-google ; https://supabase.com/docs/guides/auth/social-sign-in/auth-apple ; https://supabase.com/docs/guides/auth/native-mobile-deep-linking .

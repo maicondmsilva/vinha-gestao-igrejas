@@ -21,7 +21,7 @@ jobs:
   build:
     name: Build da aplicacao
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Baixar o codigo
@@ -44,8 +44,67 @@ jobs:
       - name: Validar build
         run: pnpm run build
 
+      - name: Verificar formatacao (Prettier) do codigo compartilhado
+        run: pnpm run format:check
+
+      - name: Verificar segredos e botoes
+        run: |
+          pnpm run check:secrets
+          pnpm run check:buttons
+          pnpm run check:types:core
+          pnpm exec tsc --noEmit -p tsconfig.ledger.json
+
+      - name: Registrar auditoria de dependencias
+        run: pnpm audit --json > dependency-audit.json || test -s dependency-audit.json
+
+      - name: Preservar diagnostico de dependencias
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit
+          path: dependency-audit.json
+          retention-days: 14
+
       - name: Validar regras de avisos financeiros
-        run: pnpm run test:central
+        run: |
+          node --experimental-strip-types --test scripts/scales-foundation.test.mjs
+          node --experimental-strip-types --test scripts/scales-planning.test.mjs
+          node --experimental-strip-types --test scripts/scales-operations.test.mjs
+          node --experimental-strip-types --test scripts/kids-foundation.test.mjs
+          node --experimental-strip-types --test scripts/shared-contract.test.mjs scripts/staff-access.test.mjs scripts/kids-station.test.mjs scripts/dashboard-route.test.mjs scripts/recurrence-ics.test.mjs scripts/rich-text.test.mjs scripts/community-chat.test.mjs
+          node --experimental-strip-types --test scripts/finance-records.test.mjs
+          node --experimental-strip-types --test scripts/finance-f5.test.mjs scripts/finance-f5-route.test.mjs
+          node --experimental-strip-types --test scripts/finance-f6.test.mjs scripts/finance-f6-route.test.mjs
+          node --experimental-strip-types --test scripts/finance-f7.test.mjs
+          node --experimental-strip-types --test scripts/finance-export.test.mjs
+          node --experimental-strip-types --test scripts/organization-settings.test.mjs
+          node --experimental-strip-types --test scripts/member-self-service.test.mjs scripts/android-base.test.mjs scripts/account-closure.test.mjs
+          node --experimental-strip-types --test scripts/brazil-registration.test.mjs scripts/android-church-select.test.mjs
+          node --experimental-strip-types --test scripts/member-church.test.mjs
+          node --experimental-strip-types --test scripts/android-experience.test.mjs
+          node --experimental-strip-types --test scripts/member-agenda.test.mjs scripts/programming.test.mjs scripts/event-stage1.test.mjs scripts/event-stage2.test.mjs scripts/event-stage3.test.mjs scripts/event-closure.test.mjs scripts/event-checkout-review.test.mjs scripts/event-question-presets.test.mjs scripts/event-publication.test.mjs scripts/publishing.test.mjs
+          node --experimental-strip-types --test scripts/member-community.test.mjs
+          node --experimental-strip-types --test scripts/member-learning.test.mjs
+          node --experimental-strip-types --test scripts/member-family.test.mjs
+          node --experimental-strip-types --test scripts/member-services.test.mjs scripts/member-payments-route.test.mjs scripts/ministry-media.test.mjs
+          node --experimental-strip-types --test scripts/kids-operations.test.mjs
+          node --experimental-strip-types --test scripts/receiver-key-validation.test.mjs
+          node --experimental-strip-types --test scripts/receiver-webhook.test.mjs
+          node --experimental-strip-types --test scripts/finance-f4.test.mjs scripts/finance-f4-route.test.mjs scripts/finance-checkout.test.mjs scripts/finance-checkout-route.test.mjs scripts/finance-pix.test.mjs scripts/push-campaigns.test.mjs scripts/live-detection.test.mjs scripts/finance-destination-route.test.mjs
+          node --experimental-strip-types --test scripts/finance-f1.test.mjs scripts/finance-f1-route.test.mjs scripts/finance-f2.test.mjs scripts/finance-f2-route.test.mjs scripts/finance-f3.test.mjs scripts/finance-f3-route.test.mjs scripts/finance-usability.test.mjs scripts/finance-annotation-route.test.mjs
+          node --experimental-strip-types --test scripts/people-summary.test.mjs scripts/people-summary-route.test.mjs
+          node --experimental-strip-types --test scripts/cell-directory.test.mjs
+          node --experimental-strip-types --test scripts/cell-operations-language.test.mjs
+          node --experimental-strip-types --test scripts/cell-overview-member.test.mjs
+          node --experimental-strip-types --test scripts/cell-visits.test.mjs
+          node --experimental-strip-types --test scripts/cell-networks.test.mjs
+          node --experimental-strip-types --test scripts/cell-flows.test.mjs
+          node --experimental-strip-types --test scripts/cell-plus.test.mjs
+          pnpm run test:central
+          node --experimental-strip-types --test scripts/operations-foundation.test.mjs
+          node --experimental-strip-types --test scripts/ledger-pilot.test.mjs
+          node --experimental-strip-types --test scripts/ledger-recovery.test.mjs scripts/ledger-pending-storage.test.mjs scripts/ledger-report.test.mjs
+          node --experimental-strip-types --test scripts/plan-proration.test.mjs
+          node --experimental-strip-types --test scripts/plan-change-command.test.mjs
 
       - name: Validar contencao de recursos nao liberados
         run: pnpm run test:release
@@ -65,7 +124,31 @@ jobs:
         run: supabase test db --local
 
       - name: Validar governanca com conexoes concorrentes isoladas
-        run: pnpm run test:governance-concurrency
+        run: |
+          pnpm run test:governance-concurrency
+          node scripts/ledger-concurrency.mjs
+          node scripts/cell-directory-concurrency.mjs
+          node scripts/kids-foundation-concurrency.mjs
+          node scripts/cell-operations-concurrency.mjs
+          node scripts/cell-visits-concurrency.mjs
+          node scripts/cell-networks-concurrency.mjs
+          node scripts/cell-flows-concurrency.mjs
+          node scripts/cell-plus-concurrency.mjs
+          node scripts/finance-f3-concurrency.mjs --local-synthetic
+          node scripts/finance-f4-concurrency.mjs --local-synthetic
+          node scripts/finance-f5-concurrency.mjs --local-synthetic
+          node scripts/finance-f7-concurrency.mjs --local-synthetic
+          node scripts/member-agenda-concurrency.mjs --local-synthetic
+          node scripts/scales-operations-concurrency.mjs --local-synthetic
+          node --experimental-strip-types scripts/programming-concurrency.mjs --local-synthetic
+          node scripts/event-stage2-concurrency.mjs --local-synthetic
+          node scripts/event-stage3-concurrency.mjs --local-synthetic
+          node scripts/publishing-concurrency.mjs --local-synthetic
+          node scripts/member-community-concurrency.mjs --local-synthetic
+          node scripts/member-learning-concurrency.mjs --local-synthetic
+          node scripts/member-family-concurrency.mjs --local-synthetic
+          node scripts/member-services-concurrency.mjs --local-synthetic
+          node scripts/kids-operations-concurrency.mjs --local-synthetic
 
       - name: Parar banco local preservando volumes
         if: always()

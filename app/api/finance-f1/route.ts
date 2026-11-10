@@ -1,0 +1,28 @@
+import {authorizeSupabaseChurch} from '../../lib/supabase/church-access';
+import type {OperationsClient} from '../../lib/supabase/operations';
+import {boundedBody} from '../../lib/private-files';
+import {financeCommand,financeQuery} from '../../lib/finance-f1';
+import {financeReason} from '../../lib/finance-errors';
+const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
+function failure(code?:string,reason?:string){return json({error:financeReason(reason)||(code==='42501'?'Você não possui acesso financeiro a todas as unidades selecionadas.':code==='23505'?'Este cadastro ou saldo inicial já existe. Atualize a consulta.':code==='40001'||code==='40P01'?'O registro foi alterado por outra operação. Atualize antes de continuar.':code==='22023'||code==='22P02'||code==='23514'?'Revise os dados, os cadastros ativos e o período financeiro.':'Não foi possível confirmar a operação. Preserve o pedido e reenvie o mesmo identificador.')},code==='42501'?403:code==='23505'||code==='40001'||code==='40P01'?409:code==='22023'||code==='22P02'||code==='23514'?400:503)}
+async function run(request:Request,write:boolean){
+ const auth=await authorizeSupabaseChurch(request,'units.read');if(!auth||auth.response)return auth?.response||failure();
+ const access=auth.access!;if(!['owner','admin','finance'].includes(access.membership.role))return failure('42501');
+ try{
+  const client=access.client as unknown as OperationsClient;
+  if(!write&&new URL(request.url).searchParams.get('action')==='bootstrap'){
+   const units=[];for(let start=0;start<access.membership.units.length;start+=4){const batch=access.membership.units.slice(start,start+4);const results=await Promise.all(batch.map(u=>client.rpc('finance_f1',{p_org:access.membership.organization_id,p_units:[u.id],p_action:'choices',p_data:{search:'__'}})));for(let i=0;i<results.length;i++){const check=results[i];if(check.error&&check.error.code!=='42501')return failure(check.error.code,check.error.message);if(!check.error)units.push(batch[i])}}
+   return json({units,scope:access.userId+':'+access.membership.organization_id,canShare:['owner','admin'].includes(access.membership.role)});
+  }
+  let action:string,units:string[],data:unknown;
+  try{if(write){const parsed=financeCommand(JSON.parse(new TextDecoder().decode(await boundedBody(request,16384))));action=parsed.action;units=[parsed.unitId];data=parsed.data}else{const parsed=financeQuery(request);({action,units,data}=parsed)}}catch(e){return json({error:e instanceof Error?e.message:'Dados inválidos.'},400)}
+  if(units.some(id=>!access.membership.units.some(u=>u.id===id)))return failure('42501');
+  const result=await client.rpc('finance_f1',{p_org:access.membership.organization_id,p_units:units,p_action:action,p_data:data});if(result.error)return failure(result.error.code,result.error.message);
+  if(write&&(!result.data?.ok||result.data.id!==(data as {id:string}).id))return failure();
+  if(!write&&Array.isArray(result.data?.entries)&&result.data.entries.length){const numbers=await client.rpc('record_numbering',{p_org:access.membership.organization_id,p_action:'finance',p_data:{ids:result.data.entries.map((e:{id:string})=>e.id)}});if(numbers.error)return failure();result.data.entries=result.data.entries.map((e:{id:string})=>({...e,code:numbers.data?.codes?.[e.id]||null}))}
+  return json(result.data);
+ }catch{return failure()}
+}
+async function timed(r:Request,write:boolean){const started=performance.now(),response=await run(r,write);response.headers.set('Server-Timing',`finance;dur=${Math.round(performance.now()-started)}`);return response}
+export const GET=(r:Request)=>timed(r,false);
+export const POST=(r:Request)=>timed(r,true);

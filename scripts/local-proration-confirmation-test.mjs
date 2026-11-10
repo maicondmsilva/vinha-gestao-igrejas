@@ -1,0 +1,27 @@
+import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+if(process.argv[2]!=='--local-synthetic')throw Error('Local synthetic opt-in required.');
+const files=['20261018151747_unit_contract_proration_pilot.sql','20261018152708_proration_documents_credit_application_pilot.sql','20261018161147_proration_cycle_rollover_pilot.sql','20261018181106_proration_confirmation_catalog_guard.sql'];
+const migrations=files.map(file=>readFileSync(new URL('../supabase/migrations/'+file,import.meta.url),'utf8')).join('\n');
+const fixture=readFileSync(new URL('../supabase/tests/unit_contract_proration.sql',import.meta.url),'utf8').split("select ok(not has_table_privilege")[0].replace(/^begin;$/m,'').replace(/^select no_plan\(\);$/m,'');
+const tests=`
+select no_plan();
+select ok(not has_function_privilege('authenticated','public.change_unit_contract_plan_pilot(jsonb)','EXECUTE'),'old RPC cannot bypass catalog validation');
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"ad000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}',true);
+select set_config('qa.confirm',(current_setting('qa.proration.input')::jsonb||jsonb_build_object('expectedCatalog',public.proration_catalog_preview_pilot('qa-proration-b')))::text,true);
+select throws_ok($$select public.confirm_unit_contract_plan_pilot(current_setting('qa.proration.input')::jsonb)$$,'40001',null,'missing snapshot refused');
+reset role;
+update public.saas_plans set base_price_cents=17000 where id='qa-proration-b';
+set local role authenticated;
+select throws_ok($$select public.confirm_unit_contract_plan_pilot(current_setting('qa.confirm')::jsonb)$$,'40001',null,'changed price requires fresh preview');
+select is((select count(*) from public.saas_plan_adjustments),0::bigint,'price mismatch leaves no adjustment');
+select set_config('qa.confirm',(current_setting('qa.confirm')::jsonb||jsonb_build_object('expectedCatalog',public.proration_catalog_preview_pilot('qa-proration-b')))::text,true);
+select lives_ok($$select public.confirm_unit_contract_plan_pilot(current_setting('qa.confirm')::jsonb)$$,'fresh snapshot confirms atomically');
+select lives_ok($$select public.confirm_unit_contract_plan_pilot(current_setting('qa.confirm')::jsonb)$$,'same UUID resumes original result');
+select is((select count(*) from public.saas_plan_adjustments),1::bigint,'replay never duplicates');
+select set_config('request.jwt.claims','{"sub":"ad000000-0000-4000-8000-000000000099","role":"authenticated","aal":"aal2"}',true);
+select throws_ok($$select public.confirm_unit_contract_plan_pilot(current_setting('qa.confirm')::jsonb)$$,'42501',null,'non-operator cannot replay confirmation');
+select * from finish();rollback;`;
+const result=spawnSync('docker',['exec','-i','supabase_db_vinha','psql','-X','-q','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{input:'begin;\n'+migrations+'\n'+fixture+'\n'+tests,encoding:'utf8',maxBuffer:8*1024*1024});
+process.stdout.write(result.stdout||'');process.stderr.write(result.stderr||'');process.exitCode=result.status===0&&!/^\s*not ok/m.test(result.stdout||'')?0:1;

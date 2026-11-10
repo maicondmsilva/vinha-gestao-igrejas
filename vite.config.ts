@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 import hostingConfig from './.openai/hosting.json';
 import { nitro } from 'nitro/vite';
 import { fileURLToPath } from 'node:url';
+import {assertDeploymentIsolation} from './app/lib/deployment-safety';
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   '00000000-0000-4000-8000-000000000000';
@@ -16,7 +17,6 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === 'seatbelt';
 
 const localBindingConfig = {
   main: './worker.ts',
-  triggers: { crons: ['*/5 * * * *'] },
   compatibility_flags: ['nodejs_compat'],
   d1_databases: d1
     ? [
@@ -37,7 +37,8 @@ const localBindingConfig = {
     : [],
 };
 
-export default defineConfig(async () => {
+export default defineConfig(async ({command}) => {
+  assertDeploymentIsolation(process.env);
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= 'false';
@@ -46,19 +47,26 @@ export default defineConfig(async () => {
 
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.
   const isVercelBuild = Boolean(process.env.VERCEL || process.env.NITRO_PRESET === 'vercel');
+  // Nitro's fetchable dev environment has no RSC `runner`. Use Vinext's native
+  // runner only for the Docker-local preview; deployment builds retain Nitro.
+  const localPreview = command === 'serve' && process.env.NEXT_PUBLIC_VINHA_ENV === 'local';
   const { cloudflare } = isVercelBuild ? { cloudflare: null } : await import('@cloudflare/vite-plugin');
 
   return {
-    server: isCodexSeatbeltSandbox
-      ? { watch: { useFsEvents: false, usePolling: true } }
-      : undefined,
+    // ExcelJS is Node-only; do not rewrite its CommonJS ZIP implementation in RSC dev.
+    ssr: localPreview ? { external: ['exceljs'] } : undefined,
+    server: { watch: {
+      // Generated APKs may be locked while copied on Windows. They are not web sources.
+      ignored: ['**/output/**', '**/android-app/android/**', '**/android-app/.gradle-cache/**', '**/staff-app/**'],
+      ...(isCodexSeatbeltSandbox ? { useFsEvents: false, usePolling: true } : {}),
+    } },
     resolve: isVercelBuild ? {
       alias: {
         'cloudflare:workers': fileURLToPath(new URL('./app/lib/cloudflare-env-stub.ts', import.meta.url)),
       },
     } : undefined,
     plugins: isVercelBuild
-      ? [vinext(), tailwindcss(), nitro()]
+      ? [vinext(), tailwindcss(), ...(localPreview ? [] : [nitro()])]
       : [
           vinext(),
           tailwindcss(),

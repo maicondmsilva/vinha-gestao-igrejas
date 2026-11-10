@@ -1,0 +1,11 @@
+'use client';
+import {useEffect,useRef,useState} from 'react';
+import type {ChurchRpc} from '../shared/member-church';
+import {openingValid,type AppOpening as Opening} from '../shared/ministry-media';
+export default function AppOpening({rpc,org,primary='#173e30',logo}:{rpc:ChurchRpc;org:string;primary?:string;logo?:string|null}){
+ const [opening,setOpening]=useState<Opening|null>(null),dialog=useRef<HTMLDialogElement>(null);
+ useEffect(()=>{let live=true;const timeout=setTimeout(()=>{live=false},3000);Promise.resolve(rpc.rpc('member_app_opening',{p_org:org})).then(r=>{if(!live||r.error)return;const o=openingValid(r.data);if(!o||o.kind==='none'||matchMedia('(prefers-reduced-motion: reduce)').matches&&o.kind==='video')return;try{if(sessionStorage.getItem('vinha.opening.'+org)===String(o.version))return}catch{}setOpening(o)}).catch(()=>{});return()=>{live=false;clearTimeout(timeout)}},[rpc,org]);
+ useEffect(()=>{if(!opening)return;dialog.current?.showModal();const timer=setTimeout(finish,opening.seconds*1000);return()=>clearTimeout(timer)},[opening]);
+ function finish(){if(opening)try{sessionStorage.setItem('vinha.opening.'+org,String(opening.version))}catch{}dialog.current?.close();setOpening(null)}
+ if(!opening)return null;return <dialog ref={dialog} aria-label="Boas-vindas à igreja" onCancel={e=>{e.preventDefault();finish()}} style={{position:'fixed',inset:0,width:'100vw',height:'100dvh',maxWidth:'none',maxHeight:'none',margin:0,padding:24,border:0,background:primary,color:'#fff'}}><div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:16}}>{logo&&<img src={logo} alt="Logo da igreja" style={{maxWidth:150,maxHeight:90}}/>}{opening.kind==='image'?<img src={opening.url} alt={opening.title||'Boas-vindas'} onError={finish} style={{maxWidth:'100%',maxHeight:'65vh',objectFit:'contain'}}/>:<video src={opening.url} autoPlay playsInline muted onEnded={finish} onError={finish} style={{maxWidth:'100%',maxHeight:'65vh'}}/>}<p>{opening.title}</p><button type="button" autoFocus onClick={finish} style={{background:'#fff',color:'#142e22',padding:'14px 28px',border:0,borderRadius:12}}>Pular abertura e continuar</button></div></dialog>;
+}

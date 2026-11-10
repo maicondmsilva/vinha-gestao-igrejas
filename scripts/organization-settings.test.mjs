@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+import {trustedSessionRequest} from '../app/lib/access-security.ts';
+import {boundedBody,uuidPattern} from '../app/lib/private-files.ts';
+import {reportLogo} from '../app/lib/finance-export.ts';
+import {PDFDocument} from 'pdf-lib';
+const source=readFileSync(new URL('../app/api/organization-settings/route.ts',import.meta.url),'utf8');
+const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/^import .*;\r?\n/gm,'').replaceAll('export ','');
+const unit='a0000000-0000-4000-8000-000000000001';
+const request=body=>new Request('https://vinha.test/api/organization-settings?tenant=verified',{method:'PATCH',headers:{origin:'https://vinha.test','content-type':'application/json'},body:JSON.stringify(body)});
+function setup({manager=true,result={data:{ok:true,updatedAt:'2026-10-24T12:00:00Z'},error:null},failure=false}={}){
+ const calls=[];const client={rpc:async(name,args)=>{calls.push({name,args});if(failure)throw Error('secret database detail');return result}};
+ const access={membership:{organization_id:'verified-org',units:[{id:unit}]},can:()=>manager};
+ const handlers=new Function('authorizeSupabaseChurch','db','boundedBody','uuidPattern','reportLogo','PDFDocument',code+';return{GET,PATCH};')(async(r,p)=>trustedSessionRequest(r)&&(!(p==='units.manage')||manager)?{access,response:null}:{access:null,response:Response.json({error:'Acesso recusado'},{status:403})},()=>client,boundedBody,uuidPattern,reportLogo,PDFDocument);
+ return{handlers,calls};
+}
+test('settings: ministry comes only from verified access and writes one atomic RPC',async()=>{const s=setup();const r=await s.handlers.PATCH(request({unitId:unit,data:{name:'Sede',updatedAt:'version'}}));assert.equal(r.status,200);assert.equal(s.calls.length,1);assert.equal(s.calls[0].name,'organization_settings_save');assert.equal(s.calls[0].args.p_org,'verified-org');assert.equal(s.calls[0].args.p_unit,unit);assert.equal(r.headers.get('cache-control'),'private, no-store')});
+test('settings: reader and cross-origin requests cannot invoke writes',async()=>{const s=setup({manager:false});assert.equal((await s.handlers.PATCH(request({data:{}}))).status,403);assert.equal(s.calls.length,0);const a=setup();const r=new Request('https://vinha.test/api/organization-settings',{method:'PATCH',headers:{origin:'https://other.test'},body:'{}'});assert.equal((await a.handlers.PATCH(r)).status,403);assert.equal(a.calls.length,0)});
+test('settings: forged ministry, inaccessible unit, invalid body and unsafe logos fail before writes',async()=>{for(const body of [{organizationId:'other',data:{}},{unitId:'a0000000-0000-4000-8000-000000000002',data:{}},[],{data:[]},{data:{logo:'https://example.invalid/secret'}},{data:{logo:'data:image/svg+xml;base64,AAAA'}},{data:{logo:'data:image/png;base64,AAAA'}}]){const s=setup();assert.ok((await s.handlers.PATCH(request(body))).status>=400);assert.equal(s.calls.length,0)}});
+test('settings: oversized streaming body never reaches the database',async()=>{const s=setup();const r=await s.handlers.PATCH(request({data:{name:'x'.repeat(351000)}}));assert.equal(r.status,400);assert.equal(s.calls.length,0)});
+test('settings: conflicts and denied writes remain private and never report success',async()=>{for(const [code,status] of [['40001',409],['42501',403],['22023',400],['08006',503]]){const s=setup({result:{data:null,error:{code,message:'secret database detail'}}});const r=await s.handlers.PATCH(request({data:{}}));assert.equal(r.status,status);assert.doesNotMatch(await r.text(),/secret database detail|"ok":true/)}});
+test('settings: incomplete confirmation and lost connection are not saved',async()=>{for(const opts of [{result:{data:null,error:null}},{result:{data:{ok:false},error:null}},{failure:true}]){const s=setup(opts);const r=await s.handlers.PATCH(request({data:{}}));assert.equal(r.status,503);assert.doesNotMatch(await r.text(),/secret database detail|"ok":true/)}});
+test('settings: navigation is nested, keeps legacy aliases and mounts integrated Kids while preserving nested settings',()=>{const ui=readFileSync(new URL('../app/DashboardApp.tsx',import.meta.url),'utf8');const nav=ui.split('const nav=')[1].split(';')[0];assert.doesNotMatch(nav,/Igrejas e unidades|Usuários e permissões/);assert.match(ui,/if\(slug==='usuarios'\|\|slug==='igrejas'\)return 'Configurações'/);assert.match(ui,/import KidsOperations from '.\/KidsOperations'/);const settings=readFileSync(new URL('../app/OrganizationSettings.tsx',import.meta.url),'utf8');assert.match(settings,/StaffDirectory/);assert.match(readFileSync(new URL('../app/lib/settings-navigation.ts',import.meta.url),'utf8'),/set\('tenant',tenant\)/)});
+test('settings: reports read canonical logo and onboarding uses the same validated data',()=>{const report=readFileSync(new URL('../app/api/finance-f6/route.ts',import.meta.url),'utf8');assert.match(report,/rpc\('church_branding_read'/);assert.match(report,/c.units.length===1/);const onboarding=readFileSync(new URL('../app/api/onboarding/route.ts',import.meta.url),'utf8');assert.match(onboarding,/boundedBody\(request,350000\)/);assert.match(onboarding,/embedPng/)});

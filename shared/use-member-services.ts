@@ -1,0 +1,11 @@
+import {useEffect,useRef,useState} from 'react';
+import type {ChurchRpc} from './member-church';
+import type {DigitalCard,MemberPayment,PaymentPurpose} from './member-services';
+export function useMemberServices(rpc:ChurchRpc,org:string,unit:string,authenticated=true){
+ const [cards,setCards]=useState<DigitalCard[]>([]),[purposes,setPurposes]=useState<PaymentPurpose[]>([]),[orders,setOrders]=useState<MemberPayment[]>([]),[error,setError]=useState(''),[loading,setLoading]=useState(false),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);const epoch=useRef(0),lock=useRef(false);
+ useEffect(()=>{let live=true,sequence=0;epoch.current++;lock.current=false;setBusy(false);setCards([]);setPurposes([]);setOrders([]);setError('');if(!authenticated||!unit)return;setLoading(true);
+ const load=async()=>{const seq=++sequence;try{const [c,p]=await Promise.all([rpc.rpc('member_services',{p_org:org,p_unit:unit,p_action:'cards'}),rpc.rpc('member_payments',{p_org:org,p_unit:unit,p_action:'list'})]);if(!live||seq!==sequence)return;if(c.error||p.error)throw Error();setCards((c.data as {items:DigitalCard[]}).items);const d=p.data as {purposes:PaymentPurpose[];orders:MemberPayment[]};setPurposes(d.purposes);setOrders(d.orders)}catch{if(live&&seq===sequence){setCards([]);setPurposes([]);setOrders([]);setError('Não foi possível consultar. Confira seu cadastro e atualize.')}}finally{if(live&&seq===sequence)setLoading(false)}};void load();const timer=setInterval(()=>void load(),60000);return()=>{live=false;epoch.current++;clearInterval(timer)};
+ },[rpc,org,unit,authenticated,revision]);
+ async function create(id:string,purpose:string,amount:string){if(lock.current||!authenticated)return false;lock.current=true;setBusy(true);setError('');const e=epoch.current;try{const r=await rpc.rpc('member_payments',{p_org:org,p_unit:unit,p_action:'create',p_data:{id,purpose,amount}});if(e!==epoch.current)return false;if(r.error||!(r.data as {ok?:boolean})?.ok)throw Error();setRevision(n=>n+1);return true}catch{if(e===epoch.current)setError('Pedido não confirmado. Atualize o histórico antes de repetir.');return false}finally{if(e===epoch.current){lock.current=false;setBusy(false)}}}
+ return{cards,purposes,orders,error,loading,busy,create,refresh:()=>setRevision(n=>n+1)};
+}
