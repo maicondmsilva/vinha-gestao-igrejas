@@ -59,7 +59,7 @@ select throws_ok($$select private.finance_digital_ingest('ff400000-0000-4000-800
 select set_config('f4.proof',(current_setting('f4.proof')::jsonb||jsonb_build_object('state','partially_refunded','refunded','2000','occurredAt',now()-interval '3 minutes'))::text,true);
 select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb)$$,'devolução parcial gera ajuste vinculado');
 select is((select posted_refund::text from private.finance_digital_receipts where external_id='456'),'2000','devolução cumulativa de 20,00');
-select is((select sum(case when kind='income' then amount_cents else -amount_cents end)::text from private.finance_entries where organization_id=current_setting('f4.org')::uuid),'7650','saldo ajustado sem apagar contribuição original');
+select is((select sum(case when kind='income' then amount_cents else -amount_cents end)::text from private.finance_entries where organization_id=current_setting('f4.org')::uuid),'7720','saldo ajustado pelo líquido: devolveu 20,00 brutos, saíram 19,30');
 select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||jsonb_build_object('state','pending','occurredAt',now()-interval '10 minutes'))$$,'evento atrasado ignorado');
 select is((select snapshot->>'state' from private.finance_digital_receipts where external_id='456'),'partially_refunded','evento antigo não regride estado');
 select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||jsonb_build_object('state','disputed','occurredAt',now()-interval '2 minutes'))$$,'contestação exige análise');
@@ -71,7 +71,7 @@ select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000
 select is((select sum(case when kind='income' then amount_cents else -amount_cents end)::text from private.finance_entries where organization_id=current_setting('f4.org')::uuid),'0','saldo final zero com contribuição original preservada');
 select is((select posted_gross::text from private.finance_digital_receipts where external_id='456'),'10000','contribuição original continua 100,00');
 select is((select count(*)::integer from private.finance_digital_links l join private.finance_digital_receipts r on r.id=l.receipt_id where r.external_id='456'),3,'recebimento e duas devoluções vinculados à mesma transação');
-select is((select amount_cents::text||'/'||base_cents::text||'/'||fee_cents::text from private.finance_entries e join private.finance_digital_links l on l.entry_id=e.id join private.finance_digital_receipts r on r.id=l.receipt_id where r.external_id='456' and l.kind='refund' and e.fee_cents<0),'7650/8000/-350','devolução sai líquida: provedor devolveu a taxa');
+select is((select amount_cents::text||'/'||base_cents::text||'/'||fee_cents::text from private.finance_entries e join private.finance_digital_links l on l.entry_id=e.id join private.finance_digital_receipts r on r.id=l.receipt_id where r.external_id='456' and l.kind='refund' and e.fee_cents<0),'7720/8000/-280','devolução sai líquida: taxa devolvida proporcional ao valor');
 update private.finance_receivers set environment='sandbox' where id='ff400000-0000-4000-8000-000000000001';
 set local role authenticated;
 select lives_ok($$select public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'order','{"id":"af410000-0000-4000-8000-000000000002","purpose":"ef400000-0000-4000-8000-000000000001","receiver":"ff400000-0000-4000-8000-000000000001","gross":"10000","party":"Teste sandbox","sourceReference":"teste-2"}')$$,'pedido de teste separado');
@@ -137,7 +137,7 @@ select is((select count(*)::text from private.finance_entries where organization
 select is((select count(*)::integer from public.church_ledger_lines where unit_id='cf400000-0000-4000-8000-000000000002'),0,'destinação não inventa saldo bancário na filial');
 select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||jsonb_build_object('reference','af410000-0000-4000-8000-000000000005','externalId','459','refunded','2000','state','partially_refunded','fees',jsonb_build_array(jsonb_build_object('kind','processing','amount','350')),'net','7650','paidDate',current_date,'occurredAt',clock_timestamp()-interval '5 seconds'));
 set local role authenticated;
-select is(public.finance_digital_destination(current_setting('f4.org')::uuid,'cf400000-0000-4000-8000-000000000002','list','{}')->'items'->0->>'net_cents','7650','devolução comprovada ajusta líquido destinado sem duplicar contribuição');
+select is(public.finance_digital_destination(current_setting('f4.org')::uuid,'cf400000-0000-4000-8000-000000000002','list','{}')->'items'->0->>'net_cents','7720','devolução comprovada ajusta líquido destinado sem duplicar contribuição');
 reset role;
 select ok(not has_table_privilege('authenticated','private.finance_digital_destinations','update'),'cliente não altera destino diretamente');
 
@@ -161,7 +161,7 @@ select set_config('f4.cross_period',public.finance_f1(current_setting('f4.org'):
 select is(current_setting('f4.cross_period')::jsonb->>'total','1','devolução de outro mês aponta para um recebimento original');
 select is(current_setting('f4.cross_period')::jsonb->'entries'->0->>'digital_kind','gross','mesmo filtro de saídas abre o recebimento principal');
 select is(current_setting('f4.cross_period')::jsonb->'summary'->>'income','0','recebimento antigo não infla entradas no período da devolução');
-select is(current_setting('f4.cross_period')::jsonb->'summary'->>'expense','2000','apenas a devolução ocorrida no período afeta o fluxo');
+select is(current_setting('f4.cross_period')::jsonb->'summary'->>'expense','1930','apenas a devolução ocorrida no período afeta o fluxo');
 reset role;
 select * from finish();
 rollback;
