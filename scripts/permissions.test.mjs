@@ -32,7 +32,8 @@ test('Usuários e permissões fica em Configurações, separado do cadastro de m
  const settings=readFileSync(new URL('../app/OrganizationSettings.tsx',import.meta.url),'utf8');
  assert.match(settings,/section==='usuarios'\?<><StaffDirectory\/><TeamAccess\/>/);
  const staff=readFileSync(new URL('../app/StaffDirectory.tsx',import.meta.url),'utf8');
- assert.match(staff,/setPermsFor\(user\)\}>Permissões<\/button>/);
+ assert.match(staff,/<th>Pessoa<\/th><th>E-mail<\/th><th>Perfil de acesso<\/th><th>Igrejas<\/th>/,'lista em tabela com o vocabulário do Vinha');
+ assert.match(staff,/<UserPermissions key=\{open\.id[^\n]*? embedded\/>/,'permissões dentro da ficha do usuário');
  const comm=readFileSync(new URL('../app/CommunicationWorkspace.tsx',import.meta.url),'utf8');
  assert.doesNotMatch(comm,/equipe/i,'Comunicação não tem mais Equipe');
 });
