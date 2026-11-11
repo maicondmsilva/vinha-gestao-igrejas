@@ -36,7 +36,7 @@ test('rotas existem e cada aba do topo é um endereço real', () => {
     assert.ok(existsSync(new URL(`../app/painel/${m}/page.tsx`, import.meta.url)));
     assert.ok(existsSync(new URL(`../app/painel/${m}/[secao]/page.tsx`, import.meta.url)));
   }
-  assert.ok(programmingPages.length >= 5 && communicationPages.some(([id]) => id === 'equipe'));
+  assert.ok(programmingPages.length >= 5 && !communicationPages.some(([id]) => id === 'equipe'), 'Equipe fica em Configurações › Usuários e permissões');
   const tabs = readFileSync(new URL('../app/ModuleTabs.tsx', import.meta.url), 'utf8');
   assert.match(tabs, /href=\{dashboardUrl\(page, id, search\)\}/);
   assert.match(tabs, /aria-current=\{current \? 'page' : undefined\}/);
