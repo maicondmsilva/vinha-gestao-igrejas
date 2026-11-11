@@ -1,11 +1,11 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
-import {permissionActions,userTypeLabel,type PermissionAction,type PermissionGrant,type PermissionSection,type PermissionTemplate} from './lib/permissions';
+import {groupKinds,permissionActions,userTypeLabel,type GroupOption,type PermissionAction,type PermissionGrant,type PermissionSection,type PermissionTemplate} from './lib/permissions';
 import './user-permissions.css';
 
 type Unit={id:string;name:string};
 type User={id:string;name:string;email:string;role:string;unit_access:{unit_id:string}[]};
-type Row={enabled:boolean;unit:string;children:boolean;actions:PermissionAction[]};
+type Row={enabled:boolean;unit:string;children:boolean;actions:PermissionAction[];kind:string;groups:string[]};
 const tenantQuery=()=>{const t=typeof window==='undefined'?'':new URLSearchParams(location.search).get('tenant')||'';return t?'tenant='+encodeURIComponent(t):''};
 async function api<T>(query:string,body?:unknown):Promise<T>{
  const q=[query,tenantQuery()].filter(Boolean).join('&');
@@ -14,16 +14,16 @@ async function api<T>(query:string,body?:unknown):Promise<T>{
  if(!r.ok)throw Error(d.error||'Não foi possível concluir.');
  return d;
 }
-const rowFrom=(g?:PermissionGrant):Row=>g?{enabled:true,unit:g.unit_id||'',children:g.include_children,actions:g.actions}:{enabled:false,unit:'',children:true,actions:[]};
-const same=(a:Row,b:Row)=>a.enabled===b.enabled&&a.unit===b.unit&&a.children===b.children&&[...a.actions].sort().join()===[...b.actions].sort().join();
+const rowFrom=(g?:PermissionGrant):Row=>g?{enabled:true,unit:g.unit_id||'',children:g.include_children,actions:g.actions,kind:g.group_kind||'',groups:g.group_ids||[]}:{enabled:false,unit:'',children:true,actions:[],kind:'',groups:[]};
+const same=(a:Row,b:Row)=>a.enabled===b.enabled&&a.unit===b.unit&&a.children===b.children&&[...a.actions].sort().join()===[...b.actions].sort().join()&&a.kind===b.kind&&[...a.groups].sort().join()===[...b.groups].sort().join();
 
 /** Configurações › Usuários e permissões: tipo de usuário e matriz por seção (seção, abrangência, ações). */
 export default function UserPermissions({user,units,close,embedded=false}:{user:User;units:Unit[];close:()=>void;embedded?:boolean}){
  const [sections,setSections]=useState<PermissionSection[]>([]),[templates,setTemplates]=useState<PermissionTemplate[]>([]),[grants,setGrants]=useState<PermissionGrant[]>([]);
- const [rows,setRows]=useState<Record<string,Row>>({}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[template,setTemplate]=useState(''),[templateUnit,setTemplateUnit]=useState('');
+ const [rows,setRows]=useState<Record<string,Row>>({}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[template,setTemplate]=useState(''),[templateUnit,setTemplateUnit]=useState(''),[groupOptions,setGroupOptions]=useState<Record<string,GroupOption[]>>({});
  const owner=user.role==='owner';
- useEffect(()=>{let live=true;Promise.all([api<{sections:PermissionSection[];templates:PermissionTemplate[]}>(''),owner?Promise.resolve({grants:[] as PermissionGrant[]}):api<{grants:PermissionGrant[]}>('membership='+user.id)])
-  .then(([c,l])=>{if(!live)return;setSections(c.sections);setTemplates(c.templates);setGrants(l.grants)}).catch(e=>{if(live)setError(e.message)});return()=>{live=false}},[user.id,owner]);
+ useEffect(()=>{let live=true;Promise.all([api<{sections:PermissionSection[];templates:PermissionTemplate[]}>(''),owner?Promise.resolve({grants:[] as PermissionGrant[]}):api<{grants:PermissionGrant[]}>('membership='+user.id),owner?Promise.resolve({}):api<Record<string,GroupOption[]>>('groups=1').catch(()=>({}))])
+  .then(([c,l,g])=>{if(!live)return;setSections(c.sections);setTemplates(c.templates);setGrants(l.grants);setGroupOptions(g as Record<string,GroupOption[]>)}).catch(e=>{if(live)setError(e.message)});return()=>{live=false}},[user.id,owner]);
  const saved=useMemo(()=>Object.fromEntries(sections.map(s=>[s.code,rowFrom(grants.find(g=>g.permission===s.code))])),[sections,grants]);
  const current=(code:string)=>rows[code]||saved[code]||rowFrom();
  const areas=[...new Set(sections.map(s=>s.area))];
@@ -37,7 +37,7 @@ export default function UserPermissions({user,units,close,embedded=false}:{user:
   try{let last:PermissionGrant[]=grants;
    for(const s of changed){const r=rows[s.code],before=saved[s.code];
     if(before.enabled&&(!r.enabled||before.unit!==r.unit))last=(await api<{grants:PermissionGrant[]}>('',{action:'remove',data:{membership:user.id,permission:s.code,unit:before.unit}})).grants;
-    if(r.enabled){if(!r.actions.length)throw Error(`Escolha ao menos uma ação em "${s.label}" ou desmarque a seção.`);last=(await api<{grants:PermissionGrant[]}>('',{action:'set',data:{membership:user.id,permission:s.code,unit:r.unit,includeChildren:r.children,actions:r.actions}})).grants}}
+    if(r.enabled){if(!r.actions.length)throw Error(`Escolha ao menos uma ação em "${s.label}" ou desmarque a seção.`);if(r.kind&&!r.groups.length)throw Error(`Marque ao menos um grupo em "${s.label}" ou escolha "Sem limite".`);last=(await api<{grants:PermissionGrant[]}>('',{action:'set',data:{membership:user.id,permission:s.code,unit:r.unit,includeChildren:r.children,actions:r.actions,...(r.kind?{groupKind:r.kind,groups:r.groups}:{})}})).grants}}
    setGrants(last);setRows({});setNotice(`${changed.length} ${changed.length===1?'seção salva':'seções salvas'}.`);
   }catch(e){setError(e instanceof Error?e.message:'Não foi possível salvar.')}finally{setBusy(false)}
  }
@@ -57,7 +57,7 @@ export default function UserPermissions({user,units,close,embedded=false}:{user:
      {areas.map(area=><section key={area} className="user-perms-area"><h3>{area}</h3>
       <div className="user-perms-rows">{sections.filter(s=>s.area===area).map(s=>{const r=current(s.code),changed=rows[s.code]&&!same(rows[s.code],saved[s.code]);return <div key={s.code} className={'user-perms-row'+(r.enabled?' on':'')+(changed?' changed':'')}>
        <label className="user-perms-section"><input type="checkbox" checked={r.enabled} disabled={busy} onChange={e=>edit(s.code,e.target.checked?{enabled:true,actions:r.actions.length?r.actions:['view']}:{enabled:false})}/><span>{s.label}{s.owner_only&&<small>só o dono concede</small>}</span></label>
-       <label className="user-perms-scope"><span className="sr-only">Onde vale: {s.label}</span><select value={r.unit} disabled={busy||!r.enabled} onChange={e=>edit(s.code,{unit:e.target.value})}><option value="">Todo o ministério</option>{units.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>{r.unit&&<label className="user-perms-children"><input type="checkbox" checked={r.children} disabled={busy||!r.enabled} onChange={e=>edit(s.code,{children:e.target.checked})}/>Incluir filhas</label>}</label>
+       <label className="user-perms-scope"><span className="sr-only">Onde vale: {s.label}</span><select value={r.unit} disabled={busy||!r.enabled} onChange={e=>edit(s.code,{unit:e.target.value})}><option value="">Todo o ministério</option>{units.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>{r.unit&&<label className="user-perms-children"><input type="checkbox" checked={r.children} disabled={busy||!r.enabled} onChange={e=>edit(s.code,{children:e.target.checked})}/>Incluir filhas</label>}{s.group_kinds.length>0&&<div className="user-perms-groups"><select aria-label={'Limitar a: '+s.label} value={r.kind} disabled={busy||!r.enabled} onChange={e=>edit(s.code,{kind:e.target.value,groups:[]})}><option value="">Sem limite de grupo</option>{groupKinds.filter(([k])=>s.group_kinds.includes(k)).map(([k,label])=><option key={k} value={k}>Só {label.toLowerCase()} escolhidas</option>)}</select>{r.kind&&r.enabled&&<details className="user-perms-group-list" open={!r.groups.length}><summary>{r.groups.length?`${r.groups.length} ${r.groups.length===1?'grupo marcado':'grupos marcados'}`:'Marque os grupos'}</summary>{(groupOptions[r.kind]||[]).length?(groupOptions[r.kind]||[]).map(g=><label key={g.id}><input type="checkbox" checked={r.groups.includes(g.id)} disabled={busy} onChange={e=>edit(s.code,{groups:e.target.checked?[...r.groups,g.id]:r.groups.filter(x=>x!==g.id)})}/>{g.name}<small>{units.find(u=>u.id===g.unit)?.name||''}</small></label>):<p>Nenhum grupo ativo deste tipo.</p>}</details>}</div>}</label>
        <fieldset className="user-perms-actions" disabled={busy||!r.enabled}><legend className="sr-only">Autorizado a ({s.label})</legend>{permissionActions.filter(([a])=>s.actions.includes(a)).map(([a,label])=><label key={a} className={r.actions.includes(a)?'on':''}><input type="checkbox" checked={r.actions.includes(a)} onChange={e=>edit(s.code,{actions:e.target.checked?[...r.actions,a]:r.actions.filter(x=>x!==a)})}/>{label}</label>)}</fieldset>
       </div>})}</div></section>)}
     </div>}

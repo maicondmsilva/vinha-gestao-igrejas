@@ -32,8 +32,19 @@ test('Usuários e permissões fica em Configurações, separado do cadastro de m
  const settings=readFileSync(new URL('../app/OrganizationSettings.tsx',import.meta.url),'utf8');
  assert.match(settings,/section==='usuarios'\?<><StaffDirectory\/><TeamAccess\/>/);
  const staff=readFileSync(new URL('../app/StaffDirectory.tsx',import.meta.url),'utf8');
- assert.match(staff,/<th>Pessoa<\/th><th>E-mail<\/th><th>Perfil de acesso<\/th><th>Igrejas<\/th>/,'lista em tabela com o vocabulário do Vinha');
+ assert.match(staff,/<th>Pessoa<\/th><th>E-mail<\/th><th>Celular<\/th><th>Perfil de acesso<\/th><th>Igrejas<\/th>/,'lista em tabela com o vocabulário do Vinha');
+ assert.match(staff,/Exportar para Excel/);assert.match(staff,/import\('exceljs'\)/,'planilha carregada só ao exportar');
  assert.match(staff,/<UserPermissions key=\{open\.id[^\n]*? embedded\/>/,'permissões dentro da ficha do usuário');
  const comm=readFileSync(new URL('../app/CommunicationWorkspace.tsx',import.meta.url),'utf8');
  assert.doesNotMatch(comm,/equipe/i,'Comunicação não tem mais Equipe');
+});
+
+test('limitar a grupos: tipo e grupos válidos, os dois juntos',()=>{
+ const g='ab900000-0000-4000-8000-000000000009';
+ const ok=permissionCommand({action:'set',data:{membership:m,permission:'cells.reports',unit:'',includeChildren:true,actions:['view'],groupKind:'cell',groups:[g,g]}});
+ assert.equal(ok.data.groupKind,'cell');assert.deepEqual(ok.data.groups,[g]);
+ assert.equal(permissionCommand({action:'set',data:{membership:m,permission:'finance.entries',unit:'',includeChildren:true,actions:['view']}}).data.groupKind,undefined);
+ assert.throws(()=>permissionCommand({action:'set',data:{membership:m,permission:'cells.reports',unit:'',includeChildren:true,actions:['view'],groupKind:'cell',groups:[]}}),/grupo/);
+ assert.throws(()=>permissionCommand({action:'set',data:{membership:m,permission:'cells.reports',unit:'',includeChildren:true,actions:['view'],groupKind:'department',groups:[g]}}));
+ assert.throws(()=>permissionCommand({action:'set',data:{membership:m,permission:'cells.reports',unit:'',includeChildren:true,actions:['view'],groupKind:'cell',groups:['x']}}));
 });

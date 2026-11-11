@@ -2,6 +2,9 @@ import {uuidPattern} from './private-files.ts';
 
 /** Actions a section may offer, in the order the matrix shows them. */
 export const permissionActions=[['view','Ver'],['create','Criar'],['edit','Editar'],['delete','Excluir'],['approve','Aprovar'],['export','Exportar']] as const;
+/** Kinds of group a section may be limited to (Células, Escalas, Kids). */
+export const groupKinds=[['cell','Células'],['network','Redes'],['scale_team','Equipes de escala'],['kids_class','Turmas Kids']] as const;
+export type GroupOption={id:string;name:string;unit:string};
 export type PermissionAction=typeof permissionActions[number][0];
 export type PermissionSection={code:string;module:string|null;area:string;label:string;actions:PermissionAction[];group_kinds:string[];position:number;owner_only:boolean};
 export type PermissionTemplate={code:string;label:string;description:string;items:Record<string,PermissionAction[]>};
@@ -20,10 +23,12 @@ export function permissionCommand(input:unknown){
  if(!raw.data||typeof raw.data!=='object'||Array.isArray(raw.data))throw Error('Dados inválidos.');
  const d=raw.data as Record<string,unknown>;
  if(action==='set'){
-  exact(d,['membership','permission','unit','includeChildren','actions']);
+  exact(d,['membership','permission','unit','includeChildren','actions','groupKind','groups']);
+  const kind=d.groupKind?String(d.groupKind):'';if(kind&&!groupKinds.some(([k])=>k===kind))throw Error('Tipo de grupo inválido.');
+  const groups=Array.isArray(d.groups)?[...new Set(d.groups.map(String))]:[];if(groups.some(g=>!uuidPattern.test(g))||groups.length>200)throw Error('Grupo inválido.');if(Boolean(kind)!==(groups.length>0))throw Error('Escolha ao menos um grupo ou tire o limite.');
   if(!Array.isArray(d.actions)||!d.actions.length||d.actions.some(a=>!actionCodes.includes(String(a))))throw Error('Escolha ao menos uma ação.');
   if(typeof d.includeChildren!=='boolean')throw Error('Abrangência inválida.');
-  return {action,data:{membership:uuid(d.membership),permission:code(d.permission),unit:d.unit?uuid(d.unit):'',includeChildren:d.includeChildren,actions:[...new Set(d.actions.map(String))]}};
+  return {action,data:{membership:uuid(d.membership),permission:code(d.permission),unit:d.unit?uuid(d.unit):'',includeChildren:d.includeChildren,actions:[...new Set(d.actions.map(String))],...(kind?{groupKind:kind,groups}:{})}};
  }
  if(action==='remove'){exact(d,['membership','permission','unit']);return {action,data:{membership:uuid(d.membership),permission:code(d.permission),unit:d.unit?uuid(d.unit):''}}}
  if(action==='apply_template'){exact(d,['membership','template','unit']);const t=String(d.template||'');if(!/^[a-z_]{2,40}$/.test(t))throw Error('Modelo inválido.');return {action,data:{membership:uuid(d.membership),template:t,unit:d.unit?uuid(d.unit):''}}}
