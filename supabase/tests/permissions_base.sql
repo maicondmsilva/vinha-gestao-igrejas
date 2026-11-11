@@ -19,6 +19,7 @@ insert into public.organization_memberships(id,organization_id,user_id,role,stat
  ('d7100000-0000-4000-8000-000000000003','b7100000-0000-4000-8000-000000000001','a7100000-0000-4000-8000-000000000003','secretary','active','c7100000-0000-4000-8000-000000000001'),
  ('d7100000-0000-4000-8000-000000000004','b7100000-0000-4000-8000-000000000001','a7100000-0000-4000-8000-000000000004','member','active','c7100000-0000-4000-8000-000000000001');
 
+insert into public.church_cells(id,organization_id,unit_id,name,meeting_day,meeting_time,meeting_format,created_by) values('e7100000-0000-4000-8000-000000000001','b7100000-0000-4000-8000-000000000001','c7100000-0000-4000-8000-000000000001','Célula P1',3,'20:00','presential','a7100000-0000-4000-8000-000000000001');
 select ok(not has_table_privilege('authenticated','private.permission_grants','SELECT'),'concessões não são lidas direto');
 select ok(not has_function_privilege('anon','public.permission_admin(uuid,text,jsonb)','EXECUTE'),'visitante sem gestão de permissões');
 select ok((select count(*) from private.permission_catalog)>=30,'catálogo de seções carregado');
@@ -54,6 +55,8 @@ select lives_ok($$select public.permission_admin('b7100000-0000-4000-8000-000000
 select throws_ok($$select public.permission_admin('b7100000-0000-4000-8000-000000000001','set','{"membership":"d7100000-0000-4000-8000-000000000003","permission":"settings.users","actions":["view"]}')$$,'42501','permission_admin_denied','só o dono concede Usuários e permissões');
 select throws_ok($$select public.permission_admin('b7100000-0000-4000-8000-000000000001','set','{"membership":"d7100000-0000-4000-8000-000000000002","permission":"church.settings","actions":["view"]}')$$,'42501','permission_admin_denied','administrador não altera outro administrador');
 select throws_ok($$select public.permission_admin('b7100000-0000-4000-8000-000000000001','set','{"membership":"d7100000-0000-4000-8000-000000000003","permission":"finance.entries","actions":["view"],"groupKind":"cell","groups":["e7100000-0000-4000-8000-000000000001"]}')$$,'22023','invalid_groups','seção sem grupos não aceita limite');
+select throws_ok($$select public.permission_admin('b7100000-0000-4000-8000-000000000001','set','{"membership":"d7100000-0000-4000-8000-000000000003","permission":"cells.reports","actions":["view"],"groupKind":"cell","groups":["c7100000-0000-4000-8000-000000000001"]}')$$,'22023','invalid_groups','grupo precisa ser célula da própria organização');
+select ok(jsonb_array_length(public.permission_admin('b7100000-0000-4000-8000-000000000001','groups','{}')->'cell')=1,'lista de células para limitar');
 select lives_ok($$select public.permission_admin('b7100000-0000-4000-8000-000000000001','apply_template','{"membership":"d7100000-0000-4000-8000-000000000003","template":"secretaria"}')$$,'modelo aplicado');
 select is(jsonb_array_length(public.permission_admin('b7100000-0000-4000-8000-000000000001','list','{"membership":"d7100000-0000-4000-8000-000000000003"}')->'grants'),9,'modelo + concessão limitada');
 reset role;

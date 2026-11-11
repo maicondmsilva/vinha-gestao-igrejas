@@ -59,3 +59,11 @@
 .user-perms.embedded{width:100%;box-shadow:none;border:1px solid #e2e9e3;border-radius:14px}
 .user-perms-head.embedded h2{font-size:18px}
 .user-perms.embedded .user-perms-foot{border-radius:0 0 14px 14px}
+/* Limitar a grupos (Células, Escalas, Kids). */
+.user-perms-groups{display:grid;gap:6px;margin-top:4px}
+.user-perms-groups select{min-height:36px;border:1px solid #cdd9cf;border-radius:10px;padding:4px 8px;font-size:13px;background:#fff;width:100%}
+.user-perms-group-list{border:1px solid #e2e9e3;border-radius:10px;padding:4px 10px;background:#fff}
+.user-perms-group-list summary{cursor:pointer;font-size:13px;font-weight:600;padding:6px 0;color:#285c45}
+.user-perms-group-list label{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0}
+.user-perms-group-list label small{margin-left:auto;color:#5f6f64}
+.user-perms-group-list p{font-size:13px;color:#5f6f64;margin:4px 0 8px}
