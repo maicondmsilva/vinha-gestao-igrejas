@@ -6,7 +6,7 @@ const json=(d:unknown,status=200)=>Response.json(d,{status,headers:{'Cache-Contr
 async function handle(r:Request,write:boolean){
  const auth=await authorizeSupabaseChurch(r,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Acesso indisponível.'},503);
  try{const a=auth.access!,p=new URL(r.url).searchParams,unit=p.get('unitId')||'',entry=p.get('entryId')||'';
- if(!['owner','admin','finance'].includes(a.membership.role)||!a.membership.units.some(u=>u.id===unit))return json({error:'Sem acesso financeiro.'},403);
+ if(!a.membership.units.some(u=>u.id===unit))return json({error:'Sem acesso financeiro.'},403);
  if(!uuidPattern.test(unit)||!uuidPattern.test(entry)||p.getAll('unitId').length!==1||p.getAll('entryId').length!==1)return json({error:'Escopo inválido.'},400);
  const prefix=`${a.membership.organization_id}/${unit}/${entry}`;
  if(write){

@@ -7,7 +7,7 @@ const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache
 function failure(code?:string,reason?:string){return json({error:financeReason(reason)||(code==='42501'?'Você não possui acesso financeiro a todas as unidades selecionadas.':code==='23505'?'Este cadastro ou saldo inicial já existe. Atualize a consulta.':code==='40001'||code==='40P01'?'O registro foi alterado por outra operação. Atualize antes de continuar.':code==='22023'||code==='22P02'||code==='23514'?'Revise os dados, os cadastros ativos e o período financeiro.':'Não foi possível confirmar a operação. Preserve o pedido e reenvie o mesmo identificador.')},code==='42501'?403:code==='23505'||code==='40001'||code==='40P01'?409:code==='22023'||code==='22P02'||code==='23514'?400:503)}
 async function run(request:Request,write:boolean){
  const auth=await authorizeSupabaseChurch(request,'units.read');if(!auth||auth.response)return auth?.response||failure();
- const access=auth.access!;if(!['owner','admin','finance'].includes(access.membership.role))return failure('42501');
+ const access=auth.access!;
  try{
   const client=access.client as unknown as OperationsClient;
   if(!write&&new URL(request.url).searchParams.get('action')==='bootstrap'){

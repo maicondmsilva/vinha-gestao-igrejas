@@ -4,7 +4,6 @@ import {boundedBody,uuidPattern} from '../../lib/private-files';
 const json=(v:unknown,status=200)=>Response.json(v,{status,headers:{'Cache-Control':'private, no-store'}});
 export async function POST(r:Request){
  const auth=await authorizeSupabaseChurch(r,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Acesso indisponível.'},503);const a=auth.access!;
- if(!['owner','admin','finance'].includes(a.membership.role))return json({error:'Sem permissão financeira.'},403);
  let c:{unitId:string;data:Record<string,unknown>};
  try{const raw=JSON.parse(new TextDecoder().decode(await boundedBody(r,8192))),d=raw.data;
   if(raw.action!=='annotate_entry'||Object.keys(raw).some(k=>!['action','unitId','data'].includes(k))||!uuidPattern.test(raw.unitId)||!d||typeof d!=='object'||Array.isArray(d)||Object.keys(d).some(k=>!['id','entry','version','description','notes','reason'].includes(k))||!uuidPattern.test(d.id)||!uuidPattern.test(d.entry)||!Number.isSafeInteger(d.version)||d.version<0||typeof d.description!=='string'||d.description.trim().length<2||d.description.length>300||typeof d.notes!=='string'||d.notes.length>2000||typeof d.reason!=='string'||d.reason.trim().length<2||d.reason.length>300)throw Error();

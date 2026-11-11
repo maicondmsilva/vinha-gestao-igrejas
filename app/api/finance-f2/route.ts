@@ -6,7 +6,6 @@ import {financeF2Command,financeF2Query} from '../../lib/finance-f2';
 const json=(v:unknown,status=200)=>Response.json(v,{status,headers:{'Cache-Control':'private, no-store'}});
 async function run(r:Request,write:boolean){
  const auth=await authorizeSupabaseChurch(r,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Acesso indisponível.'},503);const a=auth.access!;
- if(!['owner','admin','finance'].includes(a.membership.role))return json({error:'Sem permissão financeira.'},403);
  let action:string,unit:string,data:unknown;
  try{if(write){const c=financeF2Command(JSON.parse(new TextDecoder().decode(await boundedBody(r,16384))));action=c.action;unit=c.unitId;data=c.data}else{const q=financeF2Query(r);unit=q.unit;action=q.action;data={title:q.title,before:q.before}}}catch(e){return json({error:e instanceof Error?e.message:'Dados inválidos.'},400)}
  if(!a.membership.units.some(u=>u.id===unit))return json({error:'Unidade não autorizada.'},403);
