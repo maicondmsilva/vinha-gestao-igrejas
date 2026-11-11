@@ -51,6 +51,7 @@ const reasons: Record<string, string> = {
   receiver_not_ready: 'A conta recebedora ainda não está pronta para receber. Confira em Contas recebedoras.',
   entry_already_reversed: 'Este lançamento já foi estornado e não pode ser excluído.',
   entry_from_statement: 'Este lançamento veio do extrato bancário. Desfaça pela Conciliação.',
+  finance_permission_denied: 'Você não tem permissão para esta ação no Financeiro. Peça ao administrador em Configurações › Usuários e permissões.',
   purpose_unavailable: 'Esta finalidade de recebimento está desativada.',
 };
 
