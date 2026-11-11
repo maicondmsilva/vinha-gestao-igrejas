@@ -9,7 +9,11 @@ export function unifiedReportRows(rows:ReportRow[]):ReportRow[]{
   const root=group.find(r=>r.digital_kind==='gross')||group[0],dates=[...new Set(group.map(r=>r.date))].sort();
   const total=(kind:string)=>group.filter(r=>r.digital_kind===kind).reduce((n,r)=>n+BigInt(r.amount),BigInt(0));
   const money=(n:bigint)=>{const abs=(n<BigInt(0)?-n:n).toString().padStart(3,'0');return(n<BigInt(0)?'-':'')+abs.slice(0,-2)+','+abs.slice(-2)};
-  const components=`No período: recebido R$ ${money(total('gross'))}; taxas R$ ${money(-total('fee')-total('fee_credit'))}; devolvido R$ ${money(-total('refund'))}`;
+  // Gross and refund rows carry their informative composition: the amount is already net.
+  const part=(kind:string,pick:(r:ReportRow)=>bigint)=>group.filter(r=>r.digital_kind===kind).reduce((n,r)=>n+pick(r),BigInt(0));
+  const received=part('gross',r=>r.composition?BigInt(r.composition.base):BigInt(r.amount)),refunded=part('refund',r=>r.composition?BigInt(r.composition.base):-BigInt(r.amount));
+  const fees=part('gross',r=>r.composition?BigInt(r.composition.fee):BigInt(0))+part('refund',r=>r.composition?BigInt(r.composition.fee):BigInt(0))-total('fee')-total('fee_credit');
+  const components=`No período: recebido R$ ${money(received)}; taxas R$ ${money(fees)}; devolvido R$ ${money(refunded)}`;
   return {...root,description:`Recebimento digital${root.event_name?' · '+root.event_name+(root.event_number?' · ID '+root.event_number:''):''} · ${components}`,date:dates.length>1?`${dates[0]} a ${dates.at(-1)}`:dates[0],cashDate:dates.length>1?null:root.cashDate,amount:group.reduce((n,r)=>n+BigInt(r.amount),BigInt(0)).toString(),kind:'income',reconciled:group.every(r=>r.reconciled),metadataMissing:group.some(r=>r.metadataMissing),status:root.paymentState||root.digital_payment?.state||root.status};
  });
 }

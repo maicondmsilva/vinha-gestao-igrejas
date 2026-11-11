@@ -8,7 +8,8 @@ test('lançamento com juros, multa ou taxa nasce previsto e é baixado pela regr
   assert.match(source, /withAdjust=adjustable&&adjCents\.interest\+adjCents\.fine\+adjCents\.fee>BigInt\(0\),paid=withAdjust\?'':paidDate/);
   assert.match(source, /if\(created&&withAdjust\)await settleWithAdjustments\(/);
   assert.match(source, /action:'settle'/);
-  assert.match(source, /feeCategory:adjCents\.fee>BigInt\(0\)\?o\.feeCategory:''/);
+  assert.doesNotMatch(source, /feeCategory/);
+  assert.doesNotMatch(source, /f1-adjust-fee/);
 });
 
 test('ajustes só aparecem em lançamento avulso já pago ou recebido, fora do extrato', () => {
