@@ -88,3 +88,6 @@
 .f1-workspace .digital-receipts .f1-dialog-head button{font-size:22px;width:38px;height:38px;min-height:38px;padding:0;line-height:1;background:#f1f5ef;color:#526c56;border:1px solid #d7e3d5}
 .digital-receipts .digital-intro,.digital-receipts .digital-section-head,.digital-detail-panel>header{height:auto;min-height:0;max-height:none;flex-shrink:0}
 @media(max-width:850px){.f1-workspace .digital-table thead,.f1-workspace .digital-destination-table thead{display:table-header-group;position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
+/* Rodapé de páginas igual às outras telas. */
+.digital-pagination>div{display:flex;align-items:center;gap:10px}
+.digital-pagination .digital-page{font-size:13px;color:#4f5f54;white-space:nowrap}
