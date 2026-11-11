@@ -11,7 +11,7 @@ const proof={reference:order,externalId:'race'+Date.now(),receiverExternalId:'12
 const query=`select public.finance_digital_ingest('${receiver}','${JSON.stringify(proof)}');`;
 function call(){return new Promise((resolve,reject)=>{const p=spawn('docker',db,{stdio:['pipe','pipe','pipe']});let out='',err='';p.stdout.on('data',b=>out+=b);p.stderr.on('data',b=>err+=b);p.on('error',reject);p.on('close',code=>code?reject(Error(err)):resolve(out));p.stdin.end(query)})}
 await Promise.all([call(),call(),call(),call()]);
-const result=spawnSync('docker',db,{input:`select count(*)||':'||sum(case when kind='income' then amount_cents else -amount_cents end) from private.finance_entries where organization_id='${org}';`,encoding:'utf8'});assert.equal(result.status,0,result.stderr);assert.equal(result.stdout.trim(),'2:9650');
+const result=spawnSync('docker',db,{input:`select count(*)||':'||sum(case when kind='income' then amount_cents else -amount_cents end) from private.finance_entries where organization_id='${org}';`,encoding:'utf8'});assert.equal(result.status,0,result.stderr);assert.equal(result.stdout.trim(),'1:9650');
 console.log('F4 concorrência real: quatro eventos simultâneos, uma receita e uma taxa; líquido 9650. Apenas fixtures fictícias locais preservadas.');
 // Closing holds the unit first in the existing ledger API. The F4 org lock must
 // allow its audit FK KEY SHARE lock, otherwise unit -> org creates a deadlock.

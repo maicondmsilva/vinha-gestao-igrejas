@@ -38,18 +38,21 @@ select is((select review_reason from private.finance_digital_receipts where exte
 select is((select count(*)::integer from private.finance_entries where organization_id=current_setting('f4.org')::uuid),0,'taxa desconhecida não lança saldo presumido');
 select set_config('f4.proof',(current_setting('f4.proof')::jsonb||jsonb_build_object('fees',jsonb_build_array(jsonb_build_object('kind','processing','amount','350')),'occurredAt',now()-interval '4 minutes'))::text,true);
 select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb)$$,'bruto e taxa lançados automaticamente');
-select is((select count(*)::integer from private.finance_entries where organization_id=current_setting('f4.org')::uuid),2,'entrada e despesa de taxa separadas');
+select is((select count(*)::integer from private.finance_entries where organization_id=current_setting('f4.org')::uuid),1,'um lançamento: valor líquido com a taxa informada');
+select is((select amount_cents::text||'/'||base_cents::text||'/'||fee_cents::text from private.finance_entries where organization_id=current_setting('f4.org')::uuid),'9650/10000/350','líquido 96,50 = bruto 100,00 - taxa 3,50');
 select is((select sum(case when kind='income' then amount_cents else -amount_cents end)::text from private.finance_entries where organization_id=current_setting('f4.org')::uuid),'9650','líquido 96,50 sem descontar taxa duas vezes');
 set local role authenticated;
 select set_config('f4.unified',public.finance_f1(current_setting('f4.org')::uuid,array[current_setting('f4.unit')::uuid],'snapshot',jsonb_build_object('from',current_date,'to',current_date,'pageSize',1))::text,true);
 select is(current_setting('f4.unified')::jsonb->>'total','1','paginação conta um pagamento, não dois componentes');
 select is(current_setting('f4.unified')::jsonb->'entries'->0->'digital_payment'->>'net','9650','lançamento único inclui taxa e líquido exato');
 select is(current_setting('f4.unified')::jsonb->'monthly'->0->>'digital_fee','350','fluxo discrimina taxa sem duplicar saldo');
-select is(current_setting('f4.unified')::jsonb->'summary'->>'expense','350','taxa continua contabilizada no período correto');
+select is(current_setting('f4.unified')::jsonb->'summary'->>'expense','0','taxa não vira saída separada');
+select is(current_setting('f4.unified')::jsonb->'summary'->>'income','9650','entrada pelo valor líquido');
+select is(current_setting('f4.unified')::jsonb->'entries'->0->'composition'->>'fee','350','lista mostra a taxa na composição');
 reset role;
 
 select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb)$$,'retorno repetido aceito sem duplicação');
-select is((select count(*)::integer from private.finance_entries where organization_id=current_setting('f4.org')::uuid),2,'duplicidade não cria lançamento');
+select is((select count(*)::integer from private.finance_entries where organization_id=current_setting('f4.org')::uuid),1,'duplicidade não cria lançamento');
 select throws_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||'{"gross":"10001"}')$$,'22023',null,'valor divergente recusado');
 select throws_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||'{"environment":"sandbox"}')$$,'22023',null,'ambiente divergente recusado');
 select set_config('f4.proof',(current_setting('f4.proof')::jsonb||jsonb_build_object('state','partially_refunded','refunded','2000','occurredAt',now()-interval '3 minutes'))::text,true);
@@ -66,7 +69,8 @@ select is((select sum(delta_cents)::text from public.church_ledger_lines where o
 select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb||jsonb_build_object('state','refunded','refunded','10000','fees',jsonb_build_array(jsonb_build_object('kind','processing','amount','0')),'occurredAt',now()-interval '1 minute'))$$,'devolução total e crédito de taxa usam ajustes cumulativos');
 select is((select sum(case when kind='income' then amount_cents else -amount_cents end)::text from private.finance_entries where organization_id=current_setting('f4.org')::uuid),'0','saldo final zero com contribuição original preservada');
 select is((select posted_gross::text from private.finance_digital_receipts where external_id='456'),'10000','contribuição original continua 100,00');
-select is((select count(*)::integer from private.finance_digital_links l join private.finance_digital_receipts r on r.id=l.receipt_id where r.external_id='456'),5,'todos os cinco lançamentos vinculados à mesma transação');
+select is((select count(*)::integer from private.finance_digital_links l join private.finance_digital_receipts r on r.id=l.receipt_id where r.external_id='456'),3,'recebimento e duas devoluções vinculados à mesma transação');
+select is((select amount_cents::text||'/'||base_cents::text||'/'||fee_cents::text from private.finance_entries e join private.finance_digital_links l on l.entry_id=e.id join private.finance_digital_receipts r on r.id=l.receipt_id where r.external_id='456' and l.kind='refund' and e.fee_cents<0),'7650/8000/-350','devolução sai líquida: provedor devolveu a taxa');
 update private.finance_receivers set environment='sandbox' where id='ff400000-0000-4000-8000-000000000001';
 set local role authenticated;
 select lives_ok($$select public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'order','{"id":"af410000-0000-4000-8000-000000000002","purpose":"ef400000-0000-4000-8000-000000000001","receiver":"ff400000-0000-4000-8000-000000000001","gross":"10000","party":"Teste sandbox","sourceReference":"teste-2"}')$$,'pedido de teste separado');

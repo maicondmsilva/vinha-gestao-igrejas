@@ -45,8 +45,8 @@ test('PDF mantém todas as colunas juntas em paisagem, sem painéis horizontais'
 test('seleção de colunas é validada, mantém ordem e não muda totais nem dados originais',()=>{
  const original=f6Table(fixture,'book'),subset=selectReportColumns(original,[13,0,6]);
  assert.deepEqual(subset.headers,['Número','Descrição','Valor assinado']);
- assert.deepEqual(subset.rows[0],['0001','Oferta de gratidão','100,00']);assert.equal(original.headers.length,19);
- for(const v of [[],[0,0],[-1],[19],[1.5],[NaN]])assert.throws(()=>selectReportColumns(original,v));
+ assert.deepEqual(subset.rows[0],['0001','Oferta de gratidão','100,00']);assert.equal(original.headers.length,21);
+ for(const v of [[],[0,0],[-1],[21],[1.5],[NaN]])assert.throws(()=>selectReportColumns(original,v));
  for(const v of ['',',','0,0','-1','40','1.5','0,','x'])assert.throws(()=>reportColumns(v));
  assert.deepEqual(reportColumns('0,6,13'),[0,6,13]);assert.equal(reportColumns(null),undefined);
  const req=(suffix)=>new Request(`https://local?units=${unit}&from=2026-09-01&to=2026-09-30&format=pdf${suffix}`);
@@ -76,7 +76,7 @@ test('tela oferece seleção acessível, preserva uma coluna e atualiza a tabela
   const nodes=[];const walk=(node)=>{if(Array.isArray(node))return node.forEach(walk);if(node&&typeof node==='object'&&node.props){nodes.push(node);walk(node.props.children)}};walk(tree);
   return {tree,nodes,changes};
  };
- const full=mount({}),checks=full.nodes.filter(n=>n.type==='input'&&n.props.type==='checkbox');assert.equal(checks.length,19);assert.ok(checks.every(n=>n.props.checked));
+ const full=mount({}),checks=full.nodes.filter(n=>n.type==='input'&&n.props.type==='checkbox');assert.equal(checks.length,21);assert.ok(checks.every(n=>n.props.checked));
  const picker=full.nodes.find(n=>n.type==='details'&&n.props.className.includes('f6-column-settings'));assert.equal(picker.props.open,undefined);
  const css=readFileSync(new URL('../app/finance-reports.css',import.meta.url),'utf8');
  assert.match(css,/\.f6-workspace \.f6-result \.f6-column-settings\{[^}]*width:100%;[^}]*max-width:none/);
@@ -84,5 +84,5 @@ test('tela oferece seleção acessível, preserva uma coluna e atualiza a tabela
  checks[6].props.onChange({target:{checked:false}});assert.ok(!full.changes[0].value.book.includes(6));
  const one=mount({book:[6]}),only=one.nodes.filter(n=>n.type==='input'&&n.props.type==='checkbox'&&n.props.checked);assert.equal(only.length,1);assert.equal(only[0].props.disabled,true);
  const html=renderToStaticMarkup(one.tree);assert.match(html,/Colunas do relatório/);assert.match(html,/Oferta de gratidão/);assert.ok(!html.includes('<th>Metadados</th>'));
- const restore=one.nodes.find(n=>n.type==='button'&&n.props.children==='Selecionar todas');restore.props.onClick();assert.equal(one.changes[0].value.book.length,19);
+ const restore=one.nodes.find(n=>n.type==='button'&&n.props.children==='Selecionar todas');restore.props.onClick();assert.equal(one.changes[0].value.book.length,21);
 });
