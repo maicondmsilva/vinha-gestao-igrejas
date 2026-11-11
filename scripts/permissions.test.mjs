@@ -34,5 +34,5 @@ test('Usuários e permissões fica em Configurações, separado do cadastro de m
  const staff=readFileSync(new URL('../app/StaffDirectory.tsx',import.meta.url),'utf8');
  assert.match(staff,/setPermsFor\(user\)\}>Permissões<\/button>/);
  const comm=readFileSync(new URL('../app/CommunicationWorkspace.tsx',import.meta.url),'utf8');
- assert.match(comm,/Equipe e fuso horário mudaram de lugar/);
+ assert.doesNotMatch(comm,/equipe/i,'Comunicação não tem mais Equipe');
 });
