@@ -49,6 +49,7 @@ select is(current_setting('f4.unified')::jsonb->'monthly'->0->>'digital_fee','35
 select is(current_setting('f4.unified')::jsonb->'summary'->>'expense','0','taxa não vira saída separada');
 select is(current_setting('f4.unified')::jsonb->'summary'->>'income','9650','entrada pelo valor líquido');
 select is(current_setting('f4.unified')::jsonb->'entries'->0->'composition'->>'fee','350','lista mostra a taxa na composição');
+select is(public.finance_digital(current_setting('f4.org')::uuid,current_setting('f4.unit')::uuid,'list','{}')->'totals'->>'net','9650','totais de Recebimentos digitais vêm do período inteiro, no servidor');
 reset role;
 
 select lives_ok($$select private.finance_digital_ingest('ff400000-0000-4000-8000-000000000001',current_setting('f4.proof')::jsonb)$$,'retorno repetido aceito sem duplicação');

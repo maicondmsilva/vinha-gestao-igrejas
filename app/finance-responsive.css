@@ -218,3 +218,7 @@
 /* Relatórios: títulos inteiros e rolagem horizontal da tabela, sem quebrar palavras. */
 .f1-workspace .f6-screen-table th{white-space:nowrap;word-break:normal;overflow-wrap:normal}
 .f1-workspace .f6-screen-table td{word-break:normal;overflow-wrap:break-word;min-width:96px}
+/* Excluir lançamento: confirmação no próprio diálogo. */
+.f1-workspace .f1-delete,.f1-dialog .f1-delete{color:#9b3d27;border-color:#e3c4b9;margin-top:12px}
+.f1-delete-confirm{margin-top:16px;border:1px solid #e3c4b9;background:#fbf3f0;border-radius:12px;padding:14px 16px}
+.f1-delete-confirm p{margin:0 0 10px;font-size:14px;color:#5c2a1d}

@@ -56,6 +56,10 @@ export function financeCommand(input:unknown){
   if(data.person&&data.supplier||['income','expense'].includes(data.kind)&&!data.category||data.kind==='transfer'&&(!data.destination||data.account===data.destination)||['opening','transfer'].includes(data.kind)&&!data.paid)throw Error('Revise a classificação e as contas.');
   return{action:'entry' as const,unitId,data};
  }
+ if(raw.action==='delete'){
+  exact(d,['id','version']);if(!Number.isInteger(d.version)||Number(d.version)<1)throw Error('Versão inválida.');
+  return{action:'delete' as const,unitId,data:{id:id(d.id),version:d.version}};
+ }
  if(raw.action==='void'){
   exact(d,['id','version','reason','date','requestId']);if(!Number.isInteger(d.version)||Number(d.version)<1)throw Error('Versão inválida.');
   return{action:'void' as const,unitId,data:{id:id(d.id),version:d.version,reason:text(d.reason,300,2),date:financeDate(d.date),requestId:id(d.requestId)}};
