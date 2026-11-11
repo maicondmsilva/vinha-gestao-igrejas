@@ -6,7 +6,7 @@ import {financeRevision} from '../../lib/finance-revision';
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
 export async function POST(r:Request){
  const auth=await authorizeSupabaseChurch(r,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Acesso indisponível.'},503);
- const a=auth.access!;if(!['owner','admin','finance'].includes(a.membership.role))return json({error:'Sem permissão financeira.'},403);
+ const a=auth.access!;
  let c:ReturnType<typeof financeRevision>;try{c=financeRevision(JSON.parse(new TextDecoder().decode(await boundedBody(r,8192))))}catch{return json({error:'Revise os campos da edição.'},400)}
  if(!a.membership.units.some(u=>u.id===c.unitId))return json({error:'Igreja não autorizada.'},403);
  try{const result=await(a.client as unknown as OperationsClient).rpc('kind' in c.data?'finance_revise_entry':'finance_revise_pending',{p_org:a.membership.organization_id,p_unit:c.unitId,p_data:c.data});

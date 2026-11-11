@@ -10,7 +10,6 @@ const errors:Record<string,string>={ofx_entry_already_created:'Este movimento j�
 function failure(error?:{code?:string;message?:string}){const code=error?.code;return json({error:errors[error?.message||'']||(code==='42501'?'Acesso financeiro não autorizado.':code==='40001'||code==='23505'?'A seleção ou o período mudou. Atualize antes de continuar.':['22023','22P02','22007','22008','23514','23502'].includes(code||'')?'Revise os dados, valores, conta e período. Nenhuma alteração parcial foi mantida.':'Resultado não confirmado. Preserve o pedido para consultar sem duplicar.')},code==='42501'?403:code==='40001'||code==='23505'?409:['22023','22P02','22007','22008','23514','23502'].includes(code||'')?400:503)}
 async function run(r:Request,write:boolean){
  const auth=await authorizeSupabaseChurch(r,'units.read');if(!auth||auth.response)return auth?.response||failure();const a=auth.access!;
- if(!['owner','admin','finance'].includes(a.membership.role))return failure({code:'42501'});
  let unit:string,action:string,data:Record<string,unknown>;
  try{
   if(write){const c=financeF5Command(JSON.parse(new TextDecoder().decode(await boundedBody(r,2097152))));unit=c.unitId;action=c.action;data=c.data;

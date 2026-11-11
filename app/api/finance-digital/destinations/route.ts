@@ -5,7 +5,6 @@ import {receiverId} from '../../../lib/finance-receivers';
 const json=(d:unknown,status=200)=>Response.json(d,{status,headers:{'Cache-Control':'private, no-store'}});
 async function run(r:Request,write:boolean){
  const auth=await authorizeSupabaseChurch(r,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Acesso indisponível.'},503);const a=auth.access!;
- if(!['owner','admin','finance'].includes(a.membership.role))return json({error:'Acesso financeiro necessário.'},403);
  let unit:string,data:Record<string,unknown>={};
  try{
   if(write){const v=JSON.parse(new TextDecoder().decode(await boundedBody(r,2048)));if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).some(k=>!['unit','receipt','target','version'].includes(k))||!Number.isSafeInteger(v.version)||v.version<0)throw Error();unit=receiverId(v.unit);data={receipt:receiverId(v.receipt),target:receiverId(v.target),version:v.version};if(!['owner','admin'].includes(a.membership.role)||!a.membership.units.some(u=>u.id===data.target))return json({error:'O responsável precisa de acesso às duas igrejas.'},403);
