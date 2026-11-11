@@ -48,9 +48,19 @@ select throws_ok($$select public.finance_f1(current_setting('f1.org')::uuid,arra
 select ok(private.finance_file_allowed('bf100000-0000-4000-8000-000000000001/cf100000-0000-4000-8000-000000000001/ff100000-0000-4000-8000-000000000001/ff100000-0000-4000-8000-000000000001.pdf'),'anexo financeiro autorizado');
 select ok(not private.finance_file_allowed('bf100000-0000-4000-8000-000000000001/cf100000-0000-4000-8000-000000000002/ff100000-0000-4000-8000-000000000001/ff100000-0000-4000-8000-000000000001.pdf'),'anexo de unidade forjada negado');
 select ok(not private.finance_file_allowed('../secret.pdf'),'path traversal negado');
+-- Excluir lançamento (sem motivo, com restrições)
+select throws_ok($$select public.finance_f1(current_setting('f1.org')::uuid,array[current_setting('f1.unit')::uuid],'delete','{"id":"ff100000-0000-4000-8000-000000000001","version":2}')$$,'22023','entry_already_reversed','estornado não é excluído');
+select throws_ok($$select public.finance_f1(current_setting('f1.org')::uuid,array[current_setting('f1.unit')::uuid],'delete','{"id":"ff100000-0000-4000-8000-000000000002","version":9}')$$,'40001','entry_changed','versão desatualizada recusada');
+select throws_ok($$select public.finance_f1(current_setting('f1.org')::uuid,array[current_setting('f1.unit')::uuid],'delete','{"id":"ff100000-0000-4000-8000-000000000002","version":1,"reason":"x"}')$$,'22023','invalid_action','exclusão não aceita campos extras');
+select lives_ok($$select public.finance_f1(current_setting('f1.org')::uuid,array[current_setting('f1.unit')::uuid],'delete','{"id":"ff100000-0000-4000-8000-000000000002","version":1}')$$,'previsão excluída sem motivo');
+select lives_ok($$select public.finance_f1(current_setting('f1.org')::uuid,array[current_setting('f1.unit')::uuid],'delete','{"id":"ff100000-0000-4000-8000-000000000006","version":1}')$$,'saldo inicial realizado excluído');
 select set_config('request.jwt.claims','{"sub":"af100000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+select throws_ok($$select public.finance_f1(current_setting('f1.org')::uuid,array[current_setting('f1.unit')::uuid],'delete','{"id":"ff100000-0000-4000-8000-000000000004","version":1}')$$,'42501',null,'secretaria não exclui lançamento');
 select throws_ok($$select public.finance_f1(current_setting('f1.org')::uuid,array[current_setting('f1.unit')::uuid],'snapshot',current_setting('f1.query')::jsonb)$$,'42501',null,'secretaria sem acesso financeiro');
 reset role;
+select is((select count(*)::integer from private.finance_entries where id in('ff100000-0000-4000-8000-000000000002','ff100000-0000-4000-8000-000000000006')),0,'lançamentos excluídos saem da lista e do saldo');
+select is((select count(*)::integer from public.audit_logs where action='finance.entry_deleted' and organization_id='bf100000-0000-4000-8000-000000000001'),2,'exclusão registrada na auditoria com cópia');
+select throws_ok($$delete from private.finance_entry_history where organization_id='bf100000-0000-4000-8000-000000000001'$$,'42501',null,'histórico continua imutável fora da exclusão');
 select ok((select not public and file_size_limit=4194304 from storage.buckets where id='finance-documents-private'),'bucket privado com limite');
 select is((select sum(delta_cents) from public.church_ledger_lines where organization_id='bf100000-0000-4000-8000-000000000001'),0::numeric,'livro balanceado');
 select * from finish();

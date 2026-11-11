@@ -49,6 +49,8 @@ const reasons: Record<string, string> = {
   report_limit_reduce_period: 'Período muito grande para este relatório. Reduza o intervalo de datas.',
   receiver_unavailable: 'A conta recebedora não está ativa. Confira em Contas recebedoras.',
   receiver_not_ready: 'A conta recebedora ainda não está pronta para receber. Confira em Contas recebedoras.',
+  entry_already_reversed: 'Este lançamento já foi estornado e não pode ser excluído.',
+  entry_from_statement: 'Este lançamento veio do extrato bancário. Desfaça pela Conciliação.',
   purpose_unavailable: 'Esta finalidade de recebimento está desativada.',
 };
 
