@@ -1,0 +1,58 @@
+/* Configurações › Usuários e permissões: ficha do usuário com a matriz de permissões. */
+.user-perms-backdrop{position:fixed;inset:0;z-index:80;background:rgba(18,32,25,.42);display:flex;justify-content:center;align-items:flex-start;padding:24px 16px;overflow-y:auto}
+.user-perms{width:min(1100px,100%);background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.18);color:#183e31;font-size:14px}
+.user-perms *{box-sizing:border-box}
+.user-perms-head{display:flex;justify-content:space-between;gap:16px;padding:22px 24px 14px;border-bottom:1px solid #e2e9e3}
+.user-perms-head h2{margin:2px 0;font-size:22px}
+.user-perms-head p{margin:0;color:#5f6f64}
+.user-perms-over{font-size:12px!important;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.user-perms-close{border:0;background:#eef3ef;border-radius:10px;width:40px;height:40px;font-size:22px;cursor:pointer}
+.user-perms-type{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;align-items:baseline;margin:16px 24px;padding:12px 16px;border-radius:12px;background:#f3f7f3}
+.user-perms-type span{color:#5f6f64}
+.user-perms-type b{font-size:15px}
+.user-perms-type small{grid-column:1/-1;color:#5f6f64;font-size:13px}
+.user-perms-alert,.user-perms-notice{margin:0 24px 12px;padding:10px 14px;border-radius:10px}
+.user-perms-alert{background:#fbeceb;color:#8a2c1d}
+.user-perms-notice{background:#e8f3ea;color:#24563b}
+.user-perms-template{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin:0 24px 16px;padding:14px 16px;border:1px solid #e2e9e3;border-radius:12px}
+.user-perms-template label{display:grid;gap:6px;font-weight:600;font-size:13px;min-width:200px;flex:1 1 220px}
+.user-perms-template select,.user-perms-scope select{min-height:40px;border:1px solid #cdd9cf;border-radius:10px;padding:6px 10px;background:#fff;font-size:14px;width:100%}
+.user-perms-template p{flex-basis:100%;margin:0;color:#5f6f64;font-size:13px}
+.user-perms-matrix{padding:0 24px}
+.user-perms-area{margin-bottom:18px}
+.user-perms-area h3{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#4f5f54;margin:0 0 8px}
+.user-perms-rows{border:1px solid #e2e9e3;border-radius:12px;overflow:hidden}
+.user-perms-row{display:grid;grid-template-columns:minmax(180px,1.2fr) minmax(180px,1fr) minmax(260px,2fr);gap:12px;align-items:center;padding:10px 14px;border-top:1px solid #edf2ee}
+.user-perms-row:first-child{border-top:0}
+.user-perms-row.on{background:#fafdfb}
+.user-perms-row.changed{box-shadow:inset 3px 0 0 #c48a2c}
+.user-perms-section{display:flex;gap:10px;align-items:center;font-weight:600;cursor:pointer}
+.user-perms-section small{display:block;font-weight:400;color:#8a5a1f;font-size:12px}
+.user-perms-section input,.user-perms-children input,.user-perms-actions input{width:18px;height:18px;accent-color:var(--tenant,#285c45)}
+.user-perms-scope{display:grid;gap:4px}
+.user-perms-children{display:flex;gap:6px;align-items:center;font-size:13px;color:#4f5f54}
+.user-perms-actions{display:flex;flex-wrap:wrap;gap:6px;border:0;margin:0;padding:0;min-width:0}
+.user-perms-actions label{display:inline-flex;gap:6px;align-items:center;border:1px solid #d4dfd6;border-radius:999px;padding:5px 10px;font-size:13px;cursor:pointer;background:#fff}
+.user-perms-actions label.on{border-color:var(--tenant,#285c45);background:#eaf3ec}
+.user-perms-actions:disabled{opacity:.5}
+.user-perms-foot{position:sticky;bottom:0;display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:flex-end;padding:14px 24px;border-top:1px solid #e2e9e3;background:#fff;border-radius:0 0 18px 18px}
+.user-perms-foot span{margin-right:auto;color:#5f6f64;font-size:13px}
+.user-perms-foot .user-perms-danger{margin-right:auto}
+.user-perms-primary,.user-perms-secondary,.user-perms-danger{min-height:40px;border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer;border:1px solid}
+.user-perms-primary{background:var(--tenant,#285c45);border-color:var(--tenant,#285c45);color:#fff}
+.user-perms-secondary{background:#fff;border-color:#cdd9cf;color:#183e31}
+.user-perms-danger{background:#fff;border-color:#e3c4b9;color:#9b3d27}
+.user-perms button:disabled{opacity:.55;cursor:not-allowed}
+.user-perms-loading{padding:0 24px 16px;color:#5f6f64}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media(max-width:760px){
+ .user-perms-backdrop{padding:0}
+ .user-perms{border-radius:0;min-height:100%}
+ .user-perms-row{grid-template-columns:1fr;gap:8px}
+ .user-perms-head,.user-perms-matrix,.user-perms-foot{padding-left:16px;padding-right:16px}
+ .user-perms-type,.user-perms-template,.user-perms-alert,.user-perms-notice{margin-left:16px;margin-right:16px}
+ .user-perms-foot{display:grid;grid-template-columns:1fr 1fr;padding-bottom:84px}
+ .user-perms-foot span{grid-column:1/-1;order:-2;margin:0}
+ .user-perms-foot .user-perms-primary{grid-column:1/-1;order:-1}
+ .user-perms-foot .user-perms-danger{margin:0}
+}

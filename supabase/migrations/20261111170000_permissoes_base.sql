@@ -23,7 +23,7 @@ insert into private.permission_catalog(code,module,area,label,actions,group_kind
  ('people.visitors','people','Pessoas','Visitantes',array['view','create','edit','delete'],'{}',11,false),
  ('people.pending_profiles','people','Pessoas','Perfis pendentes',array['view','approve'],'{}',12,false),
  ('people.import','people','Pessoas','Importação de membros',array['create'],'{}',13,false),
- ('people.users','people','Pessoas','Usuários e permissões',array['view','edit'],'{}',14,true),
+ ('settings.users',null,'Configurações','Usuários e permissões',array['view','edit'],'{}',90,true),
  ('church.units',null,'Igreja','Igrejas e filiais',array['view','create','edit'],'{}',20,false),
  ('church.settings',null,'Igreja','Configurações e identidade',array['view','edit'],'{}',21,false),
  ('cells.cells','cells','Células','Células',array['view','create','edit','delete'],array['cell','network'],30,false),
@@ -150,6 +150,7 @@ grant execute on function private.can(uuid,uuid,text,text,uuid) to authenticated
 
 -- 5. Gestão das concessões (base para a tela Pessoas › Usuários, fase P2).
 -- Só o dono e administradores gerenciam; administrador não concede seções exclusivas do dono
+-- (Configurações › Usuários e permissões, separada do cadastro de membros em Pessoas)
 -- nem altera o dono. Toda mudança vai para a auditoria com o antes e o depois.
 create function private.permission_admin(p_org uuid,p_action text,p_data jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
