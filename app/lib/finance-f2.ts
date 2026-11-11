@@ -12,7 +12,7 @@ export function financeF2Command(value:unknown){
   keys(d,['id','title','version','principal','interest','fine','discount','fee','feeCategory','account','date','method','reason']);
   const principal=financeCents(d.principal),interest=cents(d.interest),fine=cents(d.fine),discount=cents(d.discount),fee=cents(d.fee),gross=BigInt(principal)+BigInt(interest)+BigInt(fine)-BigInt(discount);
   if(BigInt(discount)>BigInt(principal)||gross<=BigInt(0)||gross>BigInt('999999999999')||BigInt(fee)>BigInt('999999999999')||!['cash','pix','card','boleto','bank','other'].includes(String(d.method)))throw Error('Revise os valores e a forma da baixa.');
-  return {action:'settle',unitId,data:{id,title:uuid(d.title),version:version(d.version),principal,interest,fine,discount,fee,feeCategory:BigInt(fee)>BigInt(0)?uuid(d.feeCategory):'',account:uuid(d.account),date:financeDate(d.date),method:String(d.method),reason:txt(d.reason)}};
+  return {action:'settle',unitId,data:{id,title:uuid(d.title),version:version(d.version),principal,interest,fine,discount,fee,account:uuid(d.account),date:financeDate(d.date),method:String(d.method),reason:txt(d.reason)}};
  }
  if(r.action==='reverse'){
   keys(d,['id','settlement','date','reason']);return{action:'reverse',unitId,data:{id,settlement:uuid(d.settlement),date:financeDate(d.date),reason:txt(d.reason)}};

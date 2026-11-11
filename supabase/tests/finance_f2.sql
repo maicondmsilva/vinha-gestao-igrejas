@@ -22,8 +22,8 @@ select lives_ok($$select public.finance_f2(current_setting('f2.org')::uuid,curre
 select lives_ok($$select public.finance_f2(current_setting('f2.org')::uuid,current_setting('f2.unit')::uuid,'settle',current_setting('f2.pay')::jsonb)$$,'reenvio exato não duplica');
 select set_config('f2.query',jsonb_build_object('from',current_date,'to',current_date,'page',1)::text,true);
 select is(public.finance_f1(current_setting('f2.org')::uuid,array[current_setting('f2.unit')::uuid],'snapshot',current_setting('f2.query')::jsonb)#>>'{summary,receivable}','6000','previsto é só saldo em aberto');
-select is(public.finance_f1(current_setting('f2.org')::uuid,array[current_setting('f2.unit')::uuid],'snapshot',current_setting('f2.query')::jsonb)#>>'{summary,income}','4000','bruto exato');
-select is(public.finance_f1(current_setting('f2.org')::uuid,array[current_setting('f2.unit')::uuid],'snapshot',current_setting('f2.query')::jsonb)#>>'{summary,expense}','100','taxa é despesa real');
+select is(public.finance_f1(current_setting('f2.org')::uuid,array[current_setting('f2.unit')::uuid],'snapshot',current_setting('f2.query')::jsonb)#>>'{summary,income}','3900','entrada líquida: 40,00 com juros, multa e desconto, menos taxa de 1,00');
+select is(public.finance_f1(current_setting('f2.org')::uuid,array[current_setting('f2.unit')::uuid],'snapshot',current_setting('f2.query')::jsonb)#>>'{summary,expense}','0','taxa fica no lançamento, sem saída separada');
 select is(public.finance_f1(current_setting('f2.org')::uuid,array[current_setting('f2.unit')::uuid],'snapshot',current_setting('f2.query')::jsonb)#>>'{accounts,0,balanceCents}','3900','saldo líquido recebido');
 select is(public.finance_f1(current_setting('f2.org')::uuid,array[current_setting('f2.unit')::uuid],'snapshot',current_setting('f2.query')::jsonb||'{"scope":"titles"}') ->>'total','1','lista de compromissos não duplica baixas');
 select is(public.finance_f2(current_setting('f2.org')::uuid,current_setting('f2.unit')::uuid,'history','{"title":"ff200000-0000-4000-8000-000000000001"}')#>>'{payments,0,fee}','100','histórico revela taxa efetiva');
