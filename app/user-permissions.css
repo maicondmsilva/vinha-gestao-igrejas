@@ -56,3 +56,6 @@
  .user-perms-foot .user-perms-primary{grid-column:1/-1;order:-1}
  .user-perms-foot .user-perms-danger{margin:0}
 }
+.user-perms.embedded{width:100%;box-shadow:none;border:1px solid #e2e9e3;border-radius:14px}
+.user-perms-head.embedded h2{font-size:18px}
+.user-perms.embedded .user-perms-foot{border-radius:0 0 14px 14px}

@@ -1,0 +1,62 @@
+/* Configurações › Usuários e permissões: lista em tabela e ficha do usuário. */
+.staff-dir{color:#183e31;font-size:14px}
+.staff-dir *{box-sizing:border-box}
+.staff-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
+.staff-head h1{margin:0 0 4px}
+.staff-head p{margin:0;color:#5f6f64}
+.staff-card{background:#fff;border:1px solid #e2e9e3;border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.staff-card>header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.staff-card h2{margin:0;font-size:17px}
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:end}
+.staff-grid label,.staff-toolbar label{display:grid;gap:6px;font-weight:600;font-size:13px}
+.staff-grid input,.staff-grid select,.staff-toolbar input,.staff-toolbar select{min-height:40px;border:1px solid #cdd9cf;border-radius:10px;padding:6px 10px;font-size:14px;background:#fff;width:100%}
+.staff-grid input[readonly]{background:#f6f9f6}
+.staff-check{display:flex!important;align-items:center;gap:8px;min-height:40px}
+.staff-check input{width:18px;height:18px;min-height:0}
+.staff-help{color:#5f6f64;font-size:13px;margin:10px 0 0}
+.staff-notice{background:#e8f3ea;color:#24563b;border-radius:10px;padding:10px 14px;margin:0 0 14px}
+.staff-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.staff-primary,.staff-secondary,.staff-danger{min-height:40px;border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer;border:1px solid}
+.staff-primary{background:var(--tenant,#285c45);border-color:var(--tenant,#285c45);color:#fff}
+.staff-secondary{background:#fff;border-color:#cdd9cf;color:#183e31}
+.staff-danger{background:#fff;border-color:#e3c4b9;color:#9b3d27}
+.staff-dir button:disabled{opacity:.55;cursor:not-allowed}
+.staff-toolbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:12px}
+.staff-toolbar label{flex:1 1 220px;max-width:360px}
+.staff-toolbar>span{margin-left:auto;color:#5f6f64;font-size:13px}
+.staff-table{width:100%;border-collapse:collapse}
+.staff-table th{text-align:left;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#4f5f54;background:#f3f7f3;padding:10px 12px}
+.staff-table td{padding:12px;border-top:1px solid #edf2ee;vertical-align:middle}
+.staff-table tbody tr{cursor:pointer}
+.staff-table tbody tr:hover{background:#f8fbf8}
+.staff-table td button{border:0;background:none;padding:0;font:inherit;font-weight:600;color:#183e31;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.staff-status{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;background:#eee;color:#555;white-space:nowrap}
+.staff-status.active{background:#e5f1e7;color:#376346}
+.staff-status.suspended{background:#fbeceb;color:#8a2c1d}
+.staff-status.pending{background:#f4ead4;color:#8c6a2b}
+.staff-pages{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;color:#5f6f64;font-size:13px}
+.staff-pages div{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.staff-pages button{min-height:36px;border:1px solid #cdd9cf;border-radius:8px;background:#fff;padding:6px 10px;cursor:pointer}
+.staff-crumbs{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:14px}
+.staff-crumbs button{border:0;background:none;padding:0;color:#285c45;font:inherit;font-weight:600;cursor:pointer;text-decoration:underline}
+.staff-invites summary{cursor:pointer;font-weight:600}
+.staff-invites ul{list-style:none;margin:12px 0 0;padding:0}
+.staff-invites li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #edf2ee}
+@media(max-width:760px){
+ .staff-head{flex-direction:column}
+ .staff-table thead{display:none}
+ .staff-table,.staff-table tbody,.staff-table tr,.staff-table td{display:block;width:100%}
+ .staff-table tr{border:1px solid #e2e9e3;border-radius:12px;margin-bottom:10px;padding:6px 4px}
+ .staff-table td{border:0;padding:6px 10px}
+ .staff-table td::before{content:attr(data-label);display:block;font-size:12px;color:#5f6f64}
+ .staff-toolbar label{max-width:none}
+}
+.staff-head h1{font-size:26px;line-height:1.2}
+.staff-dir .staff-card>header,.staff-dir .user-perms-head{position:static;padding:0;margin:0 0 12px;border:0;background:none;box-shadow:none;min-height:0}
+.staff-dir .user-perms.embedded{padding:18px 20px}
+.staff-dir .user-perms.embedded .user-perms-template,.staff-dir .user-perms.embedded .user-perms-matrix,.staff-dir .user-perms.embedded .user-perms-alert,.staff-dir .user-perms.embedded .user-perms-notice{margin-left:0;margin-right:0;padding-left:0;padding-right:0}
+.staff-dir .user-perms.embedded .user-perms-foot{padding-left:0;padding-right:0}
+/* Cabeçalhos desta tela sem o estilo geral de cabeçalho do painel. */
+.staff-dir header{position:static;inset:auto;height:auto;min-height:0;padding:0;border:0;background:none;box-shadow:none;z-index:auto;width:auto}
+.staff-dir .staff-head{margin-bottom:16px}
+.staff-dir .staff-card>header{margin-bottom:12px}
