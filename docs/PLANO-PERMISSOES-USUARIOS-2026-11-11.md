@@ -108,3 +108,19 @@ Toda funcionalidade nova responde, antes de ser construída:
 5. Há teste de banco provando que quem não tem a permissão é recusado?
 
 Essas perguntas entram no modelo de PR (seção "Permissões") e no documento de arquitetura. Uma ação sensível não pode ser publicada sem a permissão declarada no catálogo.
+
+## 5. Situação (12/11/2026)
+
+| Fase | Situação |
+|---|---|
+| P1 | Concluída: catálogo, concessões, modelos e `private.can()`. |
+| P2 | Concluída: Configurações › Usuários e permissões (lista, ficha e matriz). |
+| P3 | Concluída em todos os módulos: Financeiro, Escalas, Kids, Células, Pessoas, Programação, Comunicação e Igreja. Cada módulo aceita "regra atual **ou** permissão concedida"; o banco decide cada ação. |
+| P4 | Concluída: "Limitar a grupos" vale em Escalas (equipes), Kids (turmas) e Células (células e redes, incluindo as redes abaixo). Os acessos avulsos antigos (equipe de escala, supervisores de rede e acessos de agenda/check-in/publicações/push) continuam valendo e passaram a aceitar as permissões equivalentes. |
+| P5 | Concluída: Pessoas › Perfis pendentes com novos cadastros e alterações, análise campo a campo, tipo de perfil e vínculo com o membro por e-mail ou CPF (candidatos lado a lado; e-mail **e** CPF = sugerido). Cadastro com mais de um candidato não é mais recusado no aplicativo. |
+
+Notas de segurança:
+- Anotações pastorais e consentimentos continuam só com a regra antiga (a permissão de Membros não as abre).
+- Autonomias das igrejas (financeira, comunicação, identidade) e a exclusão de igrejas continuam com a administração.
+- Configurações e identidade do ministério exigem a permissão concedida para todo o ministério.
+- Nova seção no catálogo: Kids › Crianças e responsáveis.
