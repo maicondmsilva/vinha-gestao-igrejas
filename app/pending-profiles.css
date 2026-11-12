@@ -77,3 +77,8 @@
  .pending-sheet>footer{display:grid;grid-template-columns:1fr 1fr;padding-bottom:84px}
  .pending-sheet>footer span{grid-column:1/-1;order:-1;margin:0}
 }
+/* Familiares: pedidos de inclusão de familiar. */
+.pending-relatives .pending-cards article{padding-top:30px}
+.pending-relatives .pending-cards article button.pending-reject{background:#fff;color:#a23a2a;border:1px solid #e5b5ad}
+.pending-relatives .pending-cards article button.suggested{background:#e8f3ea;color:#24563b;border:1px solid #b9d4c0}
+.pending-relatives .pending-type{display:flex;flex-direction:column;gap:4px;font-size:13px}
