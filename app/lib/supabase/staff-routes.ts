@@ -2,6 +2,8 @@ import {NextResponse} from 'next/server';
 import {authorizeSupabaseChurch} from './church-access';
 import {createSupabaseRequestClient} from './request';
 import {trustedSessionRequest} from '../access-security';
+import {supabaseAdminClient} from './server-admin';
+import {staffUserRoutes,type StaffAuthAdmin,type StaffRpc} from '../staff-user-core';
 type StaffClient={from:(table:string)=>any;rpc:(name:string,args:Record<string,unknown>)=>Promise<{data:any;error:{code?:string;message?:string}|null}>};
 const json=(body:unknown,status=200)=>NextResponse.json(body,{status,headers:{'Cache-Control':'no-store, private'}});
 function fail(error?:{code?:string}){return json({error:error?.code==='23505'?'Já existe um convite pendente para esse endereço. Cancele-o antes de emitir outro.':error?.code==='42501'?'O acesso ou convite não está disponível para esta conta.':error?.code==='22023'||error?.code==='22P02'?'Revise os dados informados.':'Não foi possível confirmar a operação. Atualize a lista antes de tentar novamente.'},error?.code==='23505'?409:error?.code==='42501'?403:error?.code==='22023'||error?.code==='22P02'?400:503)}
@@ -11,10 +13,23 @@ export async function staffGET(request:Request){try{const auth=await access(requ
 export async function staffPATCH(request:Request){try{const auth=await access(request);if(auth.response)return auth.response;const {a,client}=auth,data=await body(request);if(typeof data.id!=='string'||typeof data.role!=='string'||!['owner','admin','pastor','secretary','leader','finance','member','viewer'].includes(data.role)||!['active','suspended'].includes(String(data.status)))return fail({code:'22023'});
  const result=await client!.from('organization_memberships').update({role:data.role,status:data.status}).eq('id',data.id).eq('organization_id',a!.membership.organization_id).select('id');if(result.error)return fail(result.error);if(result.data?.length!==1)return json({error:'Usuário não encontrado ou sem permissão.'},404);return json({ok:true});}catch{return fail()}}
 export async function invitesGET(request:Request){try{const auth=await access(request);if(auth.response)return auth.response;const {a,client}=auth;const result=await client!.from('staff_invitations').select('id,email,full_name,role,status,expires_at,created_at,unit_id').eq('organization_id',a!.membership.organization_id).order('created_at',{ascending:false}).limit(100);if(result.error)return fail(result.error);return json({invites:result.data,units:a!.membership.units});}catch{return fail()}}
-export async function invitesPOST(request:Request){try{const auth=await access(request);if(auth.response)return auth.response;const {a,client}=auth,data=await body(request);if(typeof data.email!=='string'||typeof data.name!=='string'||typeof data.role!=='string'||typeof data.unitId!=='string')return fail({code:'22023'});const result=await client!.rpc('create_staff_invitation',{p_organization:a!.membership.organization_id,p_unit:data.unitId,p_email:data.email,p_name:data.name,p_role:data.role});if(result.error)return fail(result.error);if(!result.data?.token)return fail();return json({...result.data,activationUrl:`${new URL(request.url).origin}/convite/${result.data.token}`},201)}catch{return fail()}}
 export async function invitesPATCH(request:Request){try{const auth=await access(request);if(auth.response)return auth.response;const {a,client}=auth,data=await body(request);if(data.action!=='revoke'||typeof data.id!=='string')return fail({code:'22023'});const result=await client!.rpc('revoke_staff_invitation',{p_organization:a!.membership.organization_id,p_id:data.id});if(result.error)return fail(result.error);return json({ok:true})}catch{return fail()}}
 export async function staffUnitsPATCH(request:Request){try{const auth=await access(request);if(auth.response)return auth.response;const {a,client}=auth,data=await body(request);if(typeof data.userId!=='string'||!Array.isArray(data.entries))return fail({code:'22023'});const result=await client!.rpc('replace_staff_unit_access',{p_organization:a!.membership.organization_id,p_membership:data.userId,p_entries:data.entries});if(result.error)return fail(result.error);return json({ok:true,count:result.data})}catch{return fail()}}
 export async function activateStaff(request:Request){
  if(!trustedSessionRequest(request))return json({error:'Origem não autorizada.'},403);
  try{const data=await body(request);if(typeof data.token!=='string'||!/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(data.token))return fail({code:'22023'});const client=createSupabaseRequestClient(request) as unknown as StaffClient;const result=await client.rpc('accept_staff_invitation',{p_token:data.token});if(result.error)return fail(result.error);if(result.data?.ok!==true||typeof result.data.slug!=='string'||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(result.data.slug))return fail();return json({...result.data,redirectUrl:`/painel?tenant=${encodeURIComponent(result.data.slug)}`})}catch{return fail()}
 }
+
+// Ficha do usuário (sem convite). O banco autoriza; o login é criado/alterado com a chave administrativa depois.
+let cachedUserRoutes:ReturnType<typeof staffUserRoutes>|null=null;
+const userRoutes=()=>cachedUserRoutes??=staffUserRoutes({
+ access:async request=>{const auth=await authorizeSupabaseChurch(request,'staff.users',['settings.users:view','settings.users:edit']);if(!auth||auth.response)return{response:auth?.response||fail()};const a=auth.access!;const client=a.client as unknown as StaffClient;return{org:a.membership.organization_id,rpc:((name,args)=>client.rpc(name,args)) as StaffRpc}},
+ admin:()=>(supabaseAdminClient() as unknown as {auth:{admin:StaffAuthAdmin}}).auth.admin,
+});
+const withId=(handler:(request:Request,id:string)=>Promise<Response>)=>async(request:Request,ctx:{params:Promise<{id:string}>})=>{try{return await handler(request,(await ctx.params).id)}catch{return fail()}};
+export const userPOST=async(request:Request)=>{try{return await userRoutes().POST(request)}catch{return fail()}};
+export const userGET=withId((r,id)=>userRoutes().GET(r,id));
+export const userPATCH=withId((r,id)=>userRoutes().PATCH(r,id));
+export const userDELETE=withId((r,id)=>userRoutes().DELETE(r,id));
+export const userSearchGET=async(request:Request)=>{try{return await userRoutes().search(request)}catch{return fail()}};
+export const invitesGone=async()=>json({error:'Convites encerrados. Crie o usuário em Usuários e permissões.'},410);

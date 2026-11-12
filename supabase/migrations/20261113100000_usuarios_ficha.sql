@@ -55,7 +55,7 @@ declare
  result jsonb;
 begin
  if auth.uid() is null then raise exception 'authentication_required' using errcode='28000'; end if;
- if p_action is null or p_action not in ('get','search','save','remove','link_login') then raise exception 'invalid_action' using errcode='22023'; end if;
+ if p_action is null or p_action not in ('get','search','save','remove','link_login','mark_password') then raise exception 'invalid_action' using errcode='22023'; end if;
  p_data:=coalesce(p_data,'{}'::jsonb);
  perform 1 from public.organizations where id=p_org and status in ('active','trial');
  if not found then raise exception 'organization_access_denied' using errcode='42501'; end if;
@@ -119,6 +119,18 @@ begin
   delete from private.staff_grants where organization_id=p_org and user_id=m.user_id;
   insert into public.audit_logs(organization_id,actor_user_id,action,entity_type,entity_id,metadata)
    values(p_org,auth.uid(),'staff.user.removed','organization_membership',m.id::text,jsonb_build_object('role',m.role));
+  return jsonb_build_object('ok',true);
+ end if;
+
+ if p_action='mark_password' then
+  select * into m from public.organization_memberships where id=(p_data->>'membership')::uuid and organization_id=p_org for update;
+  if m.id is null then raise exception 'membership_not_found' using errcode='P0002'; end if;
+  if m.user_id<>auth.uid() and actor.role<>'owner' and private.staff_role_rank(m.role)>=actor_rank then
+   raise exception 'membership_role_grant_denied' using errcode='42501';
+  end if;
+  update public.organization_memberships set password_change_required=(m.user_id<>auth.uid()) where id=m.id;
+  insert into public.audit_logs(organization_id,actor_user_id,action,entity_type,entity_id,metadata)
+   values(p_org,auth.uid(),'staff.user.password_set','organization_membership',m.id::text,'{}'::jsonb);
   return jsonb_build_object('ok',true);
  end if;
 

@@ -90,6 +90,9 @@ select lives_ok($$select public.staff_user(pg_temp.su('org'),'link_login',jsonb_
 select is((select auth_user_id from public.people where id=pg_temp.su('plain-p')),pg_temp.su('other'),'membro fica ligado ao login');
 select is((select password_change_required from public.organization_memberships where organization_id=pg_temp.su('org') and user_id=pg_temp.su('other')),true,'senha do painel exige troca');
 
+select lives_ok($$select public.staff_user(pg_temp.su('org'),'mark_password',jsonb_build_object('membership',(select id from public.organization_memberships where organization_id=pg_temp.su('org') and user_id=pg_temp.su('app'))))$$,'senha nova pelo painel registrada');
+select is((select password_change_required from public.organization_memberships where organization_id=pg_temp.su('org') and user_id=pg_temp.su('app')),true,'senha nova pelo painel exige troca');
+
 -- Busca
 select is((public.staff_user(pg_temp.su('org'),'search',jsonb_build_object('q','maria'))#>>'{items,0,name}'),'Maria Teste Silva','busca encontra por nome');
 select is((public.staff_user(pg_temp.su('org'),'search',jsonb_build_object('q','member-su@'))#>>'{items,0,name}'),'Maria Teste Silva','busca encontra por e-mail');
