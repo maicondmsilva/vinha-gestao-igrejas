@@ -23,7 +23,7 @@ insert into public.church_cells(id,organization_id,unit_id,name,meeting_day,meet
 select ok(not has_table_privilege('authenticated','private.permission_grants','SELECT'),'concessões não são lidas direto');
 select ok(not has_function_privilege('anon','public.permission_admin(uuid,text,jsonb)','EXECUTE'),'visitante sem gestão de permissões');
 select ok((select count(*) from private.permission_catalog)>=30,'catálogo de seções carregado');
-select ok((select count(*) from private.permission_templates)=8,'oito modelos prontos');
+select ok((select count(*) from private.permission_templates)=9,'nove modelos prontos (inclui Líder de louvor)');
 
 set local role authenticated;
 -- Sem concessão, nada muda: a regra nova só concede o que foi dado explicitamente.
