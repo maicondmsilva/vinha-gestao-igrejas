@@ -251,6 +251,14 @@ language sql security definer set search_path to '' as $$
  update public.organization_memberships set password_change_required=false where user_id=auth.uid() and password_change_required
 $$;
 
+-- O login consulta se alguma participação ativa exige trocar a senha definida pelo painel.
+create or replace function public.password_change_required() returns boolean
+language sql stable security definer set search_path to '' as $$
+ select exists(select 1 from public.organization_memberships where user_id=auth.uid() and status='active' and password_change_required)
+$$;
+revoke all on function public.password_change_required() from public,anon,service_role;
+grant execute on function public.password_change_required() to authenticated;
+
 revoke all on function private.staff_user(uuid,text,jsonb) from public,anon,service_role;
 revoke all on function public.staff_user(uuid,text,jsonb) from public,anon,service_role;
 revoke all on function public.password_change_done() from public,anon,service_role;

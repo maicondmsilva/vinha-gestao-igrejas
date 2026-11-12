@@ -132,8 +132,10 @@ select throws_ok($$select public.staff_user(pg_temp.su('org'),'save',jsonb_build
 
 -- Troca de senha
 select pg_temp.actor('other');
+select is(public.password_change_required(),true,'login sabe que precisa trocar a senha');
 select lives_ok($$select public.password_change_done()$$,'troca de senha concluída');
 select is((select password_change_required from public.organization_memberships where organization_id=pg_temp.su('org') and user_id=pg_temp.su('other')),false,'password_change_done apaga a marca');
+select is(public.password_change_required(),false,'depois da troca o login segue normal');
 reset role;
 select is((select count(*)::int from public.audit_logs where organization_id=pg_temp.su('org') and action in ('staff.user.saved','staff.user.removed')) >= 5,true,'ficha gera auditoria');
 select * from finish();
