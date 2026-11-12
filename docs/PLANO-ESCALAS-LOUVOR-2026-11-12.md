@@ -53,3 +53,19 @@ O que falta em Escalas, pela análise:
 | E3 | Escalas: padronização visual e celular. |
 
 Cada etapa é aplicada primeiro no banco de teste, com testes de banco e de tela, e depois publicada.
+
+## 4. Pessoas · análise (12/11/2026)
+
+Feito nesta etapa:
+- **Barra do topo sem repetição**: saiu a faixa que repetia o nome do módulo acima de todas as páginas (cada página já tem o próprio título). O ajuste de nomes do ministério continua no ícone de engrenagem do topo.
+- **Lista de Pessoas modernizada**: tipografia e tamanhos iguais às telas novas; números úteis no topo (Todos, Membros, Em integração, Visitantes), que também funcionam como filtro; tabela com iniciais, número de cadastro, etapa em cor; no celular vira cartões.
+- **Numeração de membros** saiu do topo de Pessoas e foi para Configurações › Identidade e cadastro (é uma escolha do ministério inteiro).
+- Perfis pendentes e transferências aparecem em Pessoas só quando há pedido.
+
+O que falta e proponho a seguir:
+1. **Aniversariantes** do dia, da semana e do mês, com atalho para mensagem.
+2. **Possíveis duplicados**: mesmo nome com data de nascimento ou telefone parecido, com tela para juntar cadastros.
+3. **Filtros por célula, rede, gênero, faixa etária e batismo**, e **exportar para Excel** respeitando os filtros.
+4. **Histórico do membro**: mudanças de etapa, transferências, células e escalas numa linha do tempo na ficha.
+5. **Ações em lote**: mudar etapa, adicionar etiqueta e enviar comunicado para os selecionados.
+6. **Novos convertidos e acompanhamento**: etapa e responsável pelo acompanhamento, com lembrete.
