@@ -11,14 +11,14 @@ function failure(code?:string){
  return NextResponse.json({error:status===403?'Você não pode importar nesta unidade ou o módulo está bloqueado.':status===400?'Revise a planilha, a unidade e o lote. Nenhum dado deste lote foi alterado.':'Não foi possível confirmar o lote. Use Tentar novamente; o mesmo lote não será importado duas vezes.'},{status,headers:{'Cache-Control':'no-store'}});
 }
 export async function GET(request:Request){
- const auth=await authorizeSupabaseChurch(request,'people.write');if(!auth||auth.response)return auth?.response||failure();
+ const auth=await authorizeSupabaseChurch(request,'people.write',['people.import:create']);if(!auth||auth.response)return auth?.response||failure();
  const access=auth.access!,client=access.client as unknown as ImportClient;
  const {data,error}=await client.from('member_import_receipts').select('id,file_name,result,created_at').eq('organization_id',access.membership.organization_id).eq('created_by',access.userId).order('created_at',{ascending:false}).limit(10);
  if(error)return failure(error.code);
  return NextResponse.json({jobs:(data||[]).map((item:any)=>({id:item.id,file_name:item.file_name,total_rows:item.result.total,imported_rows:item.result.imported,skipped_rows:item.result.skipped,error_rows:item.result.invalid,status:'completed',created_at:item.created_at})),units:access.membership.units,defaultUnitId:access.membership.default_unit_id},{headers:{'Cache-Control':'no-store'}});
 }
 export async function POST(request:Request){
- const auth=await authorizeSupabaseChurch(request,'people.write');if(!auth||auth.response)return auth?.response||failure();
+ const auth=await authorizeSupabaseChurch(request,'people.write',['people.import:create']);if(!auth||auth.response)return auth?.response||failure();
  const access=auth.access!,client=access.client as unknown as ImportClient;
  let body:Record<string,unknown>;let checked:ReturnType<typeof validateImportRows>;
  try{
