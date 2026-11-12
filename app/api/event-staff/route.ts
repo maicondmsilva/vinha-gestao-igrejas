@@ -7,7 +7,7 @@ import {ticketBuyerValid} from '../../../shared/event-tickets';
 const json=(d:unknown,status=200)=>Response.json(d,{status,headers:{'Cache-Control':'private, no-store'}});
 export const GET=(r:Request)=>run(r,false);export const POST=(r:Request)=>run(r,true);
 async function run(request:Request,write:boolean){try{
- const auth=await authorizeSupabaseChurch(request,'units.manage');if(!auth||auth.response)return auth?.response||json({error:'Serviço indisponível.'},503);
+ const auth=await authorizeSupabaseChurch(request,'units.manage',['events.events:create','events.events:edit','events.agenda:create','events.agenda:edit']);if(!auth||auth.response)return auth?.response||json({error:'Serviço indisponível.'},503);
  const b=write?JSON.parse(new TextDecoder().decode(await boundedBody(request,100000))):Object.fromEntries(new URL(request.url).searchParams);
  if(!b||Object.keys(b).some(k=>!['unit','event','action','id','version','data','tenant'].includes(k))||!uuidPattern.test(b.unit)||!uuidPattern.test(b.event)||!['read','create','item','edit','receipt','email'].includes(b.action)||b.action!=='read'&&!uuidPattern.test(b.id)||!write&&!['read','item'].includes(b.action)||b.action==='create'&&!ticketBuyerValid(b.data)||b.action==='edit'&&(!Number.isInteger(b.version)||b.version<1))return json({error:'Revise os dados da inscrição ou do pedido.'},400);
  const r=await db(request).rpc('event_staff_admin',{p_org:auth.access!.membership.organization_id,p_unit:b.unit,p_event:b.event,p_action:b.action,p_id:b.id||null,p_version:b.version||null,p_data:b.data||{}});

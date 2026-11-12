@@ -20,11 +20,11 @@ async function supabaseGET(request:Request){
   ...unit,type:uiType(unit.unit_type),church_id:unit.organization_id,city:typeof unit.address==='object'&& unit.address!==null&&!Array.isArray(unit.address)?String((unit.address as Record<string,unknown>).city||''):'',state:typeof unit.address==='object'&&unit.address!==null&&!Array.isArray(unit.address)?String((unit.address as Record<string,unknown>).state||''):'',
   financial_autonomy:unit.financial_autonomy?1:0,communication_autonomy:unit.communication_autonomy?1:0,branding_autonomy:unit.branding_autonomy?1:0,access_role:['owner','pastor','admin'].includes(access.membership.role)?'manager':'viewer',include_children:1,
  }));
- return NextResponse.json({units,currentUser:{id:access.membership.membership_id,churchId:organizationId,churchSlug:access.membership.organization_slug,email:access.email,role:access.membership.role},canManage:access.can('units.manage')});
+ return NextResponse.json({units,currentUser:{id:access.membership.membership_id,churchId:organizationId,churchSlug:access.membership.organization_slug,email:access.email,role:access.membership.role},canManage:access.can('units.manage')||(await (access.client as unknown as {rpc:(n:string,a:Record<string,unknown>)=>PromiseLike<{data:unknown}>}).rpc('permission_any',{p_org:organizationId,p_checks:['church.units:create','church.units:edit']})).data===true});
 }
 
 async function supabasePOST(request:Request){
- const auth=await authorizeSupabaseChurch(request,'units.manage');if(!auth||auth.response)return auth?.response||NextResponse.json({error:'Supabase indisponível.'},{status:503});
+ const auth=await authorizeSupabaseChurch(request,'units.manage',['church.units:create','church.units:edit']);if(!auth||auth.response)return auth?.response||NextResponse.json({error:'Supabase indisponível.'},{status:503});
  const access=auth.access!,d=await request.json<Record<string,string|boolean>>(),name=String(d.name||'').trim(),type=String(d.type||'campus');
  if(!name||!types.includes(type))return NextResponse.json({error:'Nome e tipo de unidade são obrigatórios.'},{status:400});
  if(type!=='headquarters'&&!d.parentUnitId)return NextResponse.json({error:'Selecione a unidade responsável.'},{status:400});
@@ -41,7 +41,7 @@ async function supabasePOST(request:Request){
 }
 
 async function supabasePATCH(request:Request){
- const auth=await authorizeSupabaseChurch(request,'units.manage');if(!auth||auth.response)return auth?.response||NextResponse.json({error:'Supabase indisponível.'},{status:503});
+ const auth=await authorizeSupabaseChurch(request,'units.manage',['church.units:create','church.units:edit']);if(!auth||auth.response)return auth?.response||NextResponse.json({error:'Supabase indisponível.'},{status:503});
  const access=auth.access!,d=await request.json<Record<string,string|boolean>>();if(!d.id||!d.name)return NextResponse.json({error:'Unidade inválida.'},{status:400});
  const organizationId=access.membership.organization_id;
  const {data:existing,error:readError}=await access.client.from('organization_units').select('id,name,parent_unit_id,unit_type').eq('organization_id',organizationId).eq('status','active');

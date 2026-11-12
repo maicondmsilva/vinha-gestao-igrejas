@@ -26,7 +26,14 @@ export type SupabaseChurchAccess={
  can:(permission:string)=>boolean;
 };
 
-export async function authorizeSupabaseChurch(request:Request,permission:string){
+// Permissões concedidas na ficha do usuário (Configurações › Usuários e permissões) que também
+// abrem a rota quando o papel não basta. Formato 'seção:ação'. O banco confere cada ação.
+const grantedFallback:Record<string,string[]>={
+ 'people.read':['people.members:view','people.visitors:view'],
+ 'people.write':['people.members:create','people.members:edit','people.visitors:create','people.visitors:edit'],
+};
+
+export async function authorizeSupabaseChurch(request:Request,permission:string,granted:string[]=grantedFallback[permission]||[]){
  if(!supabaseServerConfigured)return null;
  if(!trustedSessionRequest(request))return{access:null,response:NextResponse.json({error:'Origem da solicitação não autorizada.'},{status:403})};
  const client=createSupabaseRequestClient(request);
@@ -40,7 +47,12 @@ export async function authorizeSupabaseChurch(request:Request,permission:string)
  const membership=selectActiveMembership(context.memberships,hint,preferred);
  if(!membership)return{access:null,response:NextResponse.json({error:'Nenhuma organização ativa foi encontrada para este usuário.'},{status:403})};
  const grants=permissions[membership.role]||[];
- const can=(value:string)=>grants.includes('*')||grants.includes(value);
+ let viaGrant=false;
+ if(!(grants.includes('*')||grants.includes(permission))&&granted.length){
+  const r=await (client as unknown as {rpc:(n:string,a:Record<string,unknown>)=>PromiseLike<{data:unknown;error:unknown}>}).rpc('permission_any',{p_org:membership.organization_id,p_checks:granted});
+  viaGrant=!r.error&&r.data===true;
+ }
+ const can=(value:string)=>grants.includes('*')||grants.includes(value)||(viaGrant&&value===permission);
  if(!can(permission))return{access:null,response:NextResponse.json({error:'Você não possui permissão para esta ação.'},{status:403})};
  if(!await moduleAllowed(client as unknown as OperationsClient,membership.organization_id,permission))return{access:null,response:NextResponse.json({error:'Este módulo não está liberado no contrato desta igreja. Fale com a Central Vinha.'},{status:403})};
  return{access:{client,userId:user.id,email:user.email||context.email||'',membership,can} satisfies SupabaseChurchAccess,response:null};

@@ -5,7 +5,7 @@ import {parseAgendaCommand} from '../../lib/member-agenda-command';
 import {agendaError} from '../../../shared/member-agenda';
 const json=(d:unknown,status=200)=>Response.json(d,{status,headers:{'Cache-Control':'private, no-store'}});
 async function run(request:Request,write:boolean){try{
- const auth=await authorizeSupabaseChurch(request,'units.manage');if(!auth||auth.response)return auth?.response||json({error:'Serviço indisponível.'},503);
+ const auth=await authorizeSupabaseChurch(request,'units.manage',['events.events:create','events.events:edit','events.agenda:create','events.agenda:edit']);if(!auth||auth.response)return auth?.response||json({error:'Serviço indisponível.'},503);
  let b:{action:string;unit:string;id:string|null;version:number|null;data:Record<string,unknown>};
  if(write){try{const parsed=parseAgendaCommand(JSON.parse(new TextDecoder().decode(await boundedBody(request,12000))));if(!parsed)throw Error();b=parsed}catch{return json({error:'Revise os dados do evento ou o código do ticket.'},400)}}
  else{const q=new URL(request.url).searchParams,unit=q.get('unit')||'',id=q.get('event');if(!uuidPattern.test(unit)||id&&!uuidPattern.test(id))return json({error:'Selecione uma igreja válida.'},400);b={action:id?'attendees':'list',unit,id,version:null,data:{}}}
