@@ -93,6 +93,11 @@ select is((select password_change_required from public.organization_memberships 
 select lives_ok($$select public.staff_user(pg_temp.su('org'),'mark_password',jsonb_build_object('membership',(select id from public.organization_memberships where organization_id=pg_temp.su('org') and user_id=pg_temp.su('app'))))$$,'senha nova pelo painel registrada');
 select is((select password_change_required from public.organization_memberships where organization_id=pg_temp.su('org') and user_id=pg_temp.su('app')),true,'senha nova pelo painel exige troca');
 
+-- Vínculo antigo sem cadastro de membro: a ficha cria o membro já ligado ao login.
+select lives_ok($$select public.staff_user(pg_temp.su('org'),'save',jsonb_build_object('membership',pg_temp.su('pastor-m'),'version',public.staff_user(pg_temp.su('org'),'get',jsonb_build_object('membership',pg_temp.su('pastor-m')))#>>'{membership,version}','role','pastor','unit',pg_temp.su('unit'),
+ 'account',jsonb_build_object('name','Pastor Sem Cadastro','email','pastor-su@example.invalid')))$$,'ficha de vínculo sem membro salva');
+select is((select auth_user_id from public.people where organization_id=pg_temp.su('org') and email='pastor-su@example.invalid'),pg_temp.su('pastor'),'membro criado já ligado ao login');
+
 -- Busca
 select is((public.staff_user(pg_temp.su('org'),'search',jsonb_build_object('q','maria'))#>>'{items,0,name}'),'Maria Teste Silva','busca encontra por nome');
 select is((public.staff_user(pg_temp.su('org'),'search',jsonb_build_object('q','member-su@'))#>>'{items,0,name}'),'Maria Teste Silva','busca encontra por e-mail');

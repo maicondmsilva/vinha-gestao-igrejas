@@ -206,8 +206,9 @@ begin
  end if;
 
  if person.id is null then
-  insert into public.people(organization_id,unit_id,full_name,email,phone,status,journey_status)
-   values(p_org,coalesce(v_unit,actor.default_unit_id),btrim(v_account->>'name'),v_email,nullif(btrim(coalesce(v_account->>'phone','')),''),'active','Membro')
+  -- Vínculo antigo sem cadastro de membro: o cadastro novo já nasce ligado ao login.
+  insert into public.people(organization_id,unit_id,auth_user_id,full_name,email,phone,status,journey_status)
+   values(p_org,coalesce(v_unit,actor.default_unit_id),v_login,btrim(v_account->>'name'),v_email,nullif(btrim(coalesce(v_account->>'phone','')),''),'active','Membro')
    returning * into person;
  end if;
  update public.people set
