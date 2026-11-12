@@ -52,3 +52,4 @@ test('telas Kids não montam operação legada, guardam credenciais ou liberam r
  assert.doesNotMatch(dashboard,/<KidsArea people=\{people\}/);
  assert.match(readFileSync(new URL('../app/KidsOperations.tsx',import.meta.url),'utf8'),/<KidsFoundation unitId=\{unitId\}/);
 });
+test('kids mostra sugeridos da família',()=>{const s=readFileSync(new URL('../app/KidsFoundation.tsx',import.meta.url),'utf8')+readFileSync(new URL('../app/KidsFamilySuggestions.tsx',import.meta.url),'utf8');assert.match(s,/suggest=1&child=/);assert.match(s,/Da família/);assert.match(s,/Usar como responsável/);assert.match(s,/<KidsFamilySuggestions/)});
