@@ -88,12 +88,14 @@ create trigger member_review_enqueue_email after update of status on private.mem
  for each row execute function private.member_review_enqueue_email();
 
 -- Reserva itens pendentes para envio (o servidor chama, envia e marca o resultado).
-create or replace function private.member_review_email_batch(p_limit int) returns setof private.member_review_emails
+create or replace function private.member_review_email_batch(p_limit int) returns setof jsonb
 language sql security definer set search_path to '' as $$
- update private.member_review_emails e set attempts=e.attempts+1, next_at=now()+interval '15 minutes'
- where e.id in (select id from private.member_review_emails where status='pending' and next_at<=now()
-  order by next_at limit greatest(1,least(coalesce(p_limit,20),100)) for update skip locked)
- returning e.*
+ with picked as (
+  update private.member_review_emails e set attempts=e.attempts+1, next_at=now()+interval '15 minutes'
+  where e.id in (select id from private.member_review_emails where status='pending' and next_at<=now()
+   order by next_at limit greatest(1,least(coalesce(p_limit,20),100)) for update skip locked)
+  returning e.*)
+ select to_jsonb(p)||jsonb_build_object('church',o.name,'slug',o.slug) from picked p join public.organizations o on o.id=p.organization_id
 $$;
 
 create or replace function private.member_review_email_mark(p_id uuid, p_ok boolean, p_error text) returns void
@@ -106,7 +108,7 @@ language sql security definer set search_path to '' as $$
  where id=p_id
 $$;
 
-create or replace function public.member_review_email_batch(p_limit int) returns setof private.member_review_emails
+create or replace function public.member_review_email_batch(p_limit int) returns setof jsonb
 language sql security invoker set search_path to '' as $$ select * from private.member_review_email_batch(p_limit) $$;
 create or replace function public.member_review_email_mark(p_id uuid, p_ok boolean, p_error text) returns void
 language sql security invoker set search_path to '' as $$ select private.member_review_email_mark(p_id,p_ok,p_error) $$;
