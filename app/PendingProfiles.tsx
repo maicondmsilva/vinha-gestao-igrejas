@@ -4,6 +4,7 @@ import {useEffect,useMemo,useState} from 'react';
 import {profileChanges,profileJourneys} from '../shared/member-profile-diff';
 import {memberFields} from '../shared/member-profile';
 import {settingsUrl} from './lib/settings-navigation';
+import PendingRelatives from './PendingRelatives';
 
 type Candidate={id:string;name:string;unit:string|null;journey:string|null;status:string;email:boolean;cpf:boolean;current:boolean};
 type Item={id:string;kind:'registration'|'update';unit_name:string;person_name:string|null;person_id:string|null;journey:string|null;payload:Record<string,string>;baseline:Record<string,string>|null;created_at:string;can_approve:boolean;identity_match?:{email:boolean;cpf:boolean;linked:boolean};candidates:Candidate[]};
@@ -20,9 +21,9 @@ export default function PendingProfiles(){
  const [items,setItems]=useState<Item[]>([]),[revision,setRevision]=useState(0),[notice,setNotice]=useState(''),[filter,setFilter]=useState(''),[open,setOpen]=useState<Item|null>(null);
  useEffect(()=>{const c=new AbortController();fetch(settingsUrl('/api/member-profile-review'),{cache:'no-store',signal:c.signal}).then(async r=>{if(r.status===403){setItems([]);return}const d=await r.json() as {items?:Item[];error?:string};if(!r.ok)throw Error(d.error||'Não foi possível carregar os perfis pendentes.');setItems(d.items||[])}).catch(e=>{if(!c.signal.aborted)setNotice(e.message)});return()=>c.abort()},[revision]);
  const shown=useMemo(()=>items.filter(i=>!filter||journeyOf(i.journey)===filter),[items,filter]);
- if(!items.length&&!notice)return null;
+ if(!items.length&&!notice)return <PendingRelatives/>;
  const groups:[string,string,Item[]][]=[['registration','Novos cadastros',shown.filter(i=>i.kind==='registration')],['update','Alterações de perfil',shown.filter(i=>i.kind!=='registration')]];
- return <section className="pending-profiles" aria-labelledby="pending-profiles-title">
+ return <><section className="pending-profiles" aria-labelledby="pending-profiles-title">
   <header><div><p>Pessoas</p><h2 id="pending-profiles-title">Perfis pendentes <span>{items.length}</span></h2><small>Cadastros e alterações enviados pelo aplicativo. Nada muda no cadastro até a aprovação.</small></div>
    <div className="pending-filter" role="group" aria-label="Filtrar por tipo de perfil"><button type="button" aria-pressed={!filter} onClick={()=>setFilter('')}>Todos</button>{profileJourneys.map(([j,l])=><button key={j} type="button" aria-pressed={filter===j} onClick={()=>setFilter(j)}>{l}</button>)}</div></header>
   {notice&&<p className="pending-notice" role="status">{notice}</p>}
@@ -30,7 +31,7 @@ export default function PendingProfiles(){
    {list.length?<div className="pending-cards">{list.map(i=><article key={i.id}><span className="pending-church">{i.unit_name}</span><i aria-hidden="true">{initials(nameOf(i))}</i><b>{nameOf(i)}</b><small>{journeyOf(i.journey)} · enviado em {dateOf(i.created_at)}</small>
     <button type="button" onClick={()=>{setNotice('');setOpen(i)}}>{i.can_approve?(i.kind==='registration'?'Analisar cadastro':'Analisar alteração'):'Ver pedido'}</button></article>)}</div>:<p className="pending-empty">Nada pendente{filter?' neste tipo':''}.</p>}</div>)}
   {open&&<ReviewSheet item={open} close={()=>setOpen(null)} done={msg=>{setOpen(null);setNotice(msg);setRevision(n=>n+1)}}/>}
- </section>;
+ </section><PendingRelatives/></>;
 }
 
 function ReviewSheet({item,close,done}:{item:Item;close:()=>void;done:(msg:string)=>void}){
