@@ -10,12 +10,12 @@ export async function GET(request:Request){
  const a=auth.access!,client=db(request),org=a.membership.organization_id;
  const [profile,brands]=await Promise.all([client.from('organizations').select('id,slug,name,app_name,senior_pastor_name,legal_name,tax_id,primary_color,accent_color,updated_at,registration_code').eq('id',org).single(),client.rpc('church_branding_read',{p_org:org})]);
  if(profile.error||brands.error)return json({error:'Não foi possível carregar as configurações.'},503);
- return json({organization:profile.data,brands:brands.data,canManage:a.can('units.manage')});
+ return json({organization:profile.data,brands:brands.data,canManage:a.can('units.manage')||(await client.rpc('permission_any' as never,{p_org:org,p_checks:['church.settings:edit']} as never)).data===true});
  }catch{return json({error:'Não foi possível carregar as configurações.'},503)}
 }
 export async function PATCH(request:Request){
  try{
- const auth=await authorizeSupabaseChurch(request,'units.manage');if(!auth||auth.response)return auth?.response||json({error:'Serviço indisponível.'},503);
+ const auth=await authorizeSupabaseChurch(request,'units.manage',['church.settings:edit']);if(!auth||auth.response)return auth?.response||json({error:'Serviço indisponível.'},503);
  let body:{unitId?:string;data?:Record<string,unknown>};
  try{body=JSON.parse(new TextDecoder().decode(await boundedBody(request,350000)));if(!body||Array.isArray(body)||Object.keys(body).some(k=>!['unitId','data'].includes(k))||!body.data||Array.isArray(body.data)||typeof body.data!=='object'||body.unitId&&!uuidPattern.test(body.unitId))throw Error('Revise os dados.');if('logo'in body.data){const bytes=reportLogo(body.data.logo);if(bytes){const pdf=await PDFDocument.create();await pdf.embedPng(bytes)}}}catch{return json({error:'Revise os dados. A logo deve ser PNG de até 250 KB e 2 milhões de pixels.'},400)}
  const a=auth.access!;if(body.unitId&&!a.membership.units.some(u=>u.id===body.unitId))return json({error:'Unidade sem acesso.'},403);

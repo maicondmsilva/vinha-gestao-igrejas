@@ -58,7 +58,7 @@ select throws_ok($$select public.permission_admin('b7100000-0000-4000-8000-00000
 select throws_ok($$select public.permission_admin('b7100000-0000-4000-8000-000000000001','set','{"membership":"d7100000-0000-4000-8000-000000000003","permission":"cells.reports","actions":["view"],"groupKind":"cell","groups":["c7100000-0000-4000-8000-000000000001"]}')$$,'22023','invalid_groups','grupo precisa ser célula da própria organização');
 select ok(jsonb_array_length(public.permission_admin('b7100000-0000-4000-8000-000000000001','groups','{}')->'cell')=1,'lista de células para limitar');
 select lives_ok($$select public.permission_admin('b7100000-0000-4000-8000-000000000001','apply_template','{"membership":"d7100000-0000-4000-8000-000000000003","template":"secretaria"}')$$,'modelo aplicado');
-select is(jsonb_array_length(public.permission_admin('b7100000-0000-4000-8000-000000000001','list','{"membership":"d7100000-0000-4000-8000-000000000003"}')->'grants'),9,'modelo + concessão limitada');
+select is(jsonb_array_length(public.permission_admin('b7100000-0000-4000-8000-000000000001','list','{"membership":"d7100000-0000-4000-8000-000000000003"}')->'grants'),10,'modelo + concessão limitada');
 reset role;
 select is((select count(*)::integer from public.audit_logs where organization_id='b7100000-0000-4000-8000-000000000001' and action like 'permissions.%'),4,'toda alteração vai para a auditoria');
 set local role authenticated;
