@@ -120,6 +120,35 @@ Painel lateral com quatro blocos e uma aba de permissões:
 - **Rotas (unidade):** validação, criação do login só após a permissão confirmada, desfazer em caso de falha, senha nunca devolvida.
 - **Telas:** ficha no computador e no celular; fluxo de Novo usuário; troca obrigatória de senha no primeiro acesso.
 - **Teste de ponta a ponta no ambiente de teste:** criar usuário, entrar, trocar a senha, reprovar uma solicitação e conferir o e-mail.
+- **Visual:** telas de senha capturadas no computador e no celular; e-mails conferidos em visualização HTML e recebidos numa caixa de teste.
+
+## 5A. Identidade Vinha nas telas de senha e nos e-mails
+
+### Telas
+- **Recuperar acesso** (`/recuperar-acesso`), **Nova senha** (`/conta/nova-senha`) e a nova **Troca obrigatória no primeiro acesso** seguem o mesmo visual da tela de entrada da Vinha:
+  - marca Vinha e frase "Gestão que frutifica";
+  - verde e dourado da marca;
+  - cartão central;
+  - versão para celular.
+- Cada tela mostra os estados de forma clara:
+  - enviando;
+  - "se o e-mail estiver cadastrado, você receberá o link";
+  - link expirado ou inválido (com botão para pedir outro);
+  - senha alterada (com botão para entrar).
+- Regras da senha visíveis enquanto a pessoa digita: mínimo de 8 caracteres e confirmação igual. Botão para mostrar ou ocultar a senha.
+
+### E-mails
+- Os e-mails de acesso do Supabase já usam o modelo da Vinha (cabeçalho verde com borda dourada, letreiro "Vinha · Gestão que frutifica") e saem de `notificacoes@vinhaigrejas.com.br`. Os assuntos já estão em português. Nesta etapa:
+  - revisar os 14 modelos para o mesmo texto, rodapé e botão;
+  - conferir o link de cada um para as telas novas.
+- E-mails novos enviados pelo sistema (**reprovação de cadastro** e outros que surgirem) usam a **mesma base visual**, numa função única do código (`shared/vinha-email.ts`), para não haver modelos diferentes:
+  - cabeçalho Vinha;
+  - título;
+  - texto;
+  - lista do que precisa de ajuste;
+  - botão de ação;
+  - rodapé com o nome da igreja e "você recebeu este e-mail porque tem cadastro na Vinha".
+- Os modelos do Supabase e a função do código partem do mesmo HTML de referência, guardado em `docs/email/vinha-base.html`.
 
 ## 6. Fora do escopo desta etapa
 - Editar a participação em grupos dentro da ficha (nesta etapa só exibe; a edição continua nos módulos).
