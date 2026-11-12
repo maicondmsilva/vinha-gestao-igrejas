@@ -8,3 +8,8 @@ test('formulário de pessoa usa letras legíveis', () => {
   for (const m of css.matchAll(/font-size:(\d+)px/g)) assert.ok(Number(m[1]) >= 12, m[0]);
   assert.match(read('app/DashboardApp.tsx'), /className="modal member-modal pf"/);
 });
+
+test('ficha da pessoa usa o padrão', () => {
+  assert.match(read('app/DashboardApp.tsx'), /className="person-profile pp"/);
+  assert.match(read('app/people-form.css'), /\.pp h2\{[^}]*font-size:22px/);
+});
