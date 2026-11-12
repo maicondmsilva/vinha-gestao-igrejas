@@ -1,6 +1,22 @@
 'use client';
-import {FormEvent,useState} from 'react';
+import {FormEvent,useState,useSyncExternalStore} from 'react';
 import {createSupabaseBrowserClient,supabaseConfigured} from '../../lib/supabase/client';
-import '../../access-flow.css';
+import {AuthCard,ExpiredLink,PasswordFields,linkProblem,passwordReady} from '../../AuthCard';
 
-export default function NewPassword(){const[notice,setNotice]=useState(''),[done,setDone]=useState(false),[busy,setBusy]=useState(false);async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();const form=new FormData(e.currentTarget),password=String(form.get('password')||''),confirmation=String(form.get('confirmation')||'');if(password!==confirmation){setNotice('As senhas não coincidem.');return}setBusy(true);const {error}=await createSupabaseBrowserClient().auth.updateUser({password});setBusy(false);if(error){setNotice('O link expirou ou a senha não atende aos requisitos.');return}setDone(true)}return <main className="access-flow"><section className="access-flow-card recovery-card"><div className="access-step">NOVA SENHA</div><h1>{done?'Senha atualizada':'Crie uma senha segura'}</h1>{!supabaseConfigured?<><p>Este fluxo será ativado junto com o Supabase Auth.</p><a href="/login">Voltar</a></>:done?<><p>Sua nova senha já pode ser usada.</p><a className="access-primary" href="/login">Entrar na Vinha</a></>:<form onSubmit={submit}>{notice&&<div className="access-flow-notice">{notice}</div>}<label>Nova senha<input type="password" name="password" minLength={10} required autoComplete="new-password"/></label><label>Confirmar senha<input type="password" name="confirmation" minLength={10} required autoComplete="new-password"/></label><button className="access-primary" disabled={busy}>{busy?'Salvando…':'Atualizar senha'}</button></form>}</section></main>}
+export default function NewPassword(){
+ const[password,setPassword]=useState(''),[confirmation,setConfirmation]=useState(''),[notice,setNotice]=useState(''),[state,setState]=useState<'form'|'expired'|'done'>('form'),[busy,setBusy]=useState(false);
+ // Erro do link vem no endereço; só existe no navegador.
+ const badLink=useSyncExternalStore(()=>()=>{},linkProblem,()=>'');
+ async function submit(e:FormEvent){e.preventDefault();setNotice('');
+  if(!passwordReady(password,confirmation)){setNotice('Confira as regras da senha abaixo.');return}
+  setBusy(true);const {error}=await createSupabaseBrowserClient().auth.updateUser({password});setBusy(false);
+  if(error){if(/session|expired|token|jwt/i.test(error.message))setState('expired');else setNotice('A senha não foi aceita. Use pelo menos 8 caracteres, misturando letras e números.');return}
+  await createSupabaseBrowserClient().rpc('password_change_done').then(()=>undefined,()=>undefined);
+  setState('done')}
+ if(!supabaseConfigured)return <AuthCard step="NOVA SENHA" title="Indisponível neste ambiente"><p>Fale com a equipe Vinha.</p></AuthCard>;
+ if(state==='expired'||(badLink&&state==='form'))return <AuthCard step="NOVA SENHA" title="Não foi possível usar este link"><ExpiredLink/></AuthCard>;
+ if(state==='done')return <AuthCard step="NOVA SENHA" title="Senha alterada"><div className="auth-state"><i aria-hidden>✓</i><p>Pronto! Use a nova senha para entrar no aplicativo e no painel.</p><a className="auth-primary" href="/login">Entrar na Vinha</a></div></AuthCard>;
+ return <AuthCard step="NOVA SENHA" title="Crie sua nova senha"><p>Ela vale para o aplicativo e para o painel.</p>
+  <form onSubmit={submit}>{notice&&<p className="auth-alert" role="alert">{notice}</p>}<PasswordFields password={password} confirmation={confirmation} setPassword={setPassword} setConfirmation={setConfirmation}/>
+   <button className="auth-primary" disabled={busy}>{busy?'Salvando…':'Salvar nova senha'}</button></form></AuthCard>;
+}
