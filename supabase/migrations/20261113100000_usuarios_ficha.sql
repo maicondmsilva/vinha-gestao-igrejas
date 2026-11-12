@@ -71,7 +71,7 @@ begin
   digits:=regexp_replace(q,'\D','','g');
   if char_length(q)<1 then return jsonb_build_object('items','[]'::jsonb); end if;
   return jsonb_build_object('items',coalesce((select jsonb_agg(row_to_json(x)::jsonb order by x.name) from (
-   select p.id person, p.full_name name, p.email, private.staff_user_mask_cpf(p.cpf) cpf_masked, u.name unit,
+   select p.id person, p.full_name name, p.email, p.phone, private.staff_user_mask_cpf(p.cpf) cpf_masked, u.name unit,
     p.auth_user_id is not null "hasLogin", om.id membership, om.status membership_status,
     private.staff_user_version(om.id,p.id) version
    from public.people p
