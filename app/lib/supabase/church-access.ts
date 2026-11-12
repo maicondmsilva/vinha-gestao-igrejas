@@ -9,7 +9,7 @@ import type {OperationsClient} from './operations';
 
 const permissions:Record<string,string[]>={
  owner:['*'],
- pastor:['people.read','people.write','units.read','units.manage','audit.read'],
+ pastor:['people.read','people.write','units.read','units.manage','audit.read','staff.users'],
  admin:['*'],
  secretary:['people.read','people.write','units.read'],
  finance:['units.read'],

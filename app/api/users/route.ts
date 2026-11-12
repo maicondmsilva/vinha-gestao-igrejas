@@ -1,1 +1,1 @@
-export {staffGET as GET,staffPATCH as PATCH} from '../../lib/supabase/staff-routes';
+export {staffGET as GET,staffPATCH as PATCH,userPOST as POST} from '../../lib/supabase/staff-routes';

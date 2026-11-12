@@ -7,18 +7,13 @@ const transpile=path=>ts.transpileModule(readFileSync(new URL(path,import.meta.u
 function staff({role='owner',result={data:{ok:true,slug:'igreja-teste'},error:null}}={}){
  const calls=[];const client={rpc:async(name,args)=>{calls.push({name,args});return result}};
  const access={membership:{organization_id:'org-verified',membership_id:'member-verified',role,units:[]},client};
- const handlers=new Function('NextResponse','authorizeSupabaseChurch','createSupabaseRequestClient','trustedSessionRequest',transpile('../app/lib/supabase/staff-routes.ts')+';return {staffGET,invitesPOST,activateStaff};')({json:Response.json},async request=>trustedSessionRequest(request)?{access,response:null}:{access:null,response:Response.json({error:'origin'},{status:403})},()=>client,trustedSessionRequest);
+ const handlers=new Function('NextResponse','authorizeSupabaseChurch','createSupabaseRequestClient','trustedSessionRequest',transpile('../app/lib/supabase/staff-routes.ts')+';return {staffGET,invitesGone,activateStaff};')({json:Response.json},async request=>trustedSessionRequest(request)?{access,response:null}:{access:null,response:Response.json({error:'origin'},{status:403})},()=>client,trustedSessionRequest);
  return{handlers,calls};
 }
 const request=data=>new Request('https://vinha.test/api/users/invites',{method:'POST',headers:{origin:'https://vinha.test','content-type':'application/json'},body:JSON.stringify(data)});
-test('staff routes deny non-manager and cross-origin without invoking a write',async()=>{
- const restricted=staff({role:'secretary'});assert.equal((await restricted.handlers.invitesPOST(request({}))).status,403);assert.equal(restricted.calls.length,0);
- const allowed=staff();const bad=new Request('https://vinha.test/api/users/invites',{method:'POST',headers:{origin:'https://other.test'},body:'{}'});assert.equal((await allowed.handlers.invitesPOST(bad)).status,403);assert.equal(allowed.calls.length,0);
-});
-test('invite creation takes ministry exclusively from verified access and never claims email sent',async()=>{
- const setup=staff({result:{data:{token:'a0000000-0000-4000-8000-000000000001',emailQueued:false},error:null}});
- const response=await setup.handlers.invitesPOST(request({organizationId:'forged',email:'new@example.test',name:'Pessoa',role:'secretary',unitId:'unit'}));
- assert.equal(response.status,201);assert.equal(setup.calls[0].args.p_organization,'org-verified');assert.equal((await response.json()).emailQueued,false);
+test('convites encerrados respondem 410 sem tocar no banco',async()=>{
+ const setup=staff();const response=await setup.handlers.invitesGone(request({organizationId:'forged',email:'new@example.test',name:'Pessoa',role:'secretary',unitId:'unit'}));
+ assert.equal(response.status,410);assert.match(await response.text(),/Convites encerrados/);assert.equal(setup.calls.length,0);
 });
 test('acceptance rejects malformed token and database denial without reporting activation',async()=>{
  const setup=staff({result:{data:null,error:{code:'42501',message:'private detail'}}});

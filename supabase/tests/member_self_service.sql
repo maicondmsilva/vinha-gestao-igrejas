@@ -25,7 +25,7 @@ select throws_ok($$select pg_temp.submit('{"full_name":"Conta fictícia","role":
 select lives_ok($$select pg_temp.submit('{"full_name":"Pessoa fictícia app","phone":"11999999999","street":"Rua fictícia"}')$$,'cadastro enviado');
 select lives_ok($$select pg_temp.submit('{"full_name":"Pessoa fictícia app","phone":"11999999999","street":"Rua fictícia"}')$$,'repetição não duplica pedido');
 select throws_ok($$select pg_temp.submit('{"full_name":"Outra proposta"}')$$,'40001','member_request_pending','pedido pendente não é sobrescrito');
-select is(public.member_self_service(pg_temp.mi('org'),'profile')->>'membershipStatus','pending','novo usuário aguarda aprovação');
+select is(public.member_self_service(pg_temp.mi('org'),'profile')->>'membershipStatus','active','novo usuário do app tem acesso na hora');
 select is((select role::text from public.organization_memberships where organization_id=pg_temp.mi('org') and user_id=auth.uid()),'member','não promove conta');
 select ok(public.member_self_service(pg_temp.mi('org'),'profile')->>'personId' is not null,'conta vinculada ao próprio cadastro sem expor outros registros');
 select throws_ok($$select public.member_profile_review(pg_temp.mi('org'),'list')$$,'42501','member_review_denied','membro não revisa fila');
