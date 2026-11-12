@@ -82,7 +82,7 @@ jobs:
           node --experimental-strip-types --test scripts/member-church.test.mjs
           node --experimental-strip-types --test scripts/worship.test.mjs
           node --experimental-strip-types --test scripts/postal-copy.test.mjs scripts/people-form-style.test.mjs
-          node --experimental-strip-types --test scripts/staff-user-route.test.mjs scripts/user-sheet.test.mjs scripts/vinha-email.test.mjs scripts/auth-screens.test.mjs
+          node --experimental-strip-types --test scripts/staff-user-route.test.mjs scripts/user-sheet.test.mjs scripts/vinha-email.test.mjs scripts/auth-screens.test.mjs scripts/family.test.mjs
           node --experimental-strip-types --test scripts/android-experience.test.mjs
           node --experimental-strip-types --test scripts/member-agenda.test.mjs scripts/programming.test.mjs scripts/event-stage1.test.mjs scripts/event-stage2.test.mjs scripts/event-stage3.test.mjs scripts/event-closure.test.mjs scripts/event-checkout-review.test.mjs scripts/event-question-presets.test.mjs scripts/event-publication.test.mjs scripts/publishing.test.mjs
           node --experimental-strip-types --test scripts/member-community.test.mjs
