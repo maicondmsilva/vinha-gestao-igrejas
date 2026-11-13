@@ -7,6 +7,7 @@ import {availabilityDraft, availabilityPayload, minutesText, type AvailabilityDr
 import {formatInZone} from '../../shared/timezone';
 import {presenceStatus, responseStatus, serviceStatus, weekdays} from '../../shared/scale-operations';
 import {onBrand} from './experience-model';
+import WorshipMusician from './WorshipMusician';
 type Palette = {surface: string; text: string; muted: string; line: string; brand: string};
 export default function VolunteerScales({
   rpc,
@@ -113,13 +114,16 @@ export default function VolunteerScales({
       <View style={s.row}>
         {button('Convites', () => setTab('invites'), false, tab === 'invites')}
         {button('Disponibilidade', () => setTab('availability'), false, tab === 'availability')}
+        {button('Repertório', () => setTab('repertoire'), false, tab === 'repertoire')}
       </View>
       {button('Atualizar escalas', m.refresh, m.loading)}
       {m.loading && <ActivityIndicator color={palette.brand} />}
       <Text accessibilityLiveRegion="polite" style={{color: palette.text, lineHeight: 23}}>
         {m.error || error || m.notice}
       </Text>
-      {tab === 'invites' ? (
+      {tab === 'repertoire' ? (
+        <WorshipMusician rpc={rpc} org={org} palette={palette} />
+      ) : tab === 'invites' ? (
         <>
           {m.page && !m.page.items.length && text('Nenhum convite nesta página. A liderança precisa publicar a escala para o convite aparecer.')}
           {m.page?.items.map((i) => (

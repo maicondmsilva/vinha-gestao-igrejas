@@ -6,6 +6,7 @@ import {availabilityDraft, availabilityPayload, minutesText, type AvailabilityDr
 import {formatInZone} from '../shared/timezone';
 import {presenceStatus, responseStatus, serviceStatus, weekdays} from '../shared/scale-operations';
 import './scales-volunteer.css';
+import MemberWorshipMusician from './MemberWorshipMusician';
 export default function MemberVolunteerScales({rpc, org}: {rpc: ChurchRpc; org: string}) {
   const m = useVolunteerScales(rpc, org),
     [tab, setTab] = useState('invites'),
@@ -51,6 +52,9 @@ export default function MemberVolunteerScales({rpc, org}: {rpc: ChurchRpc; org: 
         <button type="button" aria-pressed={tab === 'availability'} onClick={() => setTab('availability')}>
           Minha disponibilidade
         </button>
+        <button type="button" aria-pressed={tab === 'repertoire'} onClick={() => setTab('repertoire')}>
+          Repertório
+        </button>
         <button type="button" disabled={m.busy || m.loading} onClick={m.refresh}>
           Atualizar escalas
         </button>
@@ -59,7 +63,9 @@ export default function MemberVolunteerScales({rpc, org}: {rpc: ChurchRpc; org: 
       {m.error && <p role="alert">{m.error}</p>}
       {error && <p role="alert">{error}</p>}
       {m.notice && <p role="status">{m.notice}</p>}
-      {tab === 'invites' ? (
+      {tab === 'repertoire' ? (
+        <MemberWorshipMusician rpc={rpc} org={org} />
+      ) : tab === 'invites' ? (
         <>
           {m.page && !m.page.items.length && <p>Nenhum convite nesta página. A liderança precisa publicar a escala para o convite aparecer.</p>}
           {m.page?.items.map((i) => (
