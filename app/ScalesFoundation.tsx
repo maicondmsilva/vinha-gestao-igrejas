@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState,type ReactNode} from 'react';
-import './scales-foundation.css';
+import './scales-ui.css';
 type Team={id:string;name:string;description:string;active:boolean;version:number;reply_hours:number;reminder_hours:number;members:number;canManage:boolean;canAssign:boolean;canPublish:boolean};
 type Role={id:string;name:string;required_count:number;active:boolean;version:number};
 type Member={id:string;person_id:string;name:string;role_id:string|null;roleName:string|null;hasAccount:boolean;personActive:boolean;active:boolean;version:number};

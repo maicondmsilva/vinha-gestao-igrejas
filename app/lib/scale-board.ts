@@ -48,3 +48,7 @@ export function boardPublishMessage(r:Batch){
  if(other)parts.push(other+(other===1?' não pôde ser publicada':' não puderam ser publicadas')+' (vaga sem a função, horário já passou ou sem permissão).');
  return parts.join(' ');
 }
+
+// Cor fixa por equipe (mesma equipe, mesma cor em todo o calendário), com bom contraste sobre fundo claro.
+export const teamPalette=['#2f6f4f','#2b5f9e','#8a4fb3','#b5651d','#a23a5a','#1f7a7a','#6b6f1e','#5a4fcf'];
+export function teamColor(id:string){let h=0;for(const c of id)h=(h*31+c.charCodeAt(0))>>>0;return teamPalette[h%teamPalette.length]}
