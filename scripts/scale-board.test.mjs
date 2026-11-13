@@ -31,5 +31,5 @@ test('rota usa a igreja da sessão e o quadro está nas Escalas',()=>{
  const route=readFileSync(new URL('../app/api/scales-board/route.ts',import.meta.url),'utf8');assert.match(route,/p_org:auth\.access!\.membership\.organization_id/);assert.match(route,/scale_board/);
  const ws=readFileSync(new URL('../app/ScalesWorkspace.tsx',import.meta.url),'utf8');assert.match(ws,/\['montagem','Quadro de montagem'\]/);assert.match(ws,/<ScalesBoard/);
  const ui=readFileSync(new URL('../app/ScalesBoard.tsx',import.meta.url),'utf8');assert.match(ui,/Publicar selecionadas/);assert.match(ui,/action:'suggest'/);
- const css=readFileSync(new URL('../app/scales-board.css',import.meta.url),'utf8');for(const x of css.matchAll(/font-size:(\d+)px/g))assert.ok(Number(x[1])>=12,x[0]);
+ const css=readFileSync(new URL('../app/scales-ui.css',import.meta.url),'utf8');for(const x of css.matchAll(/font-size:(\d+)px/g))assert.ok(Number(x[1])>=12,x[0]);
 });

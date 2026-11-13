@@ -16,7 +16,7 @@ test('padrão novo: letras legíveis em px e títulos sem serifa',()=>{
  const css=read('app/scales-ui.css');
  for(const m of css.matchAll(/font-size:\s*(\d+)px/g))assert.ok(Number(m[1])>=12,m[0]);
  assert.doesNotMatch(css,/font-size:\s*[\d.]+rem/);
- assert.doesNotMatch(css,/Georgia|serif/);
+ assert.doesNotMatch(css,/Georgia|[ ,]serif[;,}]/);
  assert.match(css,/\.sp-workspace h2\{[^}]*font-size:22px/);
  assert.match(css,/@media\(max-width:640px\)/);
 });
