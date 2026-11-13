@@ -5,6 +5,7 @@ import './people-directory.css';
 import type {Person} from './DashboardApp';
 import MemberChurchAdmin from './MemberChurchAdmin';
 import PendingProfiles from './PendingProfiles';
+import PeopleBirthdays from './PeopleBirthdays';
 type Pagination={page:number;limit:number;total:number;pages:number};
 export default function PeopleDirectory({unitId,onAdd,onSelect,revision=0}:{unitId:string;onAdd:()=>void;onSelect:(person:Person)=>void;revision?:number}){
  const {t}=useMinistryLanguage();
@@ -27,6 +28,7 @@ export default function PeopleDirectory({unitId,onAdd,onSelect,revision=0}:{unit
   <header className="pd-head"><div><p>Comunidade</p><h1>{t('pessoas')}</h1><small>Membros, pessoas em integração e visitantes da igreja selecionada.</small></div>
    <div className="pd-actions"><a className="pd-secondary" href={`/onboarding/importar-membros${tenant?`?tenant=${encodeURIComponent(tenant)}`:''}`}>Importar planilha</a><button className="pd-primary" type="button" onClick={onAdd}>＋ Nova pessoa</button></div></header>
   <PendingProfiles/><MemberChurchAdmin/>
+  <PeopleBirthdays unitId={unitId} onOpen={id=>void fetch('/api/people?'+new URLSearchParams({id,limit:'1',...(tenant?{tenant}:{})}),{cache:'no-store'}).then(r=>r.ok?r.json():null).then((d:{people?:Person[]}|null)=>{const p=d?.people?.[0];if(p)onSelect(p)}).catch(()=>undefined)}/>
   <nav className="pd-kpis" aria-label="Filtrar por etapa">{statusTabs.map(([v,label,n])=><button key={label} type="button" aria-pressed={status===v} onClick={()=>setStatus(v)}><small>{label}</small><b>{n===null?'—':n}</b></button>)}</nav>
   <section className="pd-card">
    <div className="pd-tools"><label className="pd-search"><span className="sr-only">Buscar pessoa</span><input maxLength={100} value={q} onChange={event=>setQ(event.target.value)} placeholder="Buscar por nome, e-mail ou telefone"/></label>
