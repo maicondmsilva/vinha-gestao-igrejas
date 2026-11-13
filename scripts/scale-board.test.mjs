@@ -33,3 +33,9 @@ test('rota usa a igreja da sessão e o quadro está nas Escalas',()=>{
  const ui=readFileSync(new URL('../app/ScalesBoard.tsx',import.meta.url),'utf8');assert.match(ui,/Publicar selecionadas/);assert.match(ui,/action:'suggest'/);
  const css=readFileSync(new URL('../app/scales-ui.css',import.meta.url),'utf8');for(const x of css.matchAll(/font-size:(\d+)px/g))assert.ok(Number(x[1])>=12,x[0]);
 });
+test('calendário usa a mesma cor para a mesma equipe',async()=>{
+ const {teamColor,teamPalette}=await import('../app/lib/scale-board.ts');
+ assert.equal(teamColor('e0000000-0000-4000-8000-000000000001'),teamColor('e0000000-0000-4000-8000-000000000001'));
+ assert.ok(teamPalette.includes(teamColor('qualquer')));
+ const ws=readFileSync(new URL('../app/ScalesWorkspace.tsx',import.meta.url),'utf8');assert.match(ws,/sp-team-legend/);assert.match(ws,/colorOf\(s\.teams\[0\]\.id\)/);assert.match(ws,/teamPalette\[/);
+});

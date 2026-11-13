@@ -321,3 +321,9 @@
  .sb-grid thead th,.sb-grid tbody th{min-width:130px}
  .sb-panel{width:100%}
 }
+
+/* Calendário: cores por equipe */
+.sp-team-legend{list-style:none;display:flex;flex-wrap:wrap;gap:8px 16px;margin:0 0 10px;padding:0;font-size:13px;color:#3d5a4b}
+.sp-team-legend li{display:flex;align-items:center;gap:6px}
+.sp-team-legend i,.sp-team-dots i{display:inline-block;width:10px;height:10px;border-radius:50%}
+.sp-team-dots{display:flex;gap:4px;margin-top:4px}
