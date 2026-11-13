@@ -33,3 +33,9 @@ test('tema do app vem do painel e não do celular',()=>{
  assert.ok(!exp.includes('useColorScheme()')&&!app.includes('useColorScheme()'));
  assert.match(read('app/OrganizationSettings.tsx'),/name="appTheme"/);
 });
+test('rodapé respeita a barra do sistema e ícones são vetoriais do mesmo tamanho',()=>{
+ const exp=read('android-app/src/MemberExperience.tsx');assert.match(exp,/paddingBottom:Math\.max\(insets\.bottom,8\)/);assert.match(exp,/<Icon name=\{t\.icon\}/);
+ assert.match(read('android-app/App.tsx'),/SafeAreaProvider/);
+ const model=read('android-app/src/experience-model.ts');assert.match(model,/icon:'calendar'/);assert.match(model,/export function accentOn/);
+ assert.match(read('android-app/src/HomeScreen.tsx'),/tileCols=width>=900\?6:3/);
+});
