@@ -23,11 +23,13 @@
 .pd-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:12px 16px;border-bottom:1px solid #edf1ee;background:#fafcfa}
 .pd-filters label{display:grid;gap:5px;font-size:13px;font-weight:600;color:#3d5a4b;flex:1 1 260px}
 .pd-table{display:grid}
-.pd-row{display:grid;grid-template-columns:minmax(220px,2.2fr) minmax(130px,1fr) 130px minmax(120px,1fr) 110px;gap:12px;align-items:center;padding:12px 16px;border:0;border-bottom:1px solid #edf1ee;background:#fff;text-align:left;width:100%;font:inherit;color:inherit;cursor:pointer}
+.pd-row{display:grid;grid-template-columns:28px minmax(220px,2.2fr) minmax(130px,1fr) 130px minmax(120px,1fr) 110px;gap:12px;align-items:center;padding:12px 16px;border:0;border-bottom:1px solid #edf1ee;background:#fff;text-align:left;width:100%;font:inherit;color:inherit}
+.pd-row.sel{background:#f1f8f3}
 .pd-row:hover{background:#f6faf7}
 .pd-th{cursor:default;background:#fafcfa;font-size:12px;font-weight:700;color:#5f6f64;text-transform:uppercase;letter-spacing:.05em;padding-top:10px;padding-bottom:10px}
 .pd-th:hover{background:#fafcfa}
-.pd-person{display:flex;gap:12px;align-items:center;min-width:0}
+.pd-person{display:flex;gap:12px;align-items:center;min-width:0;border:0;background:none;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+.pd-person:hover b{text-decoration:underline}
 .pd-person i{flex:none;width:40px;height:40px;border-radius:50%;background:#e4efe8;color:var(--tenant,#285c45);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:14px}
 .pd-person>span{display:grid;min-width:0}
 .pd-person b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -48,11 +50,13 @@
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media(max-width:900px){
  .pd-kpis{grid-template-columns:1fr 1fr}
- .pd-th{display:none}
- .pd-row{grid-template-columns:1fr auto;grid-template-areas:'person pill' 'contact contact';gap:6px 10px}
+ .pd-row{grid-template-columns:28px 1fr auto;grid-template-areas:'check person pill' '. contact contact';gap:6px 10px}
+ .pd-row>.pd-check{grid-area:check}
  .pd-row>.pd-person{grid-area:person}
- .pd-row>span:nth-child(3){grid-area:pill}
+ .pd-row>.pd-pillcell{grid-area:pill}
  .pd-row>.pd-contact{grid-area:contact;padding-left:52px}
+ .pd-th{display:flex}
+ .pd-th>span{display:none}
  .pd-row>.pd-group,.pd-row>.pd-since{display:none}
 }
 @media(max-width:480px){
