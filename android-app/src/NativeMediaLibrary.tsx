@@ -37,7 +37,7 @@ export default function NativeMediaLibrary({rpc,org,unit,authenticated,palette:p
    <TextInput accessibilityLabel="Pesquisar" placeholder={kind==='live'?'Pesquisar transmissões…':'Pesquisar vídeos…'} placeholderTextColor={p.muted} value={query} onChangeText={setQuery} style={{borderWidth:1,borderColor:p.line,borderRadius:24,paddingHorizontal:18,paddingVertical:12,color:p.text,marginVertical:12}}/>
    {q?list.map(i=>tile(i,true)):kind==='live'?<>{list.filter(i=>i.live_state==='live').map(i=>tile(i,true))}{shelf('Próximas transmissões',list.filter(i=>i.live_state==='scheduled'))}{shelf('Transmissões anteriores',list.filter(i=>i.live_state==='ended'))}</>:<>
     {list[0]&&<View style={{marginTop:4}}><Text accessibilityRole="header" style={{fontSize:20,fontWeight:'700',color:p.text,marginBottom:10}}>Em destaque</Text>{tile(list[0],true)}</View>}
-    {shelf('Continuar assistindo',list.filter(i=>(pos.get(i.id)?.position_seconds||0)>0))}
+    {shelf('De onde você parou',list.filter(i=>(pos.get(i.id)?.position_seconds||0)>0))}
     {shelf('Meus favoritos',list.filter(i=>pos.get(i.id)?.favorite))}
     {shelf('Adicionados recentemente',list.slice(1))}
    </>}

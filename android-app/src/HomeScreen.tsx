@@ -46,7 +46,7 @@ export default function HomeScreen(x:Props){
    {x.eventsLoading?<ActivityIndicator color={p.brand}/>:x.events.length?<ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginTop:12}}>{x.events.slice(0,8).map(e=><Pressable key={e.id} accessibilityRole="button" accessibilityLabel={'Evento '+e.title} onPress={()=>x.onEvent(e.id)} style={{width:260,marginRight:12}}>{thumb(e.cover,140,'▦')}<Text numberOfLines={2} style={[s.cardTitle,{color:p.text}]}>{e.title}</Text><Text style={{color:p.muted}}>{agendaDate(e.starts_at)}</Text></Pressable>)}</ScrollView>:<Text style={{color:p.muted,marginTop:10}}>Nenhum evento programado agora.</Text>}
   </View>
   {(media.items.length>0||media.loading)&&<View style={[s.panel,{backgroundColor:p.surface,borderColor:p.line}]}>
-   {head('Para sua edificação',x.onVideos)}
+   {head('Palavra e mensagens',x.onVideos)}
    {media.loading&&!media.items.length?<ActivityIndicator color={p.brand}/>:<>
     {media.items[0]&&<Pressable accessibilityRole="button" accessibilityLabel={'Assistir '+media.items[0].title} onPress={()=>x.onVideo(media.items[0].id)}>{thumb(media.items[0].poster,190,'▶')}<Text numberOfLines={2} style={[s.cardTitle,{color:p.text}]}>{media.items[0].title}</Text></Pressable>}
     {continueWatching.length>0&&<Text style={[s.sub,{color:p.text}]}>Continue de onde parou</Text>}
@@ -54,7 +54,7 @@ export default function HomeScreen(x:Props){
    </>}
   </View>}
   <View style={[s.panel,{backgroundColor:p.surface,borderColor:p.line}]}>
-   {head('Fique por dentro',x.onContent)}
+   {head('Avisos da igreja',x.onContent)}
    {x.postsLoading?<ActivityIndicator color={p.brand}/>:notices.length?<ScrollView horizontal showsHorizontalScrollIndicator={false}>{notices.slice(0,8).map(n=><Pressable key={n.id} accessibilityRole="button" accessibilityLabel={'Abrir '+n.title} onPress={()=>x.onPost(n.id)} style={{width:240,marginRight:12}}>{thumb(n.image,130,'✉')}<Text numberOfLines={2} style={[s.cardTitle,{color:p.text}]}>{n.title}</Text><Text numberOfLines={2} style={{color:p.muted}}>{richTextPlain(n.body,120)}</Text></Pressable>)}</ScrollView>:<Text style={{color:p.muted}}>Sem avisos novos da igreja.</Text>}
   </View>
   {x.footer}

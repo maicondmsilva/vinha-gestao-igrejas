@@ -18,7 +18,7 @@ test('link para abrir o vídeo no YouTube ou Vimeo',()=>{
  assert.equal(watchLink('http://youtube.com/watch?v=x'),null);
 });
 test('telas do app usam imagens, vídeo no app, QR e configurações',()=>{
- const home=read('android-app/src/HomeScreen.tsx');for(const t of ['Minha agenda','Para sua edificação','Fique por dentro','Meus tickets','pagingEnabled'])assert.ok(home.includes(t),t);
+ const home=read('android-app/src/HomeScreen.tsx');for(const t of ['Minha agenda','Palavra e mensagens','Avisos da igreja','Meus tickets','pagingEnabled'])assert.ok(home.includes(t),t);
  const player=read('android-app/src/NativeMediaPlayer.tsx');assert.match(player,/Compartilhar/);assert.match(player,/Abrir no/);assert.match(player,/autoplay=1/);
  assert.ok(!read('android-app/src/MemberExperience.tsx').includes('Links abrem fora do aplicativo'));
  const agenda=read('android-app/src/AgendaScreens.tsx');assert.match(agenda,/<QrCode value=\{ticket\.code\}/);assert.match(agenda,/<Cover uri=\{e\.cover\}/);
