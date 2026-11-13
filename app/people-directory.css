@@ -62,3 +62,26 @@
  .pd-kpis b{font-size:22px}
  .pd-foot{padding-bottom:80px}
 }
+/* Aniversariantes */
+.pb{background:#fff;border:1px solid #e2e9e3;border-radius:16px;padding:14px 18px;margin:0 0 16px;color:#183e31;font-size:14px}
+.pb *{box-sizing:border-box}
+.pb>header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;height:auto;padding:0;background:none;border:0}
+.pb-toggle{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border:0;background:none;padding:0;cursor:pointer;color:inherit;font:inherit;text-align:left}
+.pb-toggle h2{margin:0;font-size:17px;font-weight:700;font-family:inherit}
+.pb-toggle span{font-size:13px;color:#5f6f64}
+.pb-seg{display:flex;border:1px solid #cdd9cf;border-radius:10px;overflow:hidden}
+.pb-seg button{border:0;background:#fff;padding:8px 12px;font:inherit;font-size:13px;font-weight:600;color:#3d5a4b;cursor:pointer}
+.pb-seg button b{font-size:12px;background:#eef3ef;border-radius:999px;padding:0 7px;margin-left:4px}
+.pb-seg button[aria-pressed=true]{background:var(--tenant,#285c45);color:#fff}
+.pb-seg button[aria-pressed=true] b{background:#ffffff33}
+.pb-empty{margin:12px 0 2px;color:#5f6f64}
+.pb-list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.pb-list li{display:flex;align-items:center;gap:12px;border:1px solid #e2e9e3;border-radius:12px;padding:10px 12px}
+.pb-list li>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pb-day{flex:none;min-width:64px;text-align:center;font-size:12px;font-weight:700;border-radius:8px;padding:4px 6px;background:#eef3ef;color:#3d5a4b;text-transform:capitalize}
+.pb-day.now{background:#fff4dc;color:#7a5200}
+.pb-name{border:0;background:none;padding:0;text-align:left;font:inherit;font-size:14px;font-weight:700;color:#183e31;cursor:pointer;overflow-wrap:anywhere}
+.pb-list small{font-size:12px;color:#5f6f64}
+.pb-msg{flex:none;font-size:13px;font-weight:700;color:#fff;background:#1f8f4e;border-radius:9px;padding:6px 10px;text-decoration:none}
+.pb-nophone{flex:none;font-size:12px;color:#8a978e}
+@media(max-width:640px){.pb-seg{width:100%}.pb-seg button{flex:1;padding:8px 6px}.pb-list{grid-template-columns:1fr}}
