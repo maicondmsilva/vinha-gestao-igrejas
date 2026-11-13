@@ -1,5 +1,5 @@
 export const memberFields=[['full_name','Nome completo'],['phone','Telefone'],['birth_date','Data de nascimento'],['gender','Gênero'],['marital_status','Estado civil'],['cpf','CPF'],['postal_code','CEP'],['street','Rua'],['number','Número'],['complement','Complemento'],['district','Bairro'],['city','Cidade'],['state','UF']] as const;
-export type AppConfig={id:string;name:string;appName:string;primary:string;accent:string;logo:string|null;units:{id:string;name:string;city?:string}[]};
+export type AppConfig={id:string;name:string;appName:string;primary:string;accent:string;theme?:'light'|'dark';logo:string|null;units:{id:string;name:string;city?:string}[]};
 export type MemberProfile={personId:string|null;unitId:string|null;profile:Record<string,string>|null;membershipStatus:string|null;requests:{id:string;kind:string;status:string;payload:Record<string,string>;acceptedFields:string[];reason:string|null;createdAt:string}[]};
 export function memberError(code?:string,message=''){
  if(message.includes('member_request_pending'))return 'Você já tem uma solicitação aguardando revisão.';

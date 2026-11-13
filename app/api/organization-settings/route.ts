@@ -8,7 +8,7 @@ export async function GET(request:Request){
  try{
  const auth=await authorizeSupabaseChurch(request,'units.read');if(!auth||auth.response)return auth?.response||json({error:'Serviço indisponível.'},503);
  const a=auth.access!,client=db(request),org=a.membership.organization_id;
- const [profile,brands]=await Promise.all([client.from('organizations').select('id,slug,name,app_name,senior_pastor_name,legal_name,tax_id,primary_color,accent_color,updated_at,registration_code').eq('id',org).single(),client.rpc('church_branding_read',{p_org:org})]);
+ const [profile,brands]=await Promise.all([client.from('organizations').select('id,slug,name,app_name,senior_pastor_name,legal_name,tax_id,primary_color,accent_color,app_theme,updated_at,registration_code').eq('id',org).single(),client.rpc('church_branding_read',{p_org:org})]);
  if(profile.error||brands.error)return json({error:'Não foi possível carregar as configurações.'},503);
  return json({organization:profile.data,brands:brands.data,canManage:a.can('units.manage')||(await client.rpc('permission_any' as never,{p_org:org,p_checks:['church.settings:edit']} as never)).data===true});
  }catch{return json({error:'Não foi possível carregar as configurações.'},503)}

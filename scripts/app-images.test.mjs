@@ -18,7 +18,7 @@ test('link para abrir o vídeo no YouTube ou Vimeo',()=>{
  assert.equal(watchLink('http://youtube.com/watch?v=x'),null);
 });
 test('telas do app usam imagens, vídeo no app, QR e configurações',()=>{
- const home=read('android-app/src/HomeScreen.tsx');for(const t of ['Minha agenda','Palavra e mensagens','Avisos da igreja','Meus tickets','pagingEnabled'])assert.ok(home.includes(t),t);
+ const home=read('android-app/src/HomeScreen.tsx');for(const t of ['Próximos dias','Palavra e mensagens','Avisos da igreja','SEU PRÓXIMO ENCONTRO','Minhas inscrições','pagingEnabled'])assert.ok(home.includes(t),t);
  const player=read('android-app/src/NativeMediaPlayer.tsx');assert.match(player,/Compartilhar/);assert.match(player,/Abrir no/);assert.match(player,/autoplay=1/);
  assert.ok(!read('android-app/src/MemberExperience.tsx').includes('Links abrem fora do aplicativo'));
  const agenda=read('android-app/src/AgendaScreens.tsx');assert.match(agenda,/<QrCode value=\{ticket\.code\}/);assert.match(agenda,/<Cover uri=\{e\.cover\}/);
@@ -26,4 +26,10 @@ test('telas do app usam imagens, vídeo no app, QR e configurações',()=>{
  assert.match(read('android-app/src/MemberExperience.tsx'),/Política de privacidade/);
  assert.match(read('app/privacidade/page.tsx'),/Lei 13\.709\/2018/);assert.match(read('app/termos/page.tsx'),/Termos de uso/);
  assert.match(read('android-app/package.json'),/qrcode-generator/);
+});
+test('tema do app vem do painel e não do celular',()=>{
+ const exp=read('android-app/src/MemberExperience.tsx'),app=read('android-app/src/MprApp.tsx');
+ assert.match(exp,/dark=config\.theme!=='light'/);assert.match(app,/dark=config\?\.theme!=='light'/);
+ assert.ok(!exp.includes('useColorScheme()')&&!app.includes('useColorScheme()'));
+ assert.match(read('app/OrganizationSettings.tsx'),/name="appTheme"/);
 });
