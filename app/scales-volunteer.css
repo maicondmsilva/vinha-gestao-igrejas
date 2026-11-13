@@ -1,3 +1,5 @@
+/* Escalas · aplicativo do voluntário (minhas escalas, respostas e disponibilidade).
+   As telas de gestão usam scales-ui.css. */
 .sv-portal {
   color: inherit;
   margin: 28px 0;
@@ -5,6 +7,7 @@
   border: 1px solid #cbded3;
   border-radius: 16px;
   background: var(--surface, #fff);
+  font-size: 15px;
 }
 .sv-portal header {
   height: auto;
@@ -13,10 +16,10 @@
   background: transparent;
 }
 .sv-portal h2 {
-  font-size: 1.5rem;
+  font-size: 22px;
 }
 .sv-portal h3 {
-  font-size: 1.05rem;
+  font-size: 17px;
 }
 .sv-portal p {
   line-height: 1.55;
@@ -97,124 +100,6 @@
 .sv-preserve {
   white-space: pre-wrap;
 }
-.so-panel {
-  padding: 20px 0;
-}
-.so-panel .sp-heading {
-  height: auto;
-}
-.so-rows > article {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  gap: 20px;
-  border-bottom: 1px solid #d9e4dd;
-  padding: 18px 0;
-}
-.so-rows p {
-  margin: 8px 0;
-}
-.so-rows small {
-  color: #677f71;
-}
-.so-warning {
-  color: #85542e;
-  background: #fff4e6;
-  padding: 8px 12px;
-  border-radius: 7px;
-}
-.so-request {
-  border: 1px solid #d7e4da;
-  border-radius: 10px;
-  margin: 12px 0;
-  padding: 16px;
-}
-.so-command {
-  display: grid;
-  gap: 16px;
-  margin: 24px 0;
-  padding: 22px;
-  border: 1px solid #a9c6b1;
-  border-radius: 14px;
-  background: #f5f9f1;
-}
-.so-panel label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.so-panel input,
-.so-panel select,
-.so-panel textarea {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid #c3d7c9;
-  border-radius: 8px;
-  box-sizing: border-box;
-  background: white;
-  color: #214b3d;
-  font: inherit;
-}
-.so-panel .so-check {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  line-height: 1.5;
-}
-.so-panel .so-check input[type='checkbox'] {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  max-width: 20px;
-  min-height: 20px;
-  max-height: 20px;
-  padding: 0;
-  flex: 0 0 20px;
-  margin: 2px 0;
-}
-.so-rules {
-  background: white;
-  border: 1px solid #d1e0d6;
-  border-radius: 14px;
-  padding: 20px;
-  margin: 20px 0;
-}
-.so-rules summary {
-  cursor: pointer;
-  font-weight: 650;
-}
-.so-rules form {
-  display: flex;
-  align-items: end;
-  gap: 14px;
-  margin: 20px 0;
-}
-.so-rules form label {
-  flex: 1;
-}
-.so-rules fieldset {
-  border: 1px solid #c3d7c9;
-  border-radius: 10px;
-  padding: 14px;
-}
-.so-command .sp-pager {
-  padding: 0;
-}
-.so-panel button {
-  min-height: 42px;
-}
-.so-command footer {
-  margin-top: 10px;
-}
-.so-panel > label {
-  max-width: 650px;
-}
 @media (max-width: 700px) {
   .sv-portal {
     padding: 16px;
@@ -226,33 +111,4 @@
     flex: 1;
     min-width: 125px;
   }
-  .so-rows > article {
-    flex-direction: column;
-  }
-  .so-rows .sp-actions {
-    width: 100%;
-  }
-  .so-command {
-    padding: 16px;
-  }
-  .so-rules form {
-    align-items: stretch;
-    flex-direction: column;
-  }
-  .so-command footer button {
-    flex: 1;
-  }
-  .so-panel select {
-    max-width: 100%;
-  }
-}
-.sp-modal .so-command {
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  background: white;
-  padding: 24px;
-}
-.sp-modal > header h2 {
-  overflow-wrap: anywhere;
 }

@@ -1,5 +1,5 @@
 'use client';
-import './scales-week.css';
+import './scales-ui.css';
 import {useEffect,useState} from 'react';
 import {formatInZone,panelTimezone,toLocalDay} from '../shared/timezone';
 

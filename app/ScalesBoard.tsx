@@ -1,5 +1,5 @@
 'use client';
-import './scales-board.css';
+import './scales-ui.css';
 import {useEffect,useMemo,useState} from 'react';
 import {formatInZone,panelTimezone,toLocalDay} from '../shared/timezone';
 import {boardPublishMessage,conflictLabel,weekRange} from './lib/scale-board';
