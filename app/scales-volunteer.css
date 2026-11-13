@@ -112,3 +112,97 @@
     min-width: 125px;
   }
 }
+/* Repertório do culto (visão do músico) */
+.sv-music article {
+  padding: 16px 0;
+}
+.sv-music-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 0;
+  background: var(--surface, #fff);
+}
+.sv-music-bar .secondary {
+  background: #fff;
+  color: #214b3d;
+}
+.sv-music-note {
+  padding: 10px 14px;
+  border-left: 4px solid #c39a4a;
+  background: #f6f1e2;
+  border-radius: 6px;
+}
+.sv-music-rehearsal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #cbded3;
+  border-radius: 12px;
+}
+.sv-song header {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+.sv-song header b {
+  font-size: 17px;
+}
+.sv-song header span,
+.sv-song header small {
+  color: #5f6f64;
+  font-size: 14px;
+}
+.sv-chart p {
+  margin: 0 0 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  font-size: 16px;
+  line-height: 1.3;
+  white-space: pre-wrap;
+}
+.sv-chart span {
+  display: inline-flex;
+  flex-direction: column;
+}
+.sv-chart i {
+  font-style: normal;
+  font-weight: 700;
+  color: #b4572a;
+  font-size: 14px;
+}
+.sv-music.stage {
+  background: #10261d;
+  color: #f4f8f4;
+  padding: 16px;
+  border-radius: 12px;
+}
+.sv-music.stage .sv-music-bar {
+  background: #10261d;
+}
+.sv-music.stage .sv-song header span,
+.sv-music.stage .sv-song header small,
+.sv-music.stage p {
+  color: #e6efe8;
+}
+.sv-music.stage .sv-chart p {
+  font-size: 24px;
+}
+.sv-music.stage .sv-chart i {
+  color: #f2c46b;
+  font-size: 18px;
+}
+.sv-music.stage .sv-music-note {
+  background: #1d3a2e;
+  color: #f4f8f4;
+}
+.sv-chart span.gap {
+  min-width: 2.4em;
+}
