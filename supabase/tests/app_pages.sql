@@ -1,0 +1,33 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select no_plan();
+-- Comunicação · páginas da igreja e categoria dos arquivos no app.
+create function pg_temp.ap(t text) returns uuid language sql immutable as $$select md5('app-pages-'||t)::uuid$$;
+create function pg_temp.actor(t text) returns text language sql as $$select set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.ap(t),'role','authenticated')::text,true)$$;
+insert into auth.users(id,instance_id,aud,role,email,email_confirmed_at,created_at,updated_at) select pg_temp.ap(t),'00000000-0000-0000-0000-000000000000','authenticated','authenticated',t||'-pages@example.invalid',now(),now(),now() from unnest(array['owner','reader'])t;
+insert into public.organizations(id,name,slug,status) values(pg_temp.ap('org'),'Páginas fictício','app-pages-test','active');
+insert into public.organization_units(id,organization_id,name,slug,unit_type) values(pg_temp.ap('a'),pg_temp.ap('org'),'Igreja A','a','headquarters'),(pg_temp.ap('b'),pg_temp.ap('org'),'Igreja B','b','campus');
+insert into public.organization_memberships(id,organization_id,user_id,default_unit_id,role,status) values
+ (pg_temp.ap('owner-m'),pg_temp.ap('org'),pg_temp.ap('owner'),pg_temp.ap('a'),'owner','active'),(pg_temp.ap('reader-m'),pg_temp.ap('org'),pg_temp.ap('reader'),pg_temp.ap('a'),'member','active');
+create function pg_temp.pub(a text,i text default null,v integer default null,d jsonb default '{}') returns jsonb language sql as $$select public.publishing_admin(pg_temp.ap('org'),pg_temp.ap('a'),a,case when i is null then null else pg_temp.ap(i) end,v,d)$$;
+create function pg_temp.fields(k text,title text,body text,cat text default '') returns jsonb language sql as $$select jsonb_build_object('kind',k,'title',title,'body',body,'source',case when k='file' then 'https://exemplo.invalid/estudo.pdf' else '' end,'poster','','category',cat,'channel','','scope','local','targets',jsonb_build_array(pg_temp.ap('a')),'group','','groupVersion',0,'provider','','starts','','ends','','download',false,'share',true)$$;
+select pg_temp.actor('owner');set local role authenticated;
+select lives_ok($$select pg_temp.pub('save','history',0,pg_temp.fields('page','Nossa história',repeat('Uma longa história. ',300)))$$,'página com texto longo (até 12 mil caracteres)');
+select throws_ok($$select pg_temp.pub('save','longnotice',0,pg_temp.fields('notice','Aviso longo',repeat('Texto. ',800)))$$,'22023',null,'aviso continua limitado a 4 mil caracteres');
+select lives_ok($$select pg_temp.pub('publish','history',1)$$,'página publicada');
+select lives_ok($$select pg_temp.pub('save','draftpage',0,pg_temp.fields('page','Rascunho','Ainda não'))$$,'rascunho de página');
+select lives_ok($$select pg_temp.pub('save','cat',0,pg_temp.fields('category','Estudos',''))$$,'categoria');
+select lives_ok($$select pg_temp.pub('publish','cat',1)$$,'categoria publicada');
+select lives_ok($$select pg_temp.pub('save','file',0,pg_temp.fields('file','Estudo da semana','PDF',pg_temp.ap('cat')::text))$$,'arquivo com categoria');
+select lives_ok($$select pg_temp.pub('publish','file',1)$$,'arquivo publicado');
+reset role;
+set local role anon;
+select is((select string_agg(i->>'title',',') from jsonb_array_elements(public.member_church_pages(pg_temp.ap('org'),pg_temp.ap('a'))->'items') i),'Nossa história','app mostra só a página publicada da igreja');
+select is(jsonb_array_length(public.member_church_pages(pg_temp.ap('org'),pg_temp.ap('b'))->'items'),0,'outra igreja não recebe');
+select is((select i->>'category' from jsonb_array_elements(public.member_public_feed(pg_temp.ap('org'),pg_temp.ap('a'))->'items') i where i->>'kind'='file'),'Estudos','arquivo chega ao app com a categoria');
+select is((select i->>'url' from jsonb_array_elements(public.member_public_feed(pg_temp.ap('org'),pg_temp.ap('a'))->'items') i where i->>'kind'='file'),'https://exemplo.invalid/estudo.pdf','arquivo leva ao endereço do PDF');
+reset role;
+select pg_temp.actor('reader');set local role authenticated;
+select throws_ok($$select pg_temp.pub('save','x',0,pg_temp.fields('page','Invasão','x'))$$,'42501',null,'membro não cria página');
+select * from finish();
+rollback;
