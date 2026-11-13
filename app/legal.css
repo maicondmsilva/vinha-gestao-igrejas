@@ -1,0 +1,8 @@
+/* Páginas públicas de política de privacidade e termos de uso. */
+.legal{max-width:760px;margin:0 auto;padding:40px 20px 80px;color:#183e31;font-size:16px;line-height:1.65;background:#fff}
+.legal h1{font-size:30px;margin:0 0 6px;line-height:1.2}
+.legal h2{font-size:20px;margin:32px 0 8px}
+.legal p,.legal li{color:#2f4a3d}
+.legal ul{padding-left:22px}
+.legal .legal-date{color:#5f6f64;font-size:14px;margin:0 0 24px}
+.legal a{color:#285c45}

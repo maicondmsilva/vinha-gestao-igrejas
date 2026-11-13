@@ -31,6 +31,7 @@ test('abas navegam, detalhe usa publicação atual e perfil de visitante exige l
  args.push('NativeCommunity','NativeLearning','NativeBible','NativeFamily','NativeMediaLibrary','NativeMediaPlayer','mediaSource');values.push('NativeCommunity','NativeLearning','NativeBible','NativeFamily','NativeMediaLibrary','NativeMediaPlayer',()=>null);
  args.push('StyleSheet','AppState','useMemberAgenda','NativeAgenda','NativeTickets','NativeInbox','agendaDate');values.push({create:v=>v},{currentState:'active',addEventListener:()=>({remove(){}})},()=>({events:[],tickets:[],inbox:[],unread:0,loading:false,available:true,error:'',refresh(){}}),'NativeAgenda','NativeTickets','NativeInbox',v=>v);
  args.push('RichText','richTextPlain');values.push('RichText',richTextPlain);
+ args.push('HomeScreen','appImage','Share','Constants');values.push('HomeScreen',v=>v&&v.startsWith('https:')?v:null,{share:async()=>{}},{expoConfig:{version:'0.1.0'}});
  const Component=new Function(...args,compile('../android-app/src/MemberExperience.tsx')+';return MemberExperience')(...values);
  const props={config:{id:'org',appName:'Aplicativo fictício',name:'Ministério fictício',primary:'#0099cc',units:[{id:'b',name:'Igreja fictícia B'}]},profile:null,authenticated:false,profilePanel:null,accountNotice:'',profileBusy:false,onLogin:()=>logins++,onSignOut(){},onProfileRefresh(){},rpc:{rpc(){}}};
  const render=()=>{cursor=0;return Component(props)};
