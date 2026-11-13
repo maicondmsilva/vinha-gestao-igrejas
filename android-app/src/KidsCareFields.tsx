@@ -1,27 +1,29 @@
 import {useState} from 'react';
-import {Pressable,StyleSheet,Switch,Text,TextInput,View} from 'react-native';
+import {Pressable,StyleSheet,Text,TextInput,View} from 'react-native';
 import {composeCare,parseCare,type KidsCare} from '../../shared/kids-care';
 type Palette={surface:string;text:string;muted:string;line:string;brand:string;accent?:string};
+type Need='food'|'allergy'|'special';
+const needs:[Need,string,string][]=[['food','Alimentação','O que a criança não pode comer ou beber?'],['allergy','Alergia','A que a criança tem alergia?'],['special','Saúde e acessibilidade','Como a equipe pode ajudar melhor?']];
 
-/** Cuidados da criança em perguntas simples: cada "sim" abre o campo para detalhar. */
+/** "Para cuidarmos bem" (identidade Vinha): etiquetas do que se aplica, campo só para o que foi marcado e uso de imagem em linguagem positiva. */
 export default function KidsCareFields({value,onChange,palette:p}:{value:string;onChange:(v:string)=>void;palette:Palette}){
- const [care,setCare]=useState<KidsCare>(()=>parseCare(value)),[open,setOpen]=useState(()=>{const c=parseCare(value);return{food:!!c.food,allergy:!!c.allergy,special:!!c.special}});
+ const ac=p.accent||p.brand;
+ const [care,setCare]=useState<KidsCare>(()=>parseCare(value)),[on,setOn]=useState<Record<Need,boolean>>(()=>{const c=parseCare(value);return{food:!!c.food,allergy:!!c.allergy,special:!!c.special}});
  const update=(next:KidsCare)=>{setCare(next);onChange(composeCare(next))};
- const ask=(key:'food'|'allergy'|'special',question:string,placeholder:string)=><View style={[s.item,{borderColor:p.line,backgroundColor:p.surface}]}>
-  <Pressable accessibilityRole="switch" accessibilityState={{checked:open[key]}} onPress={()=>{const on=!open[key];setOpen({...open,[key]:on});if(!on)update({...care,[key]:''})}} style={s.row}>
-   <Text style={[s.q,{color:p.text}]}>{question}</Text><Switch value={open[key]} onValueChange={on=>{setOpen({...open,[key]:on});if(!on)update({...care,[key]:''})}} trackColor={{true:p.accent||p.brand,false:p.line}}/>
-  </Pressable>
-  {open[key]&&<TextInput accessibilityLabel={question} value={care[key]} onChangeText={v=>update({...care,[key]:v})} placeholder={placeholder} placeholderTextColor={p.muted} multiline maxLength={400} style={[s.input,{color:p.text,borderColor:p.line}]}/>}
- </View>;
- return <View>
-  <Text style={[s.head,{color:p.text}]}>Cuidados e restrições</Text>
-  <Text style={{color:p.muted,marginBottom:8}}>Responda sim só no que se aplica. A equipe Kids usa estas informações na recepção.</Text>
-  {ask('food','Tem restrição alimentar?','Ex.: sem lactose, não pode açúcar')}
-  {ask('allergy','Tem alguma alergia?','Ex.: amendoim, picada de inseto, dipirona')}
-  {ask('special','Tem alguma necessidade especial?','Conte o que ajuda a equipe a cuidar bem')}
-  <View style={[s.item,{borderColor:p.line,backgroundColor:p.surface}]}><Pressable accessibilityRole="switch" accessibilityState={{checked:care.noPhotos}} onPress={()=>update({...care,noPhotos:!care.noPhotos})} style={s.row}><Text style={[s.q,{color:p.text}]}>Não autorizo fotos da criança</Text><Switch value={care.noPhotos} onValueChange={v=>update({...care,noPhotos:v})} trackColor={{true:p.accent||p.brand,false:p.line}}/></Pressable></View>
-  <Text style={[s.q,{color:p.text,marginTop:10}]}>Outras observações</Text>
-  <TextInput accessibilityLabel="Outras observações" value={care.notes} onChangeText={v=>update({...care,notes:v})} placeholder="Algo mais que a equipe deve saber" placeholderTextColor={p.muted} multiline maxLength={600} style={[s.input,{color:p.text,borderColor:p.line}]}/>
+ const toggle=(k:Need)=>{const v=!on[k];setOn({...on,[k]:v});if(!v)update({...care,[k]:''})};
+ const option=(label:string,selected:boolean,press:()=>void)=><Pressable accessibilityRole="radio" accessibilityState={{selected}} onPress={press} style={[s.option,{borderColor:selected?ac:p.line,backgroundColor:selected?ac:p.surface}]}><Text style={{color:selected?'#fff':p.text,fontWeight:'800',textAlign:'center'}}>{label}</Text></Pressable>;
+ return <View style={[s.box,{borderColor:p.line,backgroundColor:p.surface}]}>
+  <Text style={[s.head,{color:p.text}]}>Para cuidarmos bem</Text>
+  <Text style={{color:p.muted}}>Marque o que precisa de atenção. Se nada se aplica, é só seguir.</Text>
+  <View style={s.tags}>{needs.map(([k,label])=><Pressable key={k} accessibilityRole="checkbox" accessibilityState={{checked:on[k]}} onPress={()=>toggle(k)} style={[s.tag,{borderColor:on[k]?ac:p.line,backgroundColor:on[k]?ac:'transparent'}]}><Text style={{color:on[k]?'#fff':p.text,fontWeight:'700'}}>{on[k]?'✓ ':'+ '}{label}</Text></Pressable>)}</View>
+  {needs.filter(([k])=>on[k]).map(([k,label,question])=><View key={k} style={{marginTop:10}}>
+   <Text style={{color:ac,fontWeight:'800',fontSize:12,letterSpacing:1}}>{label.toUpperCase()}</Text>
+   <TextInput accessibilityLabel={question} value={care[k]} onChangeText={v=>update({...care,[k]:v})} placeholder={question} placeholderTextColor={p.muted} multiline maxLength={400} style={[s.input,{color:p.text,borderColor:p.line}]}/>
+  </View>)}
+  <Text style={[s.sub,{color:p.text}]}>Uso de imagem</Text>
+  <View style={s.options}>{option('Pode aparecer em fotos',!care.noPhotos,()=>update({...care,noPhotos:false}))}{option('Prefiro sem fotos',care.noPhotos,()=>update({...care,noPhotos:true}))}</View>
+  <Text style={[s.sub,{color:p.text}]}>Algo mais?</Text>
+  <TextInput accessibilityLabel="Algo mais que a equipe deve saber" value={care.notes} onChangeText={v=>update({...care,notes:v})} placeholder="Ex.: chega com sono, usa chupeta, tem um irmão na mesma sala" placeholderTextColor={p.muted} multiline maxLength={600} style={[s.input,{color:p.text,borderColor:p.line}]}/>
  </View>;
 }
-const s=StyleSheet.create({head:{fontSize:18,fontWeight:'800',marginTop:16,marginBottom:4},item:{borderWidth:1,borderRadius:16,padding:12,marginVertical:5},row:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:10,minHeight:40},q:{fontSize:15,fontWeight:'700',flex:1},input:{borderWidth:1,borderRadius:12,padding:12,minHeight:64,fontSize:15,marginTop:8,textAlignVertical:'top'}});
+const s=StyleSheet.create({box:{borderWidth:1,borderRadius:22,padding:16,marginTop:14},head:{fontSize:19,fontWeight:'900',marginBottom:4},sub:{fontSize:15,fontWeight:'800',marginTop:16},tags:{flexDirection:'row',flexWrap:'wrap',gap:8,marginTop:12},tag:{borderWidth:1,borderRadius:22,paddingHorizontal:14,paddingVertical:9},input:{borderWidth:1,borderRadius:14,padding:12,minHeight:60,fontSize:15,marginTop:6,textAlignVertical:'top'},options:{flexDirection:'row',gap:8,marginTop:8},option:{flex:1,borderWidth:1,borderRadius:14,paddingVertical:12,paddingHorizontal:8}});

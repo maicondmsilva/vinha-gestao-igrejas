@@ -31,21 +31,25 @@ export function NativeFiles({posts,palette:p}:{posts:PublicPost[];palette:Palett
 }
 
 type Page={id:string;title:string;body:string;image:string};
-/** Páginas da igreja (Comunicação › Páginas da igreja): história, células, ministérios e o que a igreja quiser apresentar. */
+/** Conheça a igreja (Comunicação › Páginas da igreja): grade de cartões com capa; ao tocar, a página abre inteira. */
 export function NativePages({rpc,org,unit,palette:p,dark}:{rpc:ChurchRpc;org:string;unit:string;palette:Palette;dark:boolean}){
- const [pages,setPages]=useState<Page[]|null>(null),[error,setError]=useState(''),[sel,setSel]=useState('');
- useEffect(()=>{let live=true;if(!unit)return;void Promise.resolve(rpc.rpc('member_church_pages',{p_org:org,p_unit:unit})).then(r=>{if(!live)return;if(r.error)throw Error();const items=((r.data as {items?:Page[]})?.items)||[];setPages(items);setSel(v=>v||items[0]?.id||'')}).catch(()=>{if(live)setError('Não foi possível carregar as páginas da igreja.')});return()=>{live=false}},[rpc,org,unit]);
- const page=pages?.find(x=>x.id===sel),img=appImage(page?.image);
+ const ac=p.accent||p.brand,[pages,setPages]=useState<Page[]|null>(null),[error,setError]=useState(''),[sel,setSel]=useState('');
+ useEffect(()=>{let live=true;if(!unit)return;void Promise.resolve(rpc.rpc('member_church_pages',{p_org:org,p_unit:unit})).then(r=>{if(!live)return;if(r.error)throw Error();setPages(((r.data as {items?:Page[]})?.items)||[])}).catch(()=>{if(live)setError('Não foi possível carregar as páginas da igreja.')});return()=>{live=false}},[rpc,org,unit]);
+ const page=pages?.find(x=>x.id===sel);
+ if(page){const img=appImage(page.image);return <View>
+  <Pressable accessibilityRole="button" onPress={()=>setSel('')} style={{paddingVertical:8}}><Text style={{color:ac,fontWeight:'800'}}>← Conheça a igreja</Text></Pressable>
+  {img&&<Image source={{uri:img}} resizeMode="cover" style={s.cover}/>}
+  <Text accessibilityRole="header" style={[s.h2,{color:p.text}]}>{page.title}</Text>
+  <RichText body={page.body} color={p.text} muted={p.muted} accent={dark?p.text:ac}/>
+ </View>}
  return <View>
-  <Text accessibilityRole="header" style={[s.h1,{color:p.text}]}>Nossa igreja</Text>
-  {error?<Text accessibilityRole="alert" style={{color:p.text}}>{error}</Text>:!pages?<ActivityIndicator color={p.accent||p.brand}/>:!pages.length?<Text style={{color:p.muted}}>A igreja ainda não publicou páginas de apresentação.</Text>:<>
-   {pages.length>1&&<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8,paddingVertical:6}}>{pages.map(x=>chip(p,x.title,x.id===sel,()=>setSel(x.id)))}</ScrollView>}
-   {page&&<View style={{marginTop:10}}>
-    {img&&<Image source={{uri:img}} resizeMode="cover" style={s.cover}/>}
-    <Text accessibilityRole="header" style={[s.h2,{color:p.text}]}>{page.title}</Text>
-    <RichText body={page.body} color={p.text} muted={p.muted} accent={dark?p.text:(p.accent||p.brand)}/>
-   </View>}
-  </>}
+  <Text accessibilityRole="header" style={[s.h1,{color:p.text}]}>Conheça a igreja</Text>
+  <Text style={{color:p.muted,marginBottom:12}}>Nossa história, nossas células e o jeito de ser desta igreja.</Text>
+  {error?<Text accessibilityRole="alert" style={{color:p.text}}>{error}</Text>:!pages?<ActivityIndicator color={ac}/>:!pages.length?<Text style={{color:p.muted}}>A igreja ainda não publicou páginas de apresentação.</Text>:
+   <View style={s.grid}>{pages.map(x=>{const img=appImage(x.image);return <Pressable key={x.id} accessibilityRole="button" accessibilityLabel={'Abrir '+x.title} onPress={()=>setSel(x.id)} style={[s.card,{borderColor:p.line,backgroundColor:p.surface}]}>
+    {img?<Image source={{uri:img}} resizeMode="cover" style={s.cardImg}/>:<View style={[s.cardImg,{backgroundColor:p.line,alignItems:'center',justifyContent:'center'}]}><Icon name="cells" color={ac} size={30}/></View>}
+    <Text numberOfLines={2} style={{color:p.text,fontWeight:'800',padding:10}}>{x.title}</Text>
+   </Pressable>})}</View>}
  </View>;
 }
-const s=StyleSheet.create({h1:{fontSize:28,fontWeight:'900',marginBottom:6},h2:{fontSize:22,fontWeight:'800',marginVertical:12},chip:{borderWidth:1,borderRadius:20,paddingHorizontal:14,paddingVertical:8},file:{flexDirection:'row',gap:12,borderWidth:1,borderRadius:20,padding:12,marginTop:10},thumb:{width:72,height:92,borderRadius:12},btn:{borderRadius:12,paddingHorizontal:14,paddingVertical:9},cover:{height:200,borderRadius:20,width:'100%'}});
+const s=StyleSheet.create({h1:{fontSize:28,fontWeight:'900',marginBottom:6},h2:{fontSize:22,fontWeight:'800',marginVertical:12},chip:{borderWidth:1,borderRadius:20,paddingHorizontal:14,paddingVertical:8},file:{flexDirection:'row',gap:12,borderWidth:1,borderRadius:20,padding:12,marginTop:10},thumb:{width:72,height:92,borderRadius:12},btn:{borderRadius:12,paddingHorizontal:14,paddingVertical:9},cover:{height:200,borderRadius:20,width:'100%'},grid:{flexDirection:'row',flexWrap:'wrap',gap:10},card:{flexBasis:'47%',flexGrow:1,borderWidth:1,borderRadius:20,overflow:'hidden'},cardImg:{height:110,width:'100%'}});
