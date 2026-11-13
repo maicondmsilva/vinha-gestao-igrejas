@@ -98,7 +98,7 @@ test('API do banco de imagens: ministério da sessão, arquivo validado antes do
 });
 
 test('telas usam o texto formatado', () => {
-  assert.match(readFileSync(new URL('../app/PublishingWorkspace.tsx', import.meta.url), 'utf8'), /kind==='notice'\?<RichTextEditor/);
+  assert.match(readFileSync(new URL('../app/PublishingWorkspace.tsx', import.meta.url), 'utf8'), /kind==='notice'\|\|kind==='page'\?<RichTextEditor/);
   assert.match(readFileSync(new URL('../app/MemberChurchChoice.tsx', import.meta.url), 'utf8'), /<RichText body=\{p\.body\}\/>/);
   assert.match(readFileSync(new URL('../android-app/src/MemberExperience.tsx', import.meta.url), 'utf8'), /<RichText body=\{post\.body\}/);
 });
