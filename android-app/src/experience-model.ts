@@ -1,6 +1,6 @@
 import type {PublicPost} from '../../shared/member-church';
 export type MainTab='content'|'agenda'|'home'|'contribute'|'more';
-export const mainTabs=[{id:'content',label:'Conteúdos',icon:'▷'},{id:'agenda',label:'Agenda',icon:'▦'},{id:'home',label:'Início',icon:'⌂'},{id:'contribute',label:'Contribua',icon:'♡'},{id:'more',label:'Mais',icon:'☰'}] as const;
+export const mainTabs=[{id:'home',label:'Início',icon:'⌂'},{id:'agenda',label:'Agenda',icon:'◷'},{id:'content',label:'Mensagens',icon:'▶'},{id:'contribute',label:'Contribuir',icon:'✚'},{id:'more',label:'Menu',icon:'≡'}] as const;
 export const postKinds:Record<string,string>={notice:'Aviso',event:'Agenda',video:'Vídeo',service:'Culto'};
 const normalized=(text:string)=>text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
 export function publicationList(posts:PublicPost[],section:'content'|'agenda'|'all',query='',kind='all'){

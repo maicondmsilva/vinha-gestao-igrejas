@@ -36,7 +36,7 @@ const config: ExpoConfig = {
   scheme: profile.slug,
   version: '0.1.0',
   orientation: 'portrait',
-  userInterfaceStyle: 'automatic',
+  userInterfaceStyle: 'automatic', // o tema do conteúdo vem do painel; aqui só barras do sistema
   icon: profile.icon || './assets/icon.png',
   ios: {
     bundleIdentifier: bundleIdentifier || profile.previewBundleIdentifier || profile.previewApplicationId,

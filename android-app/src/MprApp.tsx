@@ -1,7 +1,7 @@
 import NativeAppOpening from './NativeAppOpening';
 import * as SecureStore from 'expo-secure-store';
 import {useEffect,useRef,useState} from 'react';
-import {ActivityIndicator,Image,KeyboardAvoidingView,Platform,Pressable,ScrollView,StyleSheet,Text,TextInput,useColorScheme,View} from 'react-native';
+import {ActivityIndicator,Image,KeyboardAvoidingView,Platform,Pressable,ScrollView,StyleSheet,Text,TextInput,View} from 'react-native';
 import {StatusBar} from 'expo-status-bar';
 import Constants from 'expo-constants';
 import ChurchSelect from './ChurchSelect';
@@ -14,8 +14,9 @@ import {supabase,configured} from './supabase';
 import {memberFields,memberError,type AppConfig,type MemberProfile} from '../../shared/member-profile';
 export default function MprApp(){
  const displayName=String(Constants.expoConfig?.extra?.appDisplayName||'Aplicativo da igreja');
- const dark=useColorScheme()==='dark',bg=dark?'#080f15':'#f2f6f8',fg=dark?'#eff6fa':'#172d3b';
  const [config,setConfig]=useState<AppConfig|null>(null),[session,setSession]=useState<Session|null>(null),[profile,setProfile]=useState<MemberProfile|null>(null),[form,setForm]=useState<Record<string,string>>({}),[unit,setUnit]=useState(''),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[signup,setSignup]=useState(false),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[revision,setRevision]=useState(0),[explore,setExplore]=useState(true),[authReady,setAuthReady]=useState(false);
+ // Tema definido pela igreja no painel (Configurações); o membro não escolhe.
+ const dark=config?.theme!=='light',bg=dark?'#080f15':'#f2f6f8',fg=dark?'#eff6fa':'#172d3b';
  const [configAttempt,setConfigAttempt]=useState(0);
  const actor=useRef<string|null>(null),brand=brandColor(config?.primary||'#087FA3');
  useEffect(()=>{if(!supabase)return;let live=true;function apply(s:Session|null){if(!live)return;const id=s?.user.id||null;if(actor.current!==id){actor.current=id;setProfile(null);setForm({});setUnit('');setNotice('');setPassword('');setExplore(true)}setSession(s);setAuthReady(true)}

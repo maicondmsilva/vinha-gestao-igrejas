@@ -1,6 +1,6 @@
 export type ChurchTransfer={id:string;source_unit:string;target_unit:string;status:'pending'|'approved'|'rejected'|'cancelled';reason:string;created_at:string};
 export type ChurchState={ok:boolean;selectedUnit:string|null;officialUnit:string|null;canRequest:boolean;transfers:ChurchTransfer[]};
-export type PublicPost={id:string;kind:string;title:string;body:string;url:string;created_at:string};
+export type PublicPost={id:string;kind:string;title:string;body:string;url:string;created_at:string;image?:string;share?:boolean};
 export type ChurchRpc={rpc:(name:string,args:Record<string,unknown>)=>PromiseLike<{data:unknown;error:{code?:string;message:string}|null}>};
 export const churchStatus={pending:'Aguardando aprovação',approved:'Transferência aprovada',rejected:'Transferência recusada',cancelled:'Solicitação cancelada'};
 export function churchError(message:string){
