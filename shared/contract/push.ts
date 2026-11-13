@@ -34,6 +34,7 @@ export const pushAudienceSchema = z
       baptized: z.boolean().optional(),
       event: uuidText.optional(),
       birthdayToday: z.boolean().optional(),
+      people: ids(250, 'Escolha até 250 pessoas.').optional(),
     },
     {error: 'Filtro de público desconhecido.'},
   )
