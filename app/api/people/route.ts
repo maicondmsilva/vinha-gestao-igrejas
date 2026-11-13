@@ -3,8 +3,10 @@ import {authorizeSupabaseChurch,type SupabaseChurchAccess} from '../../lib/supab
 import {resolveUnitSelection} from '../../lib/unit-integrity';
 
 import {memberWriteInput} from '../../lib/member-write';
-import type {Json} from '../../lib/supabase/database.types';
+import type {Json,Tables} from '../../lib/supabase/database.types';
+type PersonRow=Tables<'people'>&{converted_at?:string|null;followup_status?:string|null};
 import {peopleQuery,peopleSearchFilter} from '../../lib/people-query';
+import {hasAdvanced,peopleFilters} from '../../lib/people-tools';
 import type {OperationsClient} from '../../lib/supabase/operations';
 
 function displayPostgresDate(value:string|null){
@@ -23,13 +25,28 @@ async function supabaseGET(request:Request){
  const access=auth.access!,organizationId=access.membership.organization_id;
  let parameters:ReturnType<typeof peopleQuery>;
  try{parameters=peopleQuery(request)}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Filtros inválidos.'},{status:400})}
- let query=access.client.from('people').select('*',{count:'exact'}).eq('organization_id',organizationId);
- if(parameters.unitId)query=query.eq('unit_id',parameters.unitId);
- if(parameters.id)query=query.eq('id',parameters.id);
- if(parameters.status)query=query.eq('journey_status',parameters.status);
- if(parameters.group)query=query.eq('group_name',parameters.group);
- if(parameters.q)query=query.or(peopleSearchFilter(parameters.q));
- const {data:people,error,count}=await query.order('created_at',{ascending:false}).order('id',{ascending:false}).range(parameters.from,parameters.to);
+ let advanced:ReturnType<typeof peopleFilters>;
+ try{advanced=peopleFilters(new URL(request.url).searchParams)}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Filtros inválidos.'},{status:400})}
+ let people:PersonRow[]|null,error:unknown,count:number|null;
+ if(hasAdvanced(advanced)&&!parameters.id){
+  // Célula, rede, gênero, idade, batismo, marcador e novos convertidos: o banco filtra e devolve a página de ids.
+  if(!parameters.unitId)return NextResponse.json({error:'Escolha a igreja para usar estes filtros.'},{status:400});
+  const filters={...advanced,...(parameters.q?{q:parameters.q}:{}),...(parameters.status?{status:parameters.status}:{}),...(parameters.group?{group:parameters.group}:{})};
+  const found=await (access.client as unknown as OperationsClient).rpc('people_search',{p_org:organizationId,p_unit:parameters.unitId,p_filters:filters,p_page:parameters.page,p_limit:parameters.limit});
+  if(found.error)return NextResponse.json({error:found.error.code==='42501'?'Você não pode consultar as pessoas desta igreja.':'Não foi possível carregar os membros.'},{status:found.error.code==='42501'?403:found.error.code==='22023'?400:500});
+  const result=found.data as {total:number;ids:string[]};
+  const order=new Map(result.ids.map((id,index)=>[id,index]));
+  const rows=result.ids.length?await access.client.from('people').select('*').eq('organization_id',organizationId).in('id',result.ids):{data:[],error:null};
+  people=((rows.data||[]) as PersonRow[]).sort((a,b)=>(order.get(a.id)??0)-(order.get(b.id)??0));error=rows.error;count=result.total;
+ }else{
+  let query=access.client.from('people').select('*',{count:'exact'}).eq('organization_id',organizationId);
+  if(parameters.unitId)query=query.eq('unit_id',parameters.unitId);
+  if(parameters.id)query=query.eq('id',parameters.id);
+  if(parameters.status)query=query.eq('journey_status',parameters.status);
+  if(parameters.group)query=query.eq('group_name',parameters.group);
+  if(parameters.q)query=query.or(peopleSearchFilter(parameters.q));
+  ({data:people,error,count}=await query.order('created_at',{ascending:false}).order('id',{ascending:false}).range(parameters.from,parameters.to));
+ }
  if(error)return NextResponse.json({error:'Não foi possível carregar os membros.'},{status:500});
  const ids=(people||[]).map(person=>person.id);
  const numbering=ids.length?await(access.client as unknown as OperationsClient).rpc('record_numbering',{p_org:organizationId,p_action:'people',p_data:{ids}}):{data:{codes:{}},error:null};
@@ -55,6 +72,7 @@ async function supabaseGET(request:Request){
   baptized:person.baptized?'Sim':'Não',baptismDate:person.baptism_date||'',tags:(person.tags||[]).join(', '),access:person.app_role||'member',
   address:address?.street||'',number:address?.number||'',extra:address?.complement||'',district:address?.district||'',city:address?.city||'',state:address?.state||'',zip:address?.postal_code||'',
   emergencyName:contact?.name||'',emergencyPhone:contact?.phone||'',notes:note?.content||'',privacy:consentByPerson.get(person.id+':privacy'),imageConsent:consentByPerson.get(person.id+':image'),messages:consentByPerson.get(person.id+':messages'),
+  convertedAt:person.converted_at||'',followupStatus:person.followup_status||'',
  }});
  return NextResponse.json({people:records,pagination:{page:parameters.page,limit:parameters.limit,total:count||0,pages:Math.max(1,Math.ceil((count||0)/parameters.limit))}},{headers:{'Cache-Control':'no-store'}});
 }
