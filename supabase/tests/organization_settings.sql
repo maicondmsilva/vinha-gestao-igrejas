@@ -14,6 +14,8 @@ values(pg_temp.si('sibling'),pg_temp.si('org'),pg_temp.si('unit'),'Igreja irmã 
 insert into public.organization_memberships(id,organization_id,user_id,role,status,default_unit_id)
 select pg_temp.si(t||'-membership'),pg_temp.si('org'),pg_temp.si(t),case when t='viewer' then 'viewer'::public.membership_role else 'owner'::public.membership_role end,'active',pg_temp.si('unit') from unnest(array['owner','viewer','unconfirmed']) t;
 create function pg_temp.payload() returns jsonb language sql as $$select jsonb_build_object('updatedAt',o.updated_at,'name','Ministério atualizado','appName','Aplicativo local','seniorPastorName','Responsável fictício','legalName','Razão fictícia','taxId','','primaryColor','#285c45','accentColor','#d8b769') from public.organizations o where id=pg_temp.si('org')$$;
+create function pg_temp.theme() returns text language sql security definer as $$select app_theme from public.organizations where id=pg_temp.si('org')$$;
+create function pg_temp.slug() returns text language sql security definer as $$select slug from public.organizations where id=pg_temp.si('org')$$;
 create function pg_temp.unit_payload() returns jsonb language sql as $$select jsonb_build_object('updatedAt',u.updated_at,'name','Sede atualizada','pastorName','Pastor fictício','legalName','','taxId','','email','sede@example.invalid','phone','','address',jsonb_build_object('city','Cidade nova','street','Rua fictícia','number','123')) from public.organization_units u where id=pg_temp.si('unit')$$;
 create function pg_temp.logo() returns text language sql immutable as $$select 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aSioAAAAASUVORK5CYII='$$;
 select ok(not has_table_privilege('authenticated','private.church_branding','select'),'marcas sem leitura direta');
@@ -26,6 +28,11 @@ select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),nul
 select is((select name from public.organizations where id=pg_temp.si('org')),'Ministério atualizado','nome atualizado na base canônica');
 select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('org')::text,pg_temp.logo(),'logo consultada na fonte única');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"updatedAt":"2000-01-01T00:00:00Z"}')$$,'40001','settings_changed','versão antiga não sobrescreve');
+select is(pg_temp.theme(),'dark','tema do app começa escuro');
+select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"appTheme":"light"}')$$,'igreja escolhe o tema claro do app');
+select is(pg_temp.theme(),'light','tema claro gravado');
+select is(public.member_app_config((select pg_temp.slug()))->>'theme','light','app recebe o tema definido no painel');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"appTheme":"rosa"}')$$,'22023',null,'tema inválido recusado');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"status":"active"}')$$,'22023','invalid_settings','não altera contrato/status');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"registration_code":"999"}')$$,'22023','invalid_settings','código protegido');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"logo":"https://example.invalid/logo.svg"}')$$,'22023','invalid_logo','não busca URL remota nem aceita SVG');
