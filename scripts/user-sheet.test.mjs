@@ -6,7 +6,7 @@ const dir=()=>readFileSync(new URL('../app/StaffDirectory.tsx',import.meta.url),
 test('ficha tem os quatro blocos e permissões',()=>{const s=sheet();for(const t of ['>Conta<','>Endereço<','>Informações adicionais<','>Grupos<','UserPermissions'])assert.ok(s.includes(t),t)});
 test('campo senha diz que em branco mantém',()=>assert.match(sheet(),/Deixe em branco para manter a senha atual/));
 test('sem botão de gerar senha',()=>assert.doesNotMatch(sheet(),/Gerar/));
-test('excluir pede confirmação e explica que o membro continua',()=>assert.match(sheet(),/Tirar o acesso de \$\{[^}]+\}\? O cadastro de membro continua\./));
+test('excluir pede confirmação e explica que o membro continua',()=>{const s=sheet();assert.match(s,/Excluir o usuário \$\{[^}]+\}\?/);assert.match(s,/O cadastro de membro e os lançamentos continuam em Pessoas\./);assert.match(s,/cria uma conta nova no app/)});
 test('StaffDirectory não usa convites e abre a ficha',()=>{const d=dir();assert.doesNotMatch(d,/\/api\/users\/invites/);assert.doesNotMatch(d,/Convidar/);assert.match(d,/<UserSheet/);assert.match(d,/Novo usuário/)});
 test('ficha usa as rotas novas, com versão',()=>{const s=sheet();assert.match(s,/\/api\/users\/search/);assert.match(s,/'\/api\/users\/'\+/);assert.match(s,/version/)});
 test('letras legíveis na ficha',()=>{const css=readFileSync(new URL('../app/user-sheet.css',import.meta.url),'utf8');for(const m of css.matchAll(/font-size:(\d+)px/g))assert.ok(Number(m[1])>=12,m[0])});
