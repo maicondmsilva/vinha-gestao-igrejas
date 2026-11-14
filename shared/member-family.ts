@@ -1,5 +1,5 @@
 export type FamilyKind='kids'|'cells';
-export type FamilyChild={id:string;name:string;birth:string;version:number;can_edit:boolean;can_pickup:boolean;care?:string};
+export type FamilyChild={photo?:string;id:string;name:string;birth:string;version:number;can_edit:boolean;can_pickup:boolean;care?:string};
 export type FamilyRequest={id:string;kind:string;data?:{name?:string;birth?:string;care?:string};status:string;reason?:string;version:number;name?:string;cell_id?:string};
 export type FamilyBooking={id:string;profile_id:string;session_id:string;group_id:string;can_pickup:boolean;status:string;version:number;pickup_requested_at:string|null;session:string;name:string;room:string;starts_at:string;ends_at:string;attendance:'present'|'out'|null;checked_in_at?:string;checked_out_at?:string};
 export type FamilyGroup={id:string;name:string;meeting_day:number;meeting_time:string;meeting_format:string;area:string;description:string;joined:boolean;location:string;can_report:boolean};
