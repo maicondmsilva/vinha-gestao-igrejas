@@ -55,7 +55,12 @@ const config: ExpoConfig = {
       monochromeImage: './assets/android-icon-monochrome.png',
     },
   },
-  plugins: ['expo-secure-store', 'expo-notifications', 'expo-video'],
+  plugins: [
+    'expo-secure-store',
+    'expo-notifications',
+    'expo-video',
+    ['expo-image-picker', {photosPermission: 'O app usa suas fotos para a foto de perfil e a foto das crianças no Kids.', cameraPermission: 'O app usa a câmera para tirar a foto de perfil e a foto das crianças no Kids.', microphonePermission: false}],
+  ],
   // EAS Update: screen and text fixes reach every ministry app without a new store review.
   // Native changes bump runtimeVersion (appVersion policy) and require a new store build.
   runtimeVersion: {policy: 'appVersion'},
