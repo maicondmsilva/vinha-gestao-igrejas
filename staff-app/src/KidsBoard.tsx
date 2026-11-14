@@ -20,6 +20,9 @@ function Ghost({label, onPress}: {label: string; onPress: () => void}) {
 export default function KidsBoard({org, unit, back}: {org: string; unit: Unit; back: () => void}) {
   const [page, setPage] = useState<KidsOperationsPage | null>(null),
     [calls, setCalls] = useState<KidsCall[]>([]),
+    [tags, setTags] = useState<Record<string, number>>({}),
+    [hasProjector, setHasProjector] = useState(false),
+    [projector, setProjector] = useState(true),
     [room, setRoom] = useState(''),
     [child, setChild] = useState<{id: string; name: string} | null>(null),
     [reason, setReason] = useState<KidsCallReason>('pickup'),
@@ -35,7 +38,12 @@ export default function KidsBoard({org, unit, back}: {org: string; unit: Unit; b
       setError('');
       if (p.sessionId && supabase) {
         const r = await supabase.rpc('kids_call', {p_org: org, p_unit: unit.id, p_action: 'list', p_data: {session: p.sessionId}});
-        if (!r.error) setCalls(((r.data as {items?: KidsCall[]})?.items || []) as KidsCall[]);
+        if (!r.error) {
+          const d = r.data as {items?: KidsCall[]; tags?: Record<string, number>; projector?: boolean};
+          setCalls(d.items || []);
+          setTags(d.tags || {});
+          setHasProjector(!!d.projector);
+        }
       }
     } catch (e) {
       setError((e as Error).message || 'Não foi possível carregar a sala.');
@@ -56,7 +64,7 @@ export default function KidsBoard({org, unit, back}: {org: string; unit: Unit; b
       p_org: org,
       p_unit: unit.id,
       p_action: 'call',
-      p_data: {id: randomUUID(), attendance: child.id, reason, message: message.trim()},
+      p_data: {id: randomUUID(), attendance: child.id, reason, message: message.trim(), projector: hasProjector && projector},
     });
     setBusy(false);
     if (r.error) {
@@ -138,8 +146,36 @@ export default function KidsBoard({org, unit, back}: {org: string; unit: Unit; b
                 onChangeText={setMessage}
                 style={ui.input}
               />
+              {hasProjector && (
+                <Pressable
+                  accessibilityRole="checkbox"
+                  accessibilityState={{checked: projector}}
+                  onPress={() => setProjector(!projector)}
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 10}}
+                >
+                  <View
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      borderWidth: 2,
+                      borderColor: colors.brand,
+                      backgroundColor: projector ? colors.brand : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {projector && <Text style={{color: '#fff', fontWeight: '900', fontSize: 12}}>✓</Text>}
+                  </View>
+                  <Text style={[ui.copy, {color: colors.text, flex: 1}]}>Mostrar no telão: “responsável pela criança nº {tags[child.id] || '?'}”</Text>
+                </Pressable>
+              )}
               <Pressable accessibilityRole="button" disabled={busy} style={[ui.primary, busy && {opacity: 0.6}]} onPress={() => void send()}>
-                {busy ? <ActivityIndicator color="#fff" /> : <Text style={ui.primaryText}>Avisar no aplicativo</Text>}
+                {busy ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={ui.primaryText}>{hasProjector && projector ? 'Avisar no app e no telão' : 'Avisar no aplicativo'}</Text>
+                )}
               </Pressable>
               <Ghost label="Cancelar" onPress={() => setChild(null)} />
             </View>
@@ -151,7 +187,10 @@ export default function KidsBoard({org, unit, back}: {org: string; unit: Unit; b
             return (
               <View key={k.id} style={[ui.card, {flexDirection: 'row', alignItems: 'center', gap: 12}]}>
                 <View style={{flex: 1}}>
-                  <Text style={ui.h2}>{k.name}</Text>
+                  <Text style={ui.h2}>
+                    {tags[k.id] || k.tag ? 'nº ' + (tags[k.id] || k.tag) + ' · ' : ''}
+                    {k.name}
+                  </Text>
                   <Text style={ui.copy}>
                     {g?.room || 'Sala'} · desde {new Date(k.inAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}
                   </Text>

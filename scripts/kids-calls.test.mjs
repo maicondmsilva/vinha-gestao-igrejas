@@ -38,3 +38,23 @@ test('Vinha Equipe abre a Sala Kids e o app mostra o aviso', () => {
   assert.match(read('android-app/src/MemberExperience.tsx'), /<KidsCallAlert /);
   assert.match(read('android-app/src/KidsCallAlert.tsx'), /Estou indo/);
 });
+
+test('etiqueta e telão nas telas', () => {
+  assert.match(read('android-app/src/KidsCallAlert.tsx'), /member_kids_present/);
+  assert.match(read('android-app/src/KidsCallAlert.tsx'), /etiqueta nº/);
+  const board = read('staff-app/src/KidsBoard.tsx');
+  assert.match(board, /projector: hasProjector && projector/);
+  assert.match(board, /Mostrar no telão/);
+  assert.match(read('app/KidsOperations.tsx'), /<KidsProjector /);
+  assert.match(read('app/KidsProjector.tsx'), /nunca o nome da criança/);
+  const sql = read('supabase/migrations/20261114230000_kids_etiqueta_telao.sql');
+  assert.match(sql, /api\.holyrics\.com\.br\/send\/SetAlert/);
+  assert.match(sql, /'close_after_seconds',60/);
+  assert.doesNotMatch(read('app/api/kids/projector/route.ts'), /apiKey.*json\(r\.data/);
+});
+
+test('rascunho do perfil vai para a plataforma', () => {
+  const app = read('android-app/src/MprApp.tsx');
+  assert.match(app, /'member_profile_draft'/);
+  assert.match(app, /},1500\)/);
+});
