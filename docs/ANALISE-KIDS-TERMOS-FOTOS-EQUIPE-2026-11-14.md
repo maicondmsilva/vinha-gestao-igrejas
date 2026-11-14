@@ -46,6 +46,12 @@
 - O responsável responde "Estou indo" e a equipe vê a resposta.
 - Tudo fica no histórico da sessão Kids. Quem pode chamar segue as permissões da turma (`kids.checkin`).
 
+### Situação (14/11)
+- Banco: `kids_call` (equipe) e `member_kids_call` (responsável). Uma chamada a cada 2 minutos enquanto não houver resposta. Fica registrado na auditoria.
+- Vinha Equipe: tela **Sala Kids**, com as crianças presentes por sala e o botão **Chamar**.
+- App da igreja: aviso no topo com **Estou indo** e **Vi o recado**, e o chamado também na caixa de notificações.
+- Voluntários com papel de membro já entram no Vinha Equipe e veem só as tarefas que o banco libera.
+
 ## 5. App Vinha Equipe: como está e o que falta
 
 **Hoje:**
@@ -81,8 +87,8 @@ Hoje o acesso usa duas chaves antigas (`checkin` e `push`). Ele precisa usar o *
 | Fase | Entrega |
 |---|---|
 | 1 | Correções do app do membro (nome e perfil), já feitas |
-| 2 | Fotos: perfil no app, no cadastro e no início, foto da criança no Kids e migração para Pessoas |
-| 3 | Termos com autenticação: modelos no painel, aceite no app (adulto e Kids), PDF com código e QR, página /verificar e ficha em Pessoas |
-| 4 | Kids no Vinha Equipe: quadro da sala, recepção e chamar responsável (aviso no app do responsável) |
+| 2 | Fotos: perfil no app, no cadastro e no início, foto da criança no Kids e migração para Pessoas, já feitas |
+| 3 | Termos com autenticação: modelos no painel, aceite no app (adulto e Kids), PDF com código e QR, página /verificar e ficha em Pessoas, já feitos |
+| 4 | Kids no Vinha Equipe: quadro da sala e chamar responsável (aviso no app do responsável), já feitos. Falta a recepção (entrada e saída) no Equipe |
 | 5 | Vinha Equipe: permissões pelo catálogo do painel, mídia e comunicação, escala do dia |
 | 6 | Pendências: Firebase, carteirinha, escalas, lojas |
