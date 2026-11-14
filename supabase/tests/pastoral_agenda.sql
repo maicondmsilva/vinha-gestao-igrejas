@@ -85,5 +85,12 @@ reset role;select pg_temp.actor('member');set local role authenticated;
 select throws_ok($$select public.pastoral_people(pg_temp.pa('org'),pg_temp.pa('a'),'membro')$$,'42501',null,'membro comum não busca pessoas');
 reset role;select pg_temp.actor('pastor');set local role authenticated;
 select is(jsonb_array_length(public.pastoral_people(pg_temp.pa('org'),pg_temp.pa('a'),'membro')->'items'),0,'quem atende sem permissão ampla só vê a própria célula');
+-- quem atende ajusta a própria agenda pelo app
+reset role;select pg_temp.actor('pastor');set local role authenticated;
+select is(public.pastoral_self_settings(pg_temp.pa('org'),pg_temp.pa('a'),pg_temp.pa('att'),false,array[60,30,30]::smallint[],(select (x->>'version')::int from jsonb_array_elements(pg_temp.staff('overview')->'attendants') x))->>'ok','true','pastor desliga a confirmação automática pelo app');
+select is((select x->'durations' from jsonb_array_elements(pg_temp.staff('overview')->'attendants') x),'[30, 60]'::jsonb,'durações sem repetição e em ordem');
+select throws_ok($$select public.pastoral_self_settings(pg_temp.pa('org'),pg_temp.pa('a'),pg_temp.pa('att'),true,array[25]::smallint[],99)$$,'22023',null,'duração fora da lista recusada');
+reset role;select pg_temp.actor('member');set local role authenticated;
+select throws_ok($$select public.pastoral_self_settings(pg_temp.pa('org'),pg_temp.pa('a'),pg_temp.pa('att'),true,array[30]::smallint[],1)$$,'42501',null,'membro não altera a agenda do pastor');
 select * from finish();
 rollback;
