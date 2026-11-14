@@ -66,3 +66,8 @@ test('identidade Vinha na série e rota de ordem dos episódios', () => {
   assert.match(route, /publishing_series_episodes/);
   assert.match(sql, /revoke all on function public\.publishing_series_episodes\(uuid,uuid,uuid,uuid\[\]\) from public,anon/);
 });
+test('oração e testemunhos com identidade Vinha',()=>{
+ const ui=read('android-app/src/CommunityScreens.tsx');
+ for(const t of ['Pelo que podemos orar?','1 · ÁREA DO PEDIDO','Podem me procurar','Só quero oração','MURAL','RESPOSTA DA EQUIPE'])assert.ok(ui.includes(t),t);
+ assert.match(ui,/allowContact:!!contact/,'consentimento continua indo para o servidor');
+});
