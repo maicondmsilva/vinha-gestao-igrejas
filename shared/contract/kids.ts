@@ -49,6 +49,8 @@ export type KidsPresence = {
   groupId: string;
   status: 'present' | 'out';
   version: number;
+  /** Número da etiqueta no encontro (aparece no telão no lugar do nome). */
+  tag?: number;
   inAt: string;
   outAt: string | null;
   hold: boolean;
