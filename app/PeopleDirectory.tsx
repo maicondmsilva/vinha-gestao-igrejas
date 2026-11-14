@@ -9,6 +9,7 @@ import PendingProfiles from './PendingProfiles';
 import PeopleBirthdays from './PeopleBirthdays';
 import PeopleDuplicates from './PeopleDuplicates';
 import PastoralAgenda from './PastoralAgenda';
+import ConsentTemplates from './ConsentTemplates';
 import PeopleConverts from './PeopleConverts';
 import {ageRange,ageRanges,bulkActions,exportColumns,exportFileName,exportRow,genders,journeys,type ExportPerson} from './lib/people-tools';
 type Pagination={page:number;limit:number;total:number;pages:number};
@@ -23,7 +24,7 @@ function advParams(a:Adv){
 
 export default function PeopleDirectory({unitId,onAdd,onSelect,revision=0}:{unitId:string;onAdd:()=>void;onSelect:(person:Person)=>void;revision?:number}){
  const {t}=useMinistryLanguage();
- const[view,setView]=useState<'list'|'converts'|'duplicates'|'pastoral'>('list'),[dupCount,setDupCount]=useState<number|null>(null),[localRev,setLocalRev]=useState(0);
+ const[view,setView]=useState<'list'|'converts'|'duplicates'|'pastoral'|'terms'>('list'),[dupCount,setDupCount]=useState<number|null>(null),[localRev,setLocalRev]=useState(0);
  const[q,setQ]=useState(''),[status,setStatus]=useState(''),[group,setGroup]=useState(''),[adv,setAdv]=useState<Adv>(noAdv),[options,setOptions]=useState<Options|null>(null),[showFilters,setShowFilters]=useState(false),[page,setPage]=useState(1),[people,setPeople]=useState<Person[]>([]),[pagination,setPagination]=useState<Pagination>({page:1,limit:25,total:0,pages:1}),[loading,setLoading]=useState(true),[error,setError]=useState('');
  const[selected,setSelected]=useState<Map<string,string>>(new Map()),[exporting,setExporting]=useState(''),[notice,setNotice]=useState('');
  const tenant=typeof window==='undefined'?'':new URLSearchParams(location.search).get('tenant')||'';
@@ -69,12 +70,13 @@ export default function PeopleDirectory({unitId,onAdd,onSelect,revision=0}:{unit
    setNotice(`Planilha gerada com ${rows.length} ${rows.length===1?'pessoa':'pessoas'}${pagination.total>rows.length?` (limite de ${rows.length}; refine os filtros para o restante)`:''}.`);
   }catch(e){setNotice(e instanceof Error?e.message:'Não foi possível gerar a planilha.')}finally{setExporting('')}
  }
- const views:[typeof view,string,number|null][]=[['list','Lista',null],['converts','Novos convertidos',null],['duplicates','Duplicados',dupCount],['pastoral','Agenda pastoral',null]];
+ const views:[typeof view,string,number|null][]=[['list','Lista',null],['converts','Novos convertidos',null],['duplicates','Duplicados',dupCount],['pastoral','Agenda pastoral',null],['terms','Termos',null]];
  return <div className="content pd">
   <header className="pd-head"><div><p>Comunidade</p><h1>{t('pessoas')}</h1><small>Membros, pessoas em integração e visitantes da igreja selecionada.</small></div>
    <div className="pd-actions"><a className="pd-secondary" href={`/onboarding/importar-membros${tenant?`?tenant=${encodeURIComponent(tenant)}`:''}`}>Importar planilha</a><button className="pd-primary" type="button" onClick={onAdd}>＋ Nova pessoa</button></div></header>
   <nav className="pd-views" aria-label="Visões de Pessoas">{views.map(([v,l,n])=><button key={v} type="button" aria-pressed={view===v} onClick={()=>setView(v)}>{l}{n?<b>{n}</b>:null}</button>)}</nav>
   {view==='pastoral'&&<PastoralAgenda unitId={unitId}/>}
+  {view==='terms'&&<ConsentTemplates/>}
   {view==='converts'&&<PeopleConverts unitId={unitId} onOpen={openById}/>}
   {view==='duplicates'&&<PeopleDuplicates unitId={unitId} onCount={onDupCount} onChanged={()=>setLocalRev(v=>v+1)}/>}
   {view==='list'&&<>

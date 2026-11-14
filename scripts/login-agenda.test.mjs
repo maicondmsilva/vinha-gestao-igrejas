@@ -65,3 +65,19 @@ test('e-mails de conta no padrão Vinha e páginas de retorno', async () => {
   assert.match(read('app/nova-senha/page.tsx'), /updateUser\(\{password\}\)/);
   assert.match(read('app/conta-confirmada/page.tsx'), /E-mail confirmado!/);
 });
+
+test('fotos de perfil e da criança; perfil não perde o que foi preenchido', () => {
+  const photo = read('android-app/src/ProfilePhoto.tsx'),
+    app = read('android-app/src/MprApp.tsx'),
+    exp = read('android-app/src/MemberExperience.tsx'),
+    kids = read('android-app/src/FamilyScreens.tsx'),
+    sql = read('supabase/migrations/20261114200000_fotos_perfil.sql');
+  assert.match(photo, /resize:\{width:512,height:512\}/, 'foto reduzida antes de enviar');
+  assert.match(photo, /createSignedUrl\(/, 'foto privada, mostrada por link temporário');
+  assert.match(exp, /<HomeScreen photo=\{myPhoto\.url\}/);
+  assert.match(kids, /<ChildPhoto /);
+  assert.match(sql, /people_photo_from_account/, 'foto migra para o cadastro de membros na aprovação');
+  assert.match(sql, /g\.can_edit/, 'só o responsável que pode editar troca a foto da criança');
+  assert.match(app, /vinha\.profile\.draft\./, 'rascunho do perfil guardado no aparelho');
+  assert.match(app, /last\.status!=='approved'\?shown\(last\.payload\)/, 'formulário volta com o último envio');
+});

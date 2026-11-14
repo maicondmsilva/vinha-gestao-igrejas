@@ -10,7 +10,7 @@ import Icon,{type IconName} from './Icon';
 
 type Palette={bg:string;surface:string;text:string;muted:string;line:string;brand:string;accent?:string};
 export type Shortcut={key:string;icon:IconName;label:string;onPress:()=>void};
-type Props={
+type Props={photo?:string;onPhoto?:()=>void;
  palette:Palette;dark:boolean;rpc:ChurchRpc;org:string;unit:string;authenticated:boolean;name:string;churchName:string;
  posts:PublicPost[];postsLoading:boolean;events:AgendaEvent[];eventsLoading:boolean;
  shortcuts:Shortcut[];onBanner:(p:PublicPost)=>void;onPost:(id:string)=>void;onEvent:(id:string)=>void;onVideo:(id:string)=>void;
@@ -42,8 +42,13 @@ export default function HomeScreen(x:Props){
   <View style={[s.cover,{backgroundColor:p.brand}]}>
    <View style={[s.blob,{width:220,height:220,top:-90,right:-60,backgroundColor:fg,opacity:.08}]}/>
    <View style={[s.blob,{width:140,height:140,bottom:-50,left:-40,backgroundColor:fg,opacity:.06}]}/>
-   <Text style={{color:fg,opacity:.85,fontSize:15,fontWeight:'600'}}>{x.authenticated?'Que bom ter você aqui':'Seja bem-vindo'}</Text>
-   <Text numberOfLines={1} style={{color:fg,fontSize:30,fontWeight:'900',marginTop:2}}>{x.authenticated?x.name:x.churchName||'à nossa igreja'}</Text>
+   <View style={{flexDirection:'row',alignItems:'center',gap:14}}>
+    {x.authenticated&&<Pressable accessibilityRole="button" accessibilityLabel={x.photo?'Meu perfil':'Colocar foto de perfil'} onPress={x.onPhoto}><View style={{width:62,height:62,borderRadius:31,borderWidth:2,borderColor:fg+'66',backgroundColor:fg+'1f',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>{x.photo?<Image source={{uri:x.photo}} style={{width:58,height:58,borderRadius:29}}/>:<Text style={{color:fg,fontSize:22,fontWeight:'900'}}>{(x.name||'?').slice(0,1).toUpperCase()}</Text>}</View></Pressable>}
+    <View style={{flex:1}}>
+     <Text style={{color:fg,opacity:.85,fontSize:15,fontWeight:'600'}}>{x.authenticated?'Que bom ter você aqui':'Seja bem-vindo'}</Text>
+     <Text numberOfLines={1} style={{color:fg,fontSize:30,fontWeight:'900',marginTop:2}}>{x.authenticated?x.name:x.churchName||'à nossa igreja'}</Text>
+    </View>
+   </View>
    {next?<Pressable accessibilityRole="button" accessibilityLabel={'Próximo encontro: '+next.title} onPress={()=>x.onEvent(next.id)} style={s.nextCard}>
     {dateBlock(next.starts_at,true)}
     <View style={{flex:1}}><Text style={{color:fg,opacity:.8,fontSize:12,fontWeight:'800',letterSpacing:1}}>SEU PRÓXIMO ENCONTRO</Text><Text numberOfLines={2} style={{color:fg,fontSize:17,fontWeight:'800',marginTop:2}}>{next.title}</Text><Text style={{color:fg,opacity:.85,marginTop:2}}>{weekdays[local(next.starts_at).getDay()]} · {hour(next.starts_at)}</Text></View>

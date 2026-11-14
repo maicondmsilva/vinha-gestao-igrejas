@@ -21,6 +21,7 @@ export const staffRoleLabel: Record<string, string> = {
   secretary: 'Secretaria',
   finance: 'Financeiro',
   leader: 'Liderança',
+  member: 'Voluntário(a)',
 };
 export const isStaff = (m: Pick<Ministry, 'role' | 'status'>) => m.status === 'active' && (staffRoles as readonly string[]).includes(m.role);
 

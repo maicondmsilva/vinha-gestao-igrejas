@@ -10,8 +10,9 @@ import type {CompatResponse} from '../shared/contract/apps.ts';
 import {colors, ui} from './src/theme';
 import PushComposer from './src/PushComposer';
 import TicketScanner from './src/TicketScanner';
+import KidsBoard from './src/KidsBoard';
 
-type Screen = 'home' | 'push' | 'tickets';
+type Screen = 'home' | 'push' | 'tickets' | 'kids';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null),
@@ -116,7 +117,7 @@ function Workspace({email}: {email: string}) {
     myAccess(ministry.organization_id)
       .then((all) => {
         if (!live) return;
-        const units = all.filter((u) => u.checkin || u.push);
+        const units = all.filter((u) => u.checkin || u.push || u.kids);
         setAccess(units);
         setUnit(units.length === 1 ? units[0] : units.find((u) => u.id === ministry.default_unit_id) || null);
       })
@@ -150,8 +151,8 @@ function Workspace({email}: {email: string}) {
         <Text style={ui.over}>{ministry.organization_name.toUpperCase()}</Text>
         <Text style={ui.h1}>Sem tarefas liberadas</Text>
         <Text style={ui.copy}>
-          Você ainda não pode validar entradas nem enviar push em nenhuma igreja deste ministério. A administração libera em Comunicação → Equipe e fuso
-          horário.
+          Você ainda não pode validar entradas, operar o Kids nem enviar push em nenhuma igreja deste ministério. A administração libera em Comunicação → Equipe
+          e fuso horário.
         </Text>
         {list.length > 1 && <Ghost label="Trocar ministério" onPress={() => chooseMinistry(null)} />}
         <Ghost label="Sair" onPress={signOut} />
@@ -182,6 +183,7 @@ function Workspace({email}: {email: string}) {
       </ScrollView>
     );
   if (screen === 'push') return <PushComposer org={ministry.organization_id} unit={unit} units={ministry.units} back={() => setScreen('home')} />;
+  if (screen === 'kids') return <KidsBoard org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'tickets') return <TicketScanner org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   return (
     <ScrollView contentContainerStyle={[ui.pad, {paddingTop: 30}]}>
@@ -192,6 +194,9 @@ function Workspace({email}: {email: string}) {
       </Text>
       {here?.checkin && (
         <Action title="Validar entrada" text="Leia o QR Code de ingressos, inscrições e retiradas de vendas." onPress={() => setScreen('tickets')} />
+      )}
+      {here?.kids && (
+        <Action title="Sala Kids" text="Crianças presentes por sala e chamar o responsável pelo aplicativo da família." onPress={() => setScreen('kids')} />
       )}
       {here?.push && <Action title="Enviar push" text="Avise o ministério, a igreja local ou as igrejas que você atende." onPress={() => setScreen('push')} />}
       <Ghost label="Trocar igreja ou ministério" onPress={() => (list.length > 1 ? chooseMinistry(null) : setUnit(null))} />
