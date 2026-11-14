@@ -31,12 +31,14 @@ test('tela de entrada e agenda com identidade Vinha', () => {
 });
 
 test('criar conta: diz exatamente o que falta e traduz os erros', () => {
-  const ok = {name: 'Ana Lúcia Prado', phone: '(16) 99999-9999', unit: 'u', email: 'ana@exemplo.com', password: 'segredo12'};
+  const ok = {name: 'Ana Lúcia Prado', phone: '(16) 99999-9999', unit: 'u', email: 'ana@exemplo.com', password: 'segredo12', confirm: 'segredo12', terms: true};
   assert.deepEqual(signupProblems(ok), []);
   assert.deepEqual(signupProblems({...ok, name: 'Ana'}), ['Digite seu nome e sobrenome.']);
   assert.deepEqual(signupProblems({...ok, phone: '9999'}), ['Digite o WhatsApp com DDD.']);
-  assert.deepEqual(signupProblems({...ok, unit: ''}), ['Escolha a sua igreja.']);
-  assert.equal(signupProblems({name: '', phone: '', unit: '', email: 'x', password: '1'}).length, 5);
+  assert.deepEqual(signupProblems({...ok, unit: ''}), ['Escolha a igreja à qual você pertence.']);
+  assert.deepEqual(signupProblems({...ok, confirm: 'outra123'}), ['As duas senhas precisam ser iguais.']);
+  assert.deepEqual(signupProblems({...ok, terms: false}), ['Marque que você aceita os termos de uso e a política de privacidade.']);
+  assert.equal(signupProblems({name: '', phone: '', unit: '', email: 'x', password: '1', confirm: '', terms: false}).length, 6);
   assert.deepEqual(loginProblems('ana@exemplo.com', ''), ['Digite sua senha.']);
   assert.match(authError('User already registered', true), /já tem conta/);
   assert.match(authError('Email not confirmed', false), /confirmar o e-mail/);
@@ -44,6 +46,22 @@ test('criar conta: diz exatamente o que falta e traduz os erros', () => {
   const ui = read('android-app/src/LoginScreen.tsx'),
     app = read('android-app/src/MprApp.tsx');
   assert.doesNotMatch(ui, /disabled=\{!canSubmit/, 'botão não fica travado sem explicação');
-  for (const t of ['Nome completo', 'WhatsApp', 'você completa depois']) assert.ok(ui.includes(t), t);
-  assert.match(app, /options:\{data:\{full_name:/, 'nome, WhatsApp e igreja vão junto na criação da conta');
+  for (const t of ['Nome completo', 'WhatsApp', 'você completa depois', 'Repita a senha', 'Li e aceito']) assert.ok(ui.includes(t), t);
+  assert.match(app, /data:\{full_name:/, 'nome, WhatsApp e igreja vão junto na criação da conta');
+});
+
+test('e-mails de conta no padrão Vinha e páginas de retorno', async () => {
+  const {templates} = await import('./auth-emails.mjs');
+  for (const k of ['confirmation', 'recovery', 'magic_link', 'email_change', 'invite', 'reauthentication']) {
+    assert.ok(templates[k].html.includes('#163d2f') && templates[k].html.includes('Vinha'), k + ' com a identidade Vinha');
+    assert.ok(!/[ ]/.test(templates[k].subject));
+  }
+  assert.match(templates.confirmation.html, /\{\{ \.Data\.church_name \}\}/, 'confirmação cita a igreja do membro');
+  assert.match(templates.confirmation.html, /\{\{ \.ConfirmationURL \}\}/);
+  assert.match(templates.reauthentication.html, /\{\{ \.Token \}\}/);
+  const app = read('android-app/src/MprApp.tsx');
+  assert.match(app, /emailRedirectTo:'https:\/\/app\.vinhaigrejas\.com\.br\/conta-confirmada'/);
+  assert.match(app, /redirectTo:'https:\/\/app\.vinhaigrejas\.com\.br\/nova-senha'/);
+  assert.match(read('app/nova-senha/page.tsx'), /updateUser\(\{password\}\)/);
+  assert.match(read('app/conta-confirmada/page.tsx'), /E-mail confirmado!/);
 });

@@ -1,0 +1,11 @@
+.ma{min-height:100vh;background:#f5f6f2;display:grid;place-items:center;padding:24px 16px;font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#1f2a22}
+.ma-card{width:min(460px,100%);background:#fff;border:1px solid #dce6df;border-radius:24px;overflow:hidden}
+.ma-head{background:#163d2f;border-bottom:4px solid #dbbb70;padding:22px 26px;display:flex;align-items:center;gap:12px;color:#fff}
+.ma-logo{width:44px;height:44px;border-radius:14px;background:#285c45;color:#dbbb70;display:grid;place-items:center;font:700 24px Georgia,serif}
+.ma-head b{font-size:19px}.ma-head small{display:block;color:#dbbb70;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+.ma-body{padding:26px;display:grid;gap:12px}.ma-body h1{margin:0;font-size:24px;color:#163d2f}.ma-body p{margin:0;line-height:1.55}
+.ma-over{font-size:11px;font-weight:700;letter-spacing:2px;color:#7f6420;text-transform:uppercase}
+.ma-ok{width:56px;height:56px;border-radius:50%;background:#e5eee8;color:#285c45;display:grid;place-items:center;font-size:28px;font-weight:900}
+.ma label{display:grid;gap:6px;font-weight:600}.ma input{padding:13px 14px;border:1px solid #dce6df;border-radius:14px;font-size:16px}
+.ma button{background:#285c45;color:#fff;border:0;border-radius:14px;padding:14px 18px;font-weight:700;font-size:16px;cursor:pointer}.ma button:disabled{opacity:.5}
+.ma-alert{background:#fff4e0;border:1px solid #e0a23a;border-radius:14px;padding:12px}.ma-note{font-size:13px;color:#5f6f64}

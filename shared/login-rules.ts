@@ -19,10 +19,11 @@ export function stepMissing(form: Record<string, string>, fields: readonly strin
   return fields.filter((k) => k !== 'complement' && !(form[k] || '').trim());
 }
 
-export type SignupForm = {name: string; phone: string; unit: string; email: string; password: string};
+export type SignupForm = {name: string; phone: string; unit: string; email: string; password: string; confirm: string; terms: boolean};
 /** O que falta para criar a conta, em linguagem simples. Lista vazia = pode enviar. */
 export function signupProblems(f: SignupForm) {
   const out: string[] = [];
+  if (!f.unit) out.push('Escolha a igreja à qual você pertence.');
   if (
     f.name
       .trim()
@@ -32,9 +33,10 @@ export function signupProblems(f: SignupForm) {
     out.push('Digite seu nome e sobrenome.');
   const digits = f.phone.replace(/\D/g, '');
   if (digits.length < 10 || digits.length > 13) out.push('Digite o WhatsApp com DDD.');
-  if (!f.unit) out.push('Escolha a sua igreja.');
   if (!/^\S+@\S+\.\S+$/.test(f.email.trim())) out.push('Confira o e-mail.');
   if (f.password.length < 8) out.push('A senha precisa ter pelo menos 8 caracteres.');
+  else if (f.password !== f.confirm) out.push('As duas senhas precisam ser iguais.');
+  if (!f.terms) out.push('Marque que você aceita os termos de uso e a política de privacidade.');
   return out;
 }
 export function loginProblems(email: string, password: string) {
