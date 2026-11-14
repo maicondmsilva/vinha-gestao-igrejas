@@ -9,7 +9,7 @@ export type StaffAuthAdmin={
  createUser:(attrs:{email:string;password:string;email_confirm:boolean;user_metadata:Record<string,string>})=>Promise<{data:{user:{id:string}|null};error:AuthError}>;
  updateUserById:(id:string,attrs:Record<string,unknown>)=>Promise<{data:unknown;error:AuthError}>;
  getUserById:(id:string)=>Promise<{data:{user:{id:string;email?:string}|null};error:AuthError}>;
- deleteUser:(id:string)=>Promise<{data:unknown;error:AuthError}>;
+ deleteUser:(id:string,soft?:boolean)=>Promise<{data:unknown;error:AuthError}>;
 };
 export type StaffDeps={access:(request:Request)=>Promise<{response?:Response;org?:string;rpc?:StaffRpc}>;admin:()=>StaffAuthAdmin};
 
@@ -131,7 +131,14 @@ export function staffUserRoutes(deps:StaffDeps){
    if(!uuid.test(id))return bad();
    const g=await guard(request);if('response' in g)return g.response!;
    const r=await call(g.rpc,g.org,'remove',{membership:id});if(r.error)return dbFail(r.error);
-   return json({ok:true});
+   // Sem nenhum outro acesso, a conta de login é encerrada: e-mail liberado para um cadastro novo; o membro e os lançamentos ficam.
+   const out=r.data as {erase?:boolean;user?:string}|null;
+   if(out?.erase&&out.user&&uuid.test(out.user)){
+    const removed=await deps.admin().deleteUser(String(out.user),true);
+    if(removed.error&&!/not.?found/i.test(removed.error.message||''))return json({ok:true,accountClosed:false,error:'O acesso foi removido, mas o encerramento da conta ficou pendente. Tente excluir de novo.'},200);
+    return json({ok:true,accountClosed:true});
+   }
+   return json({ok:true,accountClosed:false});
   },
   async GET(request:Request,id:string){
    if(!uuid.test(id))return bad();

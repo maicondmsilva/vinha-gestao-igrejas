@@ -117,6 +117,9 @@ select lives_ok($$select public.staff_user(pg_temp.su('org'),'remove',jsonb_buil
 select is((select status::text from public.organization_memberships where id=pg_temp.su('member-m')),'revoked','excluir remove o acesso');
 reset role;
 select is((select count(*)::int from private.permission_grants where membership_id=pg_temp.su('member-m')),0,'excluir remove as permissões avulsas');
+select is((select auth_user_id from public.people where id=pg_temp.su('member-p')),null,'sem outro acesso: cadastro de membro fica, sem a conta antiga');
+select is((select requested_via from private.account_closures where user_id=pg_temp.su('member')),'panel','conta registrada para encerramento');
+select is((select count(*)::int from public.audit_logs where action='staff.user.account_closed' and organization_id=pg_temp.su('org')),1,'encerramento auditado');
 set local role authenticated;
 select pg_temp.actor('admin');
 select is((select count(*)::int from public.people where id=pg_temp.su('member-p')),1,'excluir mantém o membro');
@@ -143,5 +146,14 @@ select is((select password_change_required from public.organization_memberships 
 select is(public.password_change_required(),false,'depois da troca o login segue normal');
 reset role;
 select is((select count(*)::int from public.audit_logs where organization_id=pg_temp.su('org') and action in ('staff.user.saved','staff.user.removed')) >= 5,true,'ficha gera auditoria');
+-- Quem ainda tem acesso em outra igreja, ou é da equipe da plataforma, não perde a conta.
+reset role;
+insert into public.organizations(id,name,slug,status) values(pg_temp.su('org2'),'Outra igreja fictícia','staff-user-test-2','active');
+insert into public.organization_units(id,organization_id,name,slug,unit_type) values(pg_temp.su('unit3'),pg_temp.su('org2'),'Outra sede','outra','headquarters');
+insert into public.organization_memberships(id,organization_id,user_id,role,status,default_unit_id) values(pg_temp.su('sec-other'),pg_temp.su('org2'),pg_temp.su('secretary'),'member','active',pg_temp.su('unit3'));
+set local role authenticated;select pg_temp.actor('owner');
+select is(public.staff_user(pg_temp.su('org'),'remove',jsonb_build_object('membership',pg_temp.su('secretary-m')))->>'erase','false','com acesso em outra igreja, a conta continua');
+reset role;
+select ok(private.account_erasable(pg_temp.su('member')),'conta sem acesso pode ser encerrada');
 select * from finish();
 rollback;

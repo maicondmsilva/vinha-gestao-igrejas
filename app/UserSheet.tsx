@@ -63,8 +63,8 @@ export default function UserSheet({membershipId,units,currentId,unitAccess=[],cl
    saved(isNew?'Usuário criado. '+(hasLogin?'A pessoa entra com a senha que já usa.':'Passe a senha para a pessoa; ela troca no primeiro acesso.'):'Ficha salva.');
    if(sheet){set('password','');setReload(x=>x+1)}else close();
   }catch(err){setError(err instanceof Error?err.message:'Falha de conexão.')}finally{setBusy(false)}}
- async function remove(){if(!sheet)return;if(!confirm(`Tirar o acesso de ${form.name}? O cadastro de membro continua.`))return;setBusy(true);setError('');
-  try{await call('/api/users/'+sheet.membership.id,'DELETE');saved('Acesso retirado. O cadastro de membro continua em Pessoas.');close()}catch(err){setError(err instanceof Error?err.message:'Falha de conexão.')}finally{setBusy(false)}}
+ async function remove(){if(!sheet)return;if(!confirm(`Excluir o usuário ${form.name}?\n\nO acesso dele é retirado e, se não tiver acesso em outra igreja, a conta de login é apagada: para voltar, ele cria uma conta nova no app.\n\nO cadastro de membro e os lançamentos continuam em Pessoas.`))return;setBusy(true);setError('');
+  try{const r=await call<{accountClosed?:boolean;error?:string}>('/api/users/'+sheet.membership.id,'DELETE');saved(r?.error||(r?.accountClosed?'Usuário excluído e conta de login apagada. O cadastro de membro e os lançamentos continuam em Pessoas.':'Acesso retirado nesta igreja. A conta continua porque a pessoa tem acesso em outra igreja ou à plataforma.'));close()}catch(err){setError(err instanceof Error?err.message:'Falha de conexão.')}finally{setBusy(false)}}
 
  if(picking)return <section className="us" aria-labelledby="us-title">
   <nav className="us-crumbs" aria-label="Caminho"><button type="button" onClick={close}>Usuários</button><span>›</span><b>Novo usuário</b></nav>
