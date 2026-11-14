@@ -53,7 +53,8 @@ export async function ministries(): Promise<Ministry[]> {
   if (!supabase) return [];
   const r = await supabase.rpc('access_context');
   if (r.error) throw Error('Não foi possível carregar seus ministérios.');
-  return ((r.data as {memberships?: Ministry[]} | null)?.memberships || []).filter(isStaff);
+  // Voluntários (membros) também entram: o que cada um pode fazer vem de staff_access('mine'), igreja por igreja.
+  return ((r.data as {memberships?: Ministry[]} | null)?.memberships || []).filter((m) => isStaff(m) || (m.status === 'active' && m.role === 'member'));
 }
 
 /** What the signed-in person may do in each church of the ministry (agenda, entrance, publishing, push). */
