@@ -6,18 +6,19 @@ import {staffUserRoutes,parseStaffUser} from '../app/lib/staff-user-core.ts';
 const unit='c0000000-0000-4000-8000-000000000001',person='c0000000-0000-4000-8000-000000000002',member='c0000000-0000-4000-8000-000000000003',login='c0000000-0000-4000-8000-000000000004';
 const base={role:'leader',unit,account:{name:'Ana Teste',phone:'11999990000',email:'ana@example.invalid'}};
 
-function harness({save,link,authCreate,authUpdate,get}={}){
+function harness({save,link,authCreate,authUpdate,get,remove}={}){
  const calls=[];
  const rpc=async(name,args)=>{calls.push(['rpc',args.p_action,args.p_data]);
   if(args.p_action==='save')return save?save(args.p_data):{data:{ok:true,membership:null,person,needsLogin:true,loginUser:null},error:null};
   if(args.p_action==='link_login')return link?link(args.p_data):{data:{ok:true,membership:member},error:null};
+  if(args.p_action==='remove'&&remove)return remove();
   if(args.p_action==='get')return get?get():{data:{membership:{id:member},email:'ana@example.invalid'},error:null};
   return{data:{ok:true,items:[]},error:null}};
  const admin={
   createUser:async attrs=>{calls.push(['createUser',attrs]);return authCreate?authCreate(attrs):{data:{user:{id:login}},error:null}},
   updateUserById:async(id,attrs)=>{calls.push(['updateUserById',id,attrs]);return authUpdate?authUpdate(attrs):{data:{user:{id}},error:null}},
   getUserById:async id=>({data:{user:{id,email:'ana@example.invalid'}},error:null}),
-  deleteUser:async id=>{calls.push(['deleteUser',id]);return{data:{},error:null}}};
+  deleteUser:async(id,soft)=>{calls.push(soft?['deleteUser',id,soft]:['deleteUser',id]);return{data:{},error:null}}};
  const routes=staffUserRoutes({access:async()=>({org:'verified-org',rpc}),admin:()=>admin});
  return{calls,routes};
 }
@@ -123,4 +124,12 @@ test('rotas usam a chave administrativa só no servidor',()=>{
  const src=readFileSync(new URL('../app/lib/supabase/staff-routes.ts',import.meta.url),'utf8');
  assert.match(src,/supabaseAdminClient/);
  assert.doesNotMatch(readFileSync(new URL('../app/lib/staff-user-core.ts',import.meta.url),'utf8'),/NEXT_PUBLIC|SERVICE_ROLE|SECRET_KEY/);
+});
+
+test('excluir sem outro acesso encerra a conta de login (e-mail liberado), mantendo o membro',async()=>{
+ const h=harness({remove:()=>({data:{ok:true,user:login,erase:true},error:null})}),r=await h.routes.DELETE(req('DELETE'),member);
+ assert.equal(r.status,200);assert.equal((await r.json()).accountClosed,true);
+ assert.deepEqual(h.calls.at(-1),['deleteUser',login,true],'exclusão suave: o Auth anonimiza e-mail e encerra as sessões');
+ const keep=harness({remove:()=>({data:{ok:true,user:login,erase:false},error:null})}),k=await keep.routes.DELETE(req('DELETE'),member);
+ assert.equal((await k.json()).accountClosed,false);assert.ok(!keep.calls.some(c=>c[0]==='deleteUser'),'com acesso em outra igreja a conta fica');
 });
