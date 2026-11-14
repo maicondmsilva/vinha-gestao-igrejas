@@ -71,3 +71,12 @@ test('telas com identidade Vinha e privacidade', () => {
   assert.match(sql, /open_count>=2/);
   assert.doesNotMatch(sql.slice(sql.indexOf('member_inbox_rows(p_org uuid')), /ap\.message/, 'aviso não leva o motivo');
 });
+
+test('agenda de quem atende no app', () => {
+  const ui = read('android-app/src/PastoralTeamScreen.tsx'),
+    exp = read('android-app/src/MemberExperience.tsx'),
+    sql = read('supabase/migrations/20261114180000_agenda_pastoral_proprio.sql');
+  for (const t of ['AGENDA DE ATENDIMENTO', 'PARA CONFIRMAR', 'PRÓXIMOS ATENDIMENTOS', 'Confirmação automática', 'Marcar e avisar o membro', 'Na casa do membro']) assert.ok(ui.includes(t), t);
+  assert.match(exp, /!!pastoralTeam\.data&&/, 'cartão só para quem atende');
+  assert.match(sql, /private\.pastoral_self\(a\.id\)/, 'só a própria pessoa muda a própria agenda');
+});
