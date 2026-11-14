@@ -3,7 +3,7 @@ import Svg, {Circle, Path, Rect} from 'react-native-svg';
 
 /** Ícones da Vinha: traço único de 1.8, grade 24×24, mesma área visual em todos (não dependem da fonte do celular). */
 export type IconName =
-  | 'home' | 'calendar' | 'play' | 'give' | 'menu' | 'prayer' | 'bible' | 'live' | 'kids' | 'cells' | 'scales' | 'ticket' | 'bell' | 'chevron' | 'mail' | 'chat' | 'cake' | 'plus';
+  | 'home' | 'calendar' | 'play' | 'give' | 'menu' | 'prayer' | 'bible' | 'live' | 'kids' | 'cells' | 'scales' | 'ticket' | 'bell' | 'chevron' | 'mail' | 'chat' | 'cake' | 'plus' | 'bookmark';
 const paths: Record<IconName, (c: string) => ReactElement> = {
   home: (c) => <><Path d="M4 11.5 12 5l8 6.5" stroke={c} /><Path d="M6.5 10v9h11v-9" stroke={c} /><Path d="M10.5 19v-4.5h3V19" stroke={c} /></>,
   calendar: (c) => <><Rect x="4" y="5.5" width="16" height="14" rx="3" stroke={c} /><Path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" stroke={c} /><Circle cx="12" cy="14.5" r="1.4" fill={c} /></>,
@@ -23,6 +23,7 @@ const paths: Record<IconName, (c: string) => ReactElement> = {
   chat: (c) => <><Path d="M5 18.5 6.2 15A7 7 0 1 1 9 17.6z" stroke={c} /><Path d="M9 11.5h.01M12 11.5h.01M15 11.5h.01" stroke={c} strokeWidth={2.4} /></>,
   cake: (c) => <><Rect x="5" y="11" width="14" height="8" rx="2" stroke={c} /><Path d="M5 14.5c2.3 1.4 4.7 1.4 7 0s4.7-1.4 7 0M12 11V8M12 4.5c-.9 1-.9 2 0 2.6.9-.6.9-1.6 0-2.6z" stroke={c} /></>,
   plus: (c) => <Path d="M12 5.5v13M5.5 12h13" stroke={c} />,
+  bookmark: (c) => <Path d="M7 4.5h10v15l-5-3.6-5 3.6z" stroke={c} />,
 };
 export default function Icon({name, color, size = 24}: {name: IconName; color: string; size?: number}) {
   return (
