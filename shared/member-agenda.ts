@@ -1,5 +1,5 @@
 import {panelTimezone,toLocalInput} from './timezone.ts';
-export type AgendaEvent={cover?:string;shared?:boolean;has_tickets?:boolean;public_path?:string;price_cents?:string;id:string;title:string;description:string;kind:'event'|'service';starts_at:string;ends_at:string;location:string;address:string;capacity:number;remaining:number;status:'draft'|'published'|'cancelled';version:number;registrations?:number};
+export type AgendaEvent={cover?:string;category?:string;category_color?:string;shared?:boolean;has_tickets?:boolean;public_path?:string;price_cents?:string;id:string;title:string;description:string;kind:'event'|'service';starts_at:string;ends_at:string;location:string;address:string;capacity:number;remaining:number;status:'draft'|'published'|'cancelled';version:number;registrations?:number};
 export type MemberTicket={cover?:string;id:string;event_id:string;unit_id:string;name:string;status:'confirmed'|'cancelled';checked_in_at:string|null;version:number;title:string;starts_at:string;ends_at:string;location:string;address:string;event_status:string;code:string|null};
 export type InboxItem={message_key:string;title:string;body:string;occurred_at:string;target:'content'|'agenda'|'ticket'|'profile'|'church'|'prayers'|'testimonies'|'groups'|'learning'|'kids'|'cells';target_id:string;read:boolean};
 export function agendaError(message:string){
