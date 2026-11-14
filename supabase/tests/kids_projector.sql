@@ -93,5 +93,17 @@ select pg_temp.actor('stranger');
 select is(jsonb_array_length(public.member_kids_present(pg_temp.ki('org'))->'items'),0,'outra conta não vê números');
 reset role;
 select is((select count(*)::int from private.kids_projector_log where action='hide' and call_id=pg_temp.ki('call2')),1,'resposta tira o aviso do telão');
+-- Dois chamados no telão: responder o primeiro volta a mostrar o segundo em vez de apagar.
+update private.kids_guardian_calls set created_at=now()-interval '5 minutes' where id=pg_temp.ki('call1');
+set local role authenticated;
+select pg_temp.actor('teacher');
+select is(pg_temp.call('pickup','call3','attendance')->>'ok','true','chama a primeira criança de novo');
+select pg_temp.actor('teacher2');
+select is(pg_temp.call('health','call4','attendance2')->>'ok','true','chama a segunda criança');
+select pg_temp.actor('parent');
+select lives_ok($$select public.member_kids_call(pg_temp.ki('org'),'answer',pg_temp.ki('call3'),'coming')$$,'responde o primeiro chamado');
+reset role;
+select is((select count(*)::int from private.kids_projector_log where action='hide' and call_id=pg_temp.ki('call3')),0,'não apaga o chamado que ainda está no telão');
+select is((select count(*)::int from private.kids_projector_log where action='alert' and call_id=pg_temp.ki('call4')),2,'mostra de novo o outro chamado');
 select * from finish();
 rollback;
