@@ -34,7 +34,9 @@ test('Vinha Equipe e painel configuram sem sessão ativa', () => {
   const app = read('staff-app/App.tsx');
   assert.match(app, /here\?\.kidsConfigure/);
   const screen = read('staff-app/src/KidsSetupScreen.tsx');
-  for (const t of ['Criar sala', 'Criar turma', 'Adicionar à equipe', 'Nova sessão que se repete', 'Famílias podem reservar']) assert.ok(screen.includes(t), t);
+  for (const t of ['Criar sala', 'Criar turma', '<KidsSessionEditor']) assert.ok(screen.includes(t), t);
+  const editor = read('staff-app/src/KidsSessionEditor.tsx');
+  for (const t of ['+ Nova sessão', 'Não repete', 'Toda semana', 'Responsáveis da sala']) assert.ok(editor.includes(t), t);
   assert.match(read('app/KidsOperations.tsx'), /<KidsSetupPanel /);
   const sql = read('supabase/migrations/20261115170000_kids_equipe_fixa_sessoes_recorrentes.sql');
   assert.match(sql, /cron\.schedule\('kids-series-run'/);
@@ -53,7 +55,7 @@ test('melhorias: disponibilidade, revezamento, aviso, lembretes, abertura e rela
   for (const t of ['Confirmo', 'Não posso', 'DIAS EM QUE NÃO POSSO']) assert.ok(vol.includes(t), t);
   assert.match(read('android-app/src/MemberExperience.tsx'), /Minha escala no Kids/);
   assert.match(read('staff-app/src/KidsSetupScreen.tsx'), /Ver relatório das sessões/);
-  assert.match(read('app/KidsSetupPanel.tsx'), /Relatório das repetições/);
+  assert.match(read('app/KidsSetupPanel.tsx'), /Relatório das sessões/);
 });
 
 test('recepção Kids no Vinha Equipe: comprovante e conferência', async () => {
@@ -81,7 +83,7 @@ test('QR da reserva, foto da criança e responsável temporário', async () => {
   const app = read('android-app/src/FamilyScreens.tsx') + read('android-app/src/KidsFamily.tsx');
   assert.match(app, /<ReservationPass /);
   assert.match(app, /<KidsGuardians /);
-  assert.match(read('android-app/src/KidsGuardians.tsx'), /Autorizar outra pessoa a buscar/);
+  assert.match(read('android-app/src/KidsGuardians.tsx'), /Adicionar responsável/);
   const flow = read('staff-app/src/KidsPassFlow.tsx');
   assert.match(flow, /'kids_pass'/);
   assert.match(flow, /receiptSecret: code/, 'o mesmo QR vale como comprovante');
