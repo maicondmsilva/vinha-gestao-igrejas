@@ -3,6 +3,7 @@ import {ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, TextInpu
 import {randomUUID} from 'expo-crypto';
 import {supabase} from './supabase';
 import {kidsPage} from './kids';
+import KidsChildPhoto from './KidsChildPhoto';
 import {colors, ui} from './theme';
 import type {Unit} from './api';
 import type {KidsOperationsPage} from '../../shared/contract/kids.ts';
@@ -186,6 +187,7 @@ export default function KidsBoard({org, unit, back}: {org: string; unit: Unit; b
               g = groups.find((x) => x.id === k.groupId);
             return (
               <View key={k.id} style={[ui.card, {flexDirection: 'row', alignItems: 'center', gap: 12}]}>
+                <KidsChildPhoto org={org} unit={unit.id} profile={k.profileId} name={k.name} />
                 <View style={{flex: 1}}>
                   <Text style={ui.h2}>
                     {tags[k.id] || k.tag ? 'nº ' + (tags[k.id] || k.tag) + ' · ' : ''}
