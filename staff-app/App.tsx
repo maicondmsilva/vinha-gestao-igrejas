@@ -10,12 +10,10 @@ import type {CompatResponse} from '../shared/contract/apps.ts';
 import {colors, ui} from './src/theme';
 import PushComposer from './src/PushComposer';
 import TicketScanner from './src/TicketScanner';
-import KidsBoard from './src/KidsBoard';
 import VisitorForm from './src/VisitorForm';
-import KidsSetupScreen from './src/KidsSetupScreen';
-import KidsReception from './src/KidsReception';
+import KidsHub from './src/KidsHub';
 
-type Screen = 'home' | 'push' | 'tickets' | 'kids' | 'visitor' | 'kidsSetup' | 'kidsReception';
+type Screen = 'home' | 'push' | 'tickets' | 'kids' | 'visitor';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null),
@@ -186,10 +184,9 @@ function Workspace({email}: {email: string}) {
       </ScrollView>
     );
   if (screen === 'push') return <PushComposer org={ministry.organization_id} unit={unit} units={ministry.units} back={() => setScreen('home')} />;
-  if (screen === 'kidsReception') return <KidsReception org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
-  if (screen === 'kidsSetup') return <KidsSetupScreen org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'visitor') return <VisitorForm org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
-  if (screen === 'kids') return <KidsBoard org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
+  if (screen === 'kids')
+    return <KidsHub org={ministry.organization_id} unit={unit} canOperate={!!here?.kids} canConfigure={!!here?.kidsConfigure} back={() => setScreen('home')} />;
   if (screen === 'tickets') return <TicketScanner org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   return (
     <ScrollView contentContainerStyle={[ui.pad, {paddingTop: 30}]}>
@@ -208,22 +205,8 @@ function Workspace({email}: {email: string}) {
           onPress={() => setScreen('visitor')}
         />
       )}
-      {here?.kids && (
-        <Action title="Sala Kids" text="Crianças presentes por sala e chamar o responsável pelo aplicativo da família." onPress={() => setScreen('kids')} />
-      )}
-      {here?.kids && (
-        <Action
-          title="Recepção Kids"
-          text="Entrada com comprovante (QR) e saída conferindo responsável e comprovante."
-          onPress={() => setScreen('kidsReception')}
-        />
-      )}
-      {here?.kidsConfigure && (
-        <Action
-          title="Configurar Kids"
-          text="Salas, turmas, equipe fixa e sessões que se repetem (todo domingo, todo mês…)."
-          onPress={() => setScreen('kidsSetup')}
-        />
+      {(here?.kids || here?.kidsConfigure) && (
+        <Action title="Kids" text="Recepção com QR Code, salas com as crianças e configuração (salas, equipe e sessões)." onPress={() => setScreen('kids')} />
       )}
       {here?.push && <Action title="Enviar push" text="Avise o ministério, a igreja local ou as igrejas que você atende." onPress={() => setScreen('push')} />}
       <Ghost label="Trocar igreja ou ministério" onPress={() => (list.length > 1 ? chooseMinistry(null) : setUnit(null))} />

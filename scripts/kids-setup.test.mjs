@@ -66,7 +66,8 @@ test('recepção Kids no Vinha Equipe: comprovante e conferência', async () => 
   for (const t of ['Registrar entrada', 'Registrar saída', 'Conferi a identidade', 'Ler QR Code do comprovante', 'Enviar comprovante'])
     assert.ok(ui.includes(t), t);
   assert.match(ui, /'kids_pickup_guardians'/);
-  assert.match(read('staff-app/App.tsx'), /Recepção Kids/);
+  assert.match(read('staff-app/App.tsx'), /<KidsHub /);
+  assert.match(read('staff-app/src/KidsHub.tsx'), /'Recepção'/);
 });
 
 test('QR da reserva, foto da criança e responsável temporário', async () => {
