@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {describeSeries, seriesProblem, kidsSetupError} from '../shared/kids-setup.ts';
+import {describeSeries, seriesProblem, kidsSetupError, sessionTimes} from '../shared/kids-setup.ts';
 const read = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const base = {
   name: 'Kids domingo',
@@ -120,4 +120,18 @@ test('painel Kids em 4 seções e Vinha Equipe com uma entrada', async () => {
   assert.match(read('app/DashboardNavigation.tsx'), /kidsSections\.map/);
   const app = read('staff-app/App.tsx');
   assert.equal((app.match(/<Action title="Kids"/g) || []).length, 1, 'uma entrada Kids');
+});
+
+test('editar e excluir sem perder histórico', () => {
+  const t = sessionTimes('16/11/2026', '09:00', '10:30');
+  assert.ok(t && Date.parse(t.endsAt) - Date.parse(t.startsAt) === 90 * 60000);
+  assert.equal(sessionTimes('31/02/2026', '09:00', '10:00'), null);
+  assert.equal(sessionTimes('16/11/2026', '10:00', '09:00'), null);
+  assert.match(kidsSetupError('kids_has_records'), /desative/);
+  const screen = read('staff-app/src/KidsSetupScreen.tsx');
+  for (const a of ['room_delete', 'class_delete', 'session_delete']) assert.match(screen, new RegExp(a));
+  assert.match(screen, /locked/);
+  const sql = read('supabase/migrations/20261115240000_kids_editar_excluir.sql');
+  assert.match(sql, /kids_has_records/);
+  assert.match(sql, /skip_dates/);
 });
