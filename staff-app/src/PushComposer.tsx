@@ -18,6 +18,8 @@ export default function PushComposer({org, unit, back}: {org: string; unit: Unit
     [cells, setCells] = useState<string[]>([]),
     [groups, setGroups] = useState<string[]>([]),
     [roles, setRoles] = useState<string[]>([]),
+    [peopleGroups, setPeopleGroups] = useState<string[]>([]),
+    [groupList, setGroupList] = useState<{id: string; name: string}[]>([]),
     [extra, setExtra] = useState<Record<string, unknown>>({}),
     [segments, setSegments] = useState<PushSegment[]>([]),
     [segment, setSegment] = useState(''),
@@ -44,18 +46,23 @@ export default function PushComposer({org, unit, back}: {org: string; unit: Unit
       .then((d) => setSegments(d.items || []))
       .catch(() => setSegments([]));
     void authHeaders(org).then(setHeaders);
+    api<{items: {id: string; name: string}[]}>('/api/people-groups', org)
+      .then((d) => setGroupList(d.items || []))
+      .catch(() => setGroupList([]));
   }, [org, unit.id]);
   function applySegment(sg: PushSegment) {
     if (segment === sg.id) {
       setSegment('');
+      setPeopleGroups([]);
       setRoles([]);
       setCells([]);
       setGroups([]);
       setExtra({});
       return;
     }
-    const {roles: r, cells: c, groups: g, ...rest} = sg.audience;
+    const {roles: r, cells: c, groups: g, peopleGroups: pg, ...rest} = sg.audience;
     setSegment(sg.id);
+    setPeopleGroups(pg || []);
     setRoles(r || []);
     setCells(c || []);
     setGroups(g || []);
@@ -66,7 +73,13 @@ export default function PushComposer({org, unit, back}: {org: string; unit: Unit
       .then((d) => setImages(d.items || []))
       .catch(() => setImages([]));
   }
-  const audience = {...extra, ...(roles.length ? {roles} : {}), ...(cells.length ? {cells} : {}), ...(groups.length ? {groups} : {})};
+  const audience = {
+    ...extra,
+    ...(peopleGroups.length ? {peopleGroups} : {}),
+    ...(roles.length ? {roles} : {}),
+    ...(cells.length ? {cells} : {}),
+    ...(groups.length ? {groups} : {}),
+  };
   useEffect(() => {
     if (!options || !targets.length) return setReach(null);
     const timer = setTimeout(() => {
@@ -76,7 +89,7 @@ export default function PushComposer({org, unit, back}: {org: string; unit: Unit
     }, 400);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, targets.join(), cells.join(), groups.join(), roles.join(), JSON.stringify(extra)]);
+  }, [options, targets.join(), cells.join(), groups.join(), roles.join(), peopleGroups.join(), JSON.stringify(extra)]);
   async function send() {
     if (busy) return;
     const data = {
@@ -219,6 +232,12 @@ export default function PushComposer({org, unit, back}: {org: string; unit: Unit
             <>
               <Text style={ui.label}>Somente estes ministérios (opcional)</Text>
               <Chips items={options.groups.filter((g) => targets.includes(g.unit))} selected={groups} toggle={(id) => toggle(groups, setGroups, id)} />
+            </>
+          )}
+          {!!groupList.length && (
+            <>
+              <Text style={ui.label}>Somente estes grupos (opcional)</Text>
+              <Chips items={groupList} selected={peopleGroups} toggle={(id) => toggle(peopleGroups, setPeopleGroups, id)} />
             </>
           )}
           <Text style={ui.label}>Somente estas funções (opcional)</Text>

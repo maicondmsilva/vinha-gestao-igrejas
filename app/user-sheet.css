@@ -59,3 +59,13 @@
  .us-actions button{flex:1}
  .us-danger{margin-right:0;order:3;flex-basis:100%!important}
 }
+.us-person-groups{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}.us-person-groups label{display:inline-flex;align-items:center;gap:8px;border:1.5px solid #d6e1d9;border-radius:18px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px;background:#fff}
+.us-person-groups label.on{background:#f1f7f2}.us-person-groups i{width:10px;height:10px;border-radius:50%;display:inline-block}.us-person-groups input{accent-color:#285c45}
+.people-groups>header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}.people-groups .pg-form{display:grid;gap:12px;border:1px solid #dce6df;border-radius:14px;padding:16px;margin:12px 0;background:#f8faf7}
+.people-groups label{display:grid;gap:6px;font-weight:600;font-size:13px}.people-groups input{padding:10px 12px;border:1px solid #cbd8ce;border-radius:10px;font:inherit}
+.pg-colors{display:flex;gap:8px}.pg-colors button{width:28px;height:28px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #cbd8ce;cursor:pointer}.pg-colors button[aria-checked=true]{box-shadow:0 0 0 2px #173d32}
+.pg-actions{display:flex;gap:8px;justify-content:flex-end}.pg-list{display:grid;gap:8px;margin-top:12px}.pg-list article{display:flex;gap:8px;align-items:center;border:1px solid #dce6df;border-radius:12px;padding:8px 10px}.pg-list article.on{border-color:#285c45;background:#f3f8f4}
+.pg-open{flex:1;display:grid;grid-template-columns:14px 1fr;column-gap:10px;text-align:left;background:none;border:0;cursor:pointer;font:inherit}.pg-open i{width:12px;height:12px;border-radius:50%;grid-row:span 2;margin-top:4px}.pg-open small{color:#5f6f64}
+.pg-list article>button:not(.pg-open),.pg-member button,.pg-actions button:not(.create){border:1px solid #cbd9d0;border-radius:10px;background:#fff;padding:7px 12px;cursor:pointer;font:inherit;font-size:13px}
+.pg-members{margin-top:16px;display:grid;gap:8px}.pg-member{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #edf1ed;padding:8px 0}.pg-member small{color:#5f6f64}
+.pg-found{justify-self:start;border:1px dashed #9fc0aa;border-radius:10px;background:#fff;padding:7px 12px;cursor:pointer}.pg-error{color:#893c2b}.pg-notice{color:#235943}.pg-empty{color:#5f6f64}

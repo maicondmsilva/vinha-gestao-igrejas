@@ -10,6 +10,7 @@ import './programming.css';
 import './publishing.css';
 
 type Audience = {
+  peopleGroups?: string[];
   roles?: string[];
   cells?: string[];
   groups?: string[];
@@ -344,7 +345,8 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
     [image, setImage] = useState(campaign?.link?.image || ''),
     [picking, setPicking] = useState(false),
     [segments, setSegments] = useState<PushSegment[]>([]),
-    [segNote, setSegNote] = useState('');
+    [segNote, setSegNote] = useState(''),
+    [peopleGroups, setPeopleGroups] = useState<{id: string; name: string}[]>([]);
   const visibleCells = useMemo(() => options.cells.filter((c) => targets.includes(c.unit)), [options.cells, targets]),
     visibleGroups = useMemo(() => options.groups.filter((g) => targets.includes(g.unit)), [options.groups, targets]);
   const toggle = (list: string[] | undefined, value: string) => {
@@ -364,6 +366,10 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
       .then((d) => setSegments((d as {items?: PushSegment[]}).items || []))
       .catch(() => {});
   useEffect(() => {
+    void fetch(settingsUrl('/api/people-groups'), {cache: 'no-store'})
+      .then((r) => (r.ok ? r.json() : {items: []}))
+      .then((d) => setPeopleGroups((d as {items?: {id: string; name: string}[]}).items || []))
+      .catch(() => {});
     void loadSegments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unit]);
@@ -550,6 +556,7 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
               </label>
             )}
           </div>
+          {peopleGroups.length > 0 && <Chips label="Grupos (Configurações › Grupos)" items={peopleGroups} selected={audience.peopleGroups} toggle={(v) => setFilter('peopleGroups', toggle(audience.peopleGroups, v))} />}
           <Chips label="Função no ministério" items={roles.map(([id, name]) => ({id, name}))} selected={audience.roles} toggle={(v) => setFilter('roles', toggle(audience.roles, v))} />
           <Chips label="Células" items={visibleCells} selected={audience.cells} toggle={(v) => setFilter('cells', toggle(audience.cells, v))} />
           <Chips label="Ministérios e departamentos" items={visibleGroups} selected={audience.groups} toggle={(v) => setFilter('groups', toggle(audience.groups, v))} />
