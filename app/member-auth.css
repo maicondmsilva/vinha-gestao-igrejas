@@ -9,3 +9,8 @@
 .ma label{display:grid;gap:6px;font-weight:600}.ma input{padding:13px 14px;border:1px solid #dce6df;border-radius:14px;font-size:16px}
 .ma button{background:#285c45;color:#fff;border:0;border-radius:14px;padding:14px 18px;font-weight:700;font-size:16px;cursor:pointer}.ma button:disabled{opacity:.5}
 .ma-alert{background:#fff4e0;border:1px solid #e0a23a;border-radius:14px;padding:12px}.ma-note{font-size:13px;color:#5f6f64}
+.ma select,.ma textarea{padding:13px 14px;border:1px solid #dce6df;border-radius:14px;font:inherit;font-size:16px;background:#fff}
+.ma-choices{border:0;padding:0;margin:0;display:flex;gap:8px;flex-wrap:wrap}.ma-choices legend{font-weight:600;margin-bottom:6px}
+.ma .ma-choices button{background:#fff;color:#285c45;border:1px solid #c8d8cd}.ma .ma-choices button[aria-pressed=true]{background:#285c45;color:#fff;border-color:#285c45}
+.ma .ma-check{display:flex;gap:10px;align-items:flex-start;font-weight:400;line-height:1.45}.ma .ma-check input{width:20px;height:20px;margin-top:2px;accent-color:#285c45;flex:none}
+.ma a{color:#285c45}

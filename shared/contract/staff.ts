@@ -57,6 +57,8 @@ export type StaffUnitAccess = Unit & {
   kids?: boolean;
   /** May register and turn off reception stations (Kids coordination or session supervisor). */
   kidsStations?: boolean;
+  /** May register visitors (reception). */
+  visitors?: boolean;
 };
 export type StaffTeamMember = {user: string; role: string; name: string; email: string; units: string[]; grants: Record<string, StaffScope[]>};
 export type StaffAccessList = {

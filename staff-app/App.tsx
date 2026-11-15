@@ -11,8 +11,9 @@ import {colors, ui} from './src/theme';
 import PushComposer from './src/PushComposer';
 import TicketScanner from './src/TicketScanner';
 import KidsBoard from './src/KidsBoard';
+import VisitorForm from './src/VisitorForm';
 
-type Screen = 'home' | 'push' | 'tickets' | 'kids';
+type Screen = 'home' | 'push' | 'tickets' | 'kids' | 'visitor';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null),
@@ -117,7 +118,7 @@ function Workspace({email}: {email: string}) {
     myAccess(ministry.organization_id)
       .then((all) => {
         if (!live) return;
-        const units = all.filter((u) => u.checkin || u.push || u.kids);
+        const units = all.filter((u) => u.checkin || u.push || u.kids || u.visitors);
         setAccess(units);
         setUnit(units.length === 1 ? units[0] : units.find((u) => u.id === ministry.default_unit_id) || null);
       })
@@ -183,6 +184,7 @@ function Workspace({email}: {email: string}) {
       </ScrollView>
     );
   if (screen === 'push') return <PushComposer org={ministry.organization_id} unit={unit} units={ministry.units} back={() => setScreen('home')} />;
+  if (screen === 'visitor') return <VisitorForm org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'kids') return <KidsBoard org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'tickets') return <TicketScanner org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   return (
@@ -194,6 +196,13 @@ function Workspace({email}: {email: string}) {
       </Text>
       {here?.checkin && (
         <Action title="Validar entrada" text="Leia o QR Code de ingressos, inscrições e retiradas de vendas." onPress={() => setScreen('tickets')} />
+      )}
+      {here?.visitors && (
+        <Action
+          title="Cadastrar visitante"
+          text="Recepção: nome, WhatsApp e algumas perguntas. Vai para Pessoas como Visitante."
+          onPress={() => setScreen('visitor')}
+        />
       )}
       {here?.kids && (
         <Action title="Sala Kids" text="Crianças presentes por sala e chamar o responsável pelo aplicativo da família." onPress={() => setScreen('kids')} />

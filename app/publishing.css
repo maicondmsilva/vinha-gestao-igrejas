@@ -683,3 +683,7 @@
   font-weight: 800;
   background: var(--brand-soft, #e6f3f8);
 }
+.push-preview .push-cover{display:block;width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-top:8px}
+.push-cover-field{display:grid;gap:6px;font-weight:600;font-size:13px}.push-cover-field>div{display:flex;gap:8px;flex-wrap:wrap}
+.push-segments{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;font-size:13px}.push-segments>span:first-child{font-weight:600}
+.push-segment{display:inline-flex;border:1px solid #cbd9d0;border-radius:20px;overflow:hidden}.push-segment button{border:0;background:#f3f7f2;padding:6px 10px;cursor:pointer;font:inherit}.push-segment button+button{background:#fff;color:#7a6a5a}

@@ -6,6 +6,7 @@ import {durationLabel,pastoralKinds,pastoralModes,pastoralStatus} from '../../sh
 import {monthShort,initials,whatsappLink} from '../../shared/cell-leader';
 import {onBrand} from './experience-model';
 import Icon from './Icon';
+import PastoralAvailability from './PastoralAvailability';
 type Palette={bg:string;surface:string;text:string;muted:string;line:string;brand:string;accent:string};
 type Hour={weekday:number;starts:string;ends:string};
 export type TeamAttendant={id:string;name:string;role:string;autoConfirm:boolean;durations:number[];kinds:string[];modes:string[];active:boolean;version:number;self:boolean;hours:Hour[]};
@@ -85,9 +86,7 @@ function SelfSettings({rpc,org,unit,attendant:a,palette:p,done,fail}:{rpc:Church
    <Switch accessibilityLabel="Confirmação automática" value={auto} disabled={busy} onValueChange={v=>{setAuto(v);void save(v,durations)}} trackColor={{true:ac,false:p.line}} thumbColor="#fff"/></View>
   <Text style={{color:p.text,fontWeight:'900',marginTop:14}}>Durações que o membro pode escolher</Text>
   <View style={[s.wrap,{marginTop:8}]}>{all.map(d=>{const on=durations.includes(d);return <Pressable key={d} accessibilityRole="checkbox" accessibilityState={{checked:on}} disabled={busy||(on&&durations.length===1)} onPress={()=>{const n=on?durations.filter(x=>x!==d):[...durations,d].sort((x,y)=>x-y);setDurations(n);void save(auto,n)}} style={[s.chip,{borderColor:on?ac:p.line,backgroundColor:on?ac:p.surface}]}><Text style={{color:on?onBrand(ac):p.text,fontWeight:'700'}}>{durationLabel(d)}</Text></Pressable>})}</View>
-  <Text style={{color:p.text,fontWeight:'900',marginTop:14}}>Horários da semana</Text>
-  <Text style={{color:p.muted,marginTop:4,lineHeight:20}}>{a.hours.length?a.hours.map(h=>`${week[h.weekday]} ${h.starts}–${h.ends}`).join(' · '):'Nenhum horário cadastrado.'}</Text>
-  <Text style={{color:p.muted,fontSize:12,marginTop:6}}>Horários e bloqueios de dias são ajustados no painel (Pessoas › Agenda pastoral).</Text>
+  <PastoralAvailability rpc={rpc} org={org} unit={unit} attendant={a.id} palette={p} onChanged={done}/>
  </View>;
 }
 
