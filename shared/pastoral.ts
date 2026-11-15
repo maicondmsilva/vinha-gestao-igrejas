@@ -109,3 +109,34 @@ export function durationLabel(min: number) {
   if (min % 60) return `${Math.floor(min / 60)}h${String(min % 60).padStart(2, '0')}`;
   return min === 60 ? '1 hora' : `${min / 60} horas`;
 }
+
+// ── Calendário de disponibilidade de quem atende ──────────────────────────────────────────────
+export type AvailabilityRange = {starts: string; ends: string};
+export type AvailabilityDay = {date: string; custom: boolean; blocked: boolean; booked: number; ranges: AvailabilityRange[]};
+export type AvailabilityState = 'blocked' | 'custom' | 'open' | 'off';
+/** Cor do dia: bloqueado (férias), ajustado só naquele dia, aberto pela semana padrão ou sem atendimento. */
+export function availabilityState(d: Pick<AvailabilityDay, 'blocked' | 'custom' | 'ranges'>): AvailabilityState {
+  if (d.blocked) return 'blocked';
+  if (d.custom) return d.ranges.length ? 'custom' : 'off';
+  return d.ranges.length ? 'open' : 'off';
+}
+export const availabilityLegend: [AvailabilityState, string][] = [
+  ['open', 'Atendo (semana padrão)'],
+  ['custom', 'Horário só deste dia'],
+  ['off', 'Não atendo'],
+  ['blocked', 'Bloqueado'],
+];
+/** 0930 → 09:30 enquanto digita. */
+export function timeMask(v: string) {
+  const d = v.replace(/\D/g, '').slice(0, 4);
+  return d.length <= 2 ? d : d.slice(0, 2) + ':' + d.slice(2);
+}
+export const validTime = (t: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+/** Faixas válidas, em ordem e sem sobreposição. */
+export function rangesProblem(list: AvailabilityRange[]) {
+  if (list.some((r) => !validTime(r.starts) || !validTime(r.ends))) return 'Use horários no formato 09:00.';
+  if (list.some((r) => r.ends <= r.starts)) return 'O fim precisa ser depois do início.';
+  const sorted = [...list].sort((a, b) => a.starts.localeCompare(b.starts));
+  if (sorted.some((r, i) => i > 0 && r.starts < sorted[i - 1]!.ends)) return 'Os horários não podem se sobrepor.';
+  return '';
+}
