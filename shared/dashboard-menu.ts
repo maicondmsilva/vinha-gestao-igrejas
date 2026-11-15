@@ -1,5 +1,8 @@
 import {dashboardUrl} from './dashboard-route.ts';
 export const kidsPages=[['overview','Visão geral'],['attendance','Recepção: entrada e retirada'],['directory','Crianças e responsáveis'],['sessions','Sessões'],['setup','Equipe fixa e repetições'],['spaces','Turmas e salas'],['team','Equipe'],['notes','Ocorrências e chamados'],['materials','Materiais'],['reports','Presenças por sala'],['stations','Estações e telão'],['history','Histórico']] as const;
+/** Kids em 4 seções: cada página pertence a uma; o menu lateral mostra só as seções. */
+export const kidsSections=[['today','Hoje',['overview','attendance','notes']],['children','Crianças',['directory']],['plan','Programação',['sessions','setup','spaces','team','materials','stations']],['reports','Relatórios',['reports','history']]] as const;
+export const kidsSectionOf=(page:string)=>kidsSections.find(([,,pages])=>(pages as readonly string[]).includes(page))?.[0]||'today';
 export const programmingPages=[['agenda','Agenda da igreja'],['proximos','Próximos eventos'],['encerrados','Eventos encerrados'],['todos','Eventos'],['vendas','Vendas e encomendas'],['categorias','Categorias de eventos']] as const;
 export const communicationPages=[['avisos','Avisos e notícias'],['push','Push para o app'],['metricas','Métricas de alcance'],['chat','Chat da comunidade'],['videos','Vídeos e pregações'],['series','Séries de mensagens'],['categorias','Categorias'],['grupos','Grupos de publicação'],['banners','Banners e atalhos'],['arquivos','Arquivos e downloads'],['paginas','Páginas da igreja']] as const;
 export function dashboardGroup(active:string){return ['Cultos e eventos','Transmissões'].includes(active)?'Programação':active}

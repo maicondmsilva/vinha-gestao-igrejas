@@ -51,7 +51,7 @@ function Ghost({label, onPress}: {label: string; onPress: () => void}) {
 }
 
 /** Vinha Equipe › Configurar Kids: salas, turmas, equipe fixa (sem precisar de sessão) e sessões que se repetem. */
-export default function KidsSetupScreen({org, unit, back}: {org: string; unit: Unit; back: () => void}) {
+export default function KidsSetupScreen({org, unit, back, embedded = false}: {org: string; unit: Unit; back: () => void; embedded?: boolean}) {
   const [data, setData] = useState<KidsSetup | null>(null),
     [tab, setTab] = useState<Tab>('sessions'),
     [busy, setBusy] = useState(false),
@@ -105,9 +105,9 @@ export default function KidsSetupScreen({org, unit, back}: {org: string; unit: U
     return true;
   };
   return (
-    <ScrollView contentContainerStyle={[ui.pad, {paddingTop: 24}]} keyboardShouldPersistTaps="handled">
-      <Text style={ui.over}>KIDS · {unit.name.toUpperCase()}</Text>
-      <Text style={ui.h1}>Configurar Kids</Text>
+    <ScrollView contentContainerStyle={[ui.pad, {paddingTop: embedded ? 12 : 24}]} keyboardShouldPersistTaps="handled">
+      {!embedded && <Text style={ui.over}>KIDS · {unit.name.toUpperCase()}</Text>}
+      {!embedded && <Text style={ui.h1}>Configurar Kids</Text>}
       <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
         {tabs.map(([k, l]) => (
           <Chip key={k} on={tab === k} label={l} onPress={() => setTab(k)} />
@@ -139,7 +139,7 @@ export default function KidsSetupScreen({org, unit, back}: {org: string; unit: U
           }}
         />
       )}
-      <Ghost label="Voltar" onPress={back} />
+      {!embedded && <Ghost label="Voltar" onPress={back} />}
     </ScrollView>
   );
 }

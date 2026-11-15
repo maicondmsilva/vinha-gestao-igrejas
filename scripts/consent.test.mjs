@@ -41,6 +41,6 @@ test('telas e rotas dos termos', () => {
   assert.match(verify, /consent_verify/);
   assert.match(sql, /extensions\.digest\(private\.consent_canonical/, 'impressão digital SHA-256 do texto assinado');
   assert.match(sql, /grant execute on function public\.consent_verify\(text\) to anon,authenticated/);
-  assert.match(read('android-app/src/FamilyScreens.tsx'), /kinds=\{\['kids_guardian','kids_image'\]\}/, 'Kids: termos por criança');
+  assert.match(read('android-app/src/KidsFamily.tsx'), /kinds=\{\['kids_guardian','kids_image'\]\}/, 'Kids: termos por criança');
   assert.match(read('android-app/src/MemberExperience.tsx'), /kinds=\{\['adult_data','adult_image'\]\}/, 'adulto: termos em Meu perfil');
 });

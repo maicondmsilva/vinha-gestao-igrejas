@@ -3,7 +3,7 @@ import {useEffect,useState,type MouseEvent} from 'react';
 import {useMinistryLanguage} from './MinistryLanguage';
 import {cellSections,type LanguageKey} from './lib/ministry-language';
 import {financeSections,financeLabel} from './lib/finance-f1';
-import {communicationPages,kidsPages,programmingPages,dashboardGroup,dashboardHref} from '../shared/dashboard-menu';
+import {communicationPages,kidsSections,programmingPages,dashboardGroup,dashboardHref} from '../shared/dashboard-menu';
 import {dashboardQuery} from '../shared/dashboard-route';
 type Entry={label:string;page:string;section?:string};
 export default function DashboardNavigation({active,navigate}:{active:string;navigate:(label:string,section?:string)=>void}){
@@ -13,7 +13,7 @@ export default function DashboardNavigation({active,navigate}:{active:string;nav
  const q=dashboardQuery(typeof location==='undefined'?'/painel':location.pathname,search),current=q.get('secao')||'',page=q.get('pagina')||'inicio';
  const entries:({label:string;icon:string;key:LanguageKey;children?:Entry[]})[]=[
   {label:'Visão geral',icon:'⌂',key:'inicio'},{label:'Pessoas',icon:'♙',key:'pessoas'},{label:'Famílias e termos',icon:'⌁',key:'familias'},
-  {label:'Aplicativo do membro',icon:'▣',key:'aplicativo'},{label:'Área Kids',icon:'★',key:'kids',children:kidsPages.map(([section,label])=>({label,page:'kids',section}))},
+  {label:'Aplicativo do membro',icon:'▣',key:'aplicativo'},{label:'Área Kids',icon:'★',key:'kids',children:kidsSections.map(([,label,pages])=>({label,page:'kids',section:pages[0] as string}))},
   {label:'Programação',icon:'▦',key:'eventos',children:[...programmingPages.map(([section,label])=>({label,page:'eventos',section})),{label:'Ao vivo · Canais',page:'transmissoes',section:'canais'},{label:'Ao vivo · Transmissões',page:'transmissoes',section:'transmissoes'}]},
   {label:'Células',icon:'⌾',key:'celulas',children:cellSections.map(section=>({label:t(('celulas.'+section) as LanguageKey),page:'celulas',section}))},
   {label:'Escalas',icon:'✓',key:'escalas',children:[['geral','Visão geral'],['calendario','Calendário e escalas'],['equipes','Equipes e funções'],['pendencias','Pendências e trocas'],['relatorios','Relatórios']].map(([section,label])=>({label,page:'escalas',section}))},{label:'Louvor',icon:'♫',key:'louvor'},

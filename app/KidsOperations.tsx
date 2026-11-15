@@ -2,7 +2,7 @@
 import {useEffect,useRef,useState,type FormEvent} from 'react';
 import KidsResources from './KidsResources';
 import KidsDesk from './KidsDesk';
-import {kidsPages} from '../shared/dashboard-menu';
+import {kidsPages,kidsSections,kidsSectionOf} from '../shared/dashboard-menu';
 import './publishing.css';
 import KidsReceiptScanner from './KidsReceiptScanner';
 import KidsNotes from './KidsNotes';
@@ -65,13 +65,15 @@ export default function KidsOperations({unitId}:{unitId:string}){
   open(action,title+' · '+a.name,data,a.id,a.version,{childName:a.name,adults:a.guardians});
  };
  const tabs=kidsPages.filter(([id])=>(id!=='spaces'&&id!=='setup')||canConfigure).filter(([id])=>id!=='team'&&id!=='history'||page?.canSupervise).filter(([id])=>id!=='directory'||page?.canDirectory).filter(([id])=>id!=='stations'||canConfigure||page?.canSupervise);
+ const subLabel:Record<string,string>={overview:'Visão geral',attendance:'Entrada e saída',notes:'Ocorrências e chamados',sessions:'Sessões',setup:'Repetições e equipe fixa',spaces:'Salas e turmas',team:'Equipe da sessão',materials:'Materiais',stations:'Estações e telão',reports:'Presenças por sala',history:'Histórico'};
  const groupLabel=(id:string|null)=>page?.groups.find(g=>g.id===id)?.room||'Outra sala';
  const field=(label:string,key:string,type='text',extra:Record<string,unknown>={})=><label>{label}<input type={type} value={String(editor?.data[key]??'')} maxLength={key==='name'?100:200} onChange={e=>change(key,type==='number'?Number(e.target.value):e.target.value)} {...extra}/></label>;
  const select=(label:string,key:string,options:{id:string;name:string}[],nullable=false)=><label>{label}<select required={!nullable} value={String(editor?.data[key]??'')} onChange={e=>change(key,e.target.value||null)}><option value="">Selecione</option>{options.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></label>;
  const check=(label:string,key:string)=><label className="ko-check"><input type="checkbox" checked={editor?.data[key]===true} onChange={e=>change(key,e.target.checked)}/><span>{label}</span></label>;
  return <section className="kids-operations" aria-label={t('kids')}>
   <div className="ko-heading"><div><span className="ko-eyebrow">CUIDADO EM CADA ENCONTRO</span><h1>{t('kids')}</h1><p>Da chegada ao reencontro com a família.</p></div><button type="button" onClick={refresh} disabled={loading||saving}>↻ Atualizar</button></div>
-  <nav className="ko-nav" aria-label="Páginas Kids">{tabs.map(([id,label])=><button type="button" key={id} aria-current={tab===id?'page':undefined} onClick={()=>selectTab(id)}>{label}</button>)}</nav>
+  <nav className="ko-sections" aria-label="Seções Kids">{kidsSections.map(([id,label,pages])=>{const first=tabs.find(([t])=>(pages as readonly string[]).includes(t));return first?<button type="button" key={id} aria-current={kidsSectionOf(tab)===id?'page':undefined} onClick={()=>selectTab(first[0])}>{label}</button>:null})}</nav>
+  {(()=>{const sub=tabs.filter(([t])=>kidsSectionOf(t)===kidsSectionOf(tab));return sub.length>1?<nav className="ko-nav" aria-label="Páginas da seção">{sub.map(([id,label])=><button type="button" key={id} aria-current={tab===id?'page':undefined} onClick={()=>selectTab(id)}>{subLabel[id]||label}</button>)}</nav>:null})()}
   {notice&&<div className="ko-notice" role="status">{notice}</div>}{error&&<div className="ko-error" role="alert">{error}<button type="button" onClick={refresh}>Tentar novamente</button></div>}{loading&&<p role="status">Carregando a operação Kids…</p>}
   {tab==='directory'?<KidsFoundation unitId={unitId}/>:page&&<>
    <div className="ko-session-bar"><label>Sessão<select value={page.sessionId||''} onChange={e=>{setSession(e.target.value);setCursor('')}}><option value="">Selecione uma sessão</option>{page.sessions.map(s=><option key={s.id} value={s.id}>{s.name} · {statusLabel[s.status]}</option>)}</select></label>{current&&<div><b className={'ko-badge '+current.status}>{statusLabel[current.status]}</b><small>{stamp(current.startsAt)} — {stamp(current.endsAt)} · {timezoneLabel(panelTimezone())}</small></div>}{canConfigure&&<button type="button" className="ko-primary" onClick={()=>open('session','Nova sessão',{name:'',startsAt:new Date().toISOString(),endsAt:new Date(Date.now()+7200000).toISOString()})}>+ Nova sessão</button>}</div>
