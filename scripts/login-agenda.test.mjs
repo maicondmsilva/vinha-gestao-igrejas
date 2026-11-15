@@ -70,7 +70,7 @@ test('fotos de perfil e da criança; perfil não perde o que foi preenchido', ()
   const photo = read('android-app/src/ProfilePhoto.tsx'),
     app = read('android-app/src/MprApp.tsx'),
     exp = read('android-app/src/MemberExperience.tsx'),
-    kids = read('android-app/src/FamilyScreens.tsx'),
+    kids = read('android-app/src/FamilyScreens.tsx') + read('android-app/src/KidsFamily.tsx'),
     sql = read('supabase/migrations/20261114200000_fotos_perfil.sql');
   assert.match(photo, /resize:\{width:512,height:512\}/, 'foto reduzida antes de enviar');
   assert.match(photo, /createSignedUrl\(/, 'foto privada, mostrada por link temporário');

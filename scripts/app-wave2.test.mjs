@@ -24,5 +24,5 @@ test('página da igreja na Comunicação e telas no app',()=>{
  const exp=read('android-app/src/MemberExperience.tsx');for(const t of ["detail==='files'","detail==='pages'","detail==='relatives'",'<ProfileProgress','Conheça a igreja'])assert.ok(exp.includes(t),t);
  assert.match(read('android-app/src/ChurchInfoScreens.tsx'),/member_church_pages/);
  assert.match(read('android-app/src/MemberRelatives.tsx'),/member_relatives/);
- assert.match(read('android-app/src/FamilyScreens.tsx'),/<KidsCareFields/);
+ assert.match(read('android-app/src/KidsFamily.tsx'),/<KidsCareFields/);
 });
