@@ -55,3 +55,16 @@ test('melhorias: disponibilidade, revezamento, aviso, lembretes, abertura e rela
   assert.match(read('staff-app/src/KidsSetupScreen.tsx'), /Ver relatório das sessões/);
   assert.match(read('app/KidsSetupPanel.tsx'), /Relatório das repetições/);
 });
+
+test('recepção Kids no Vinha Equipe: comprovante e conferência', async () => {
+  const {receiptCode, receptionError} = await import('../shared/kids-reception.ts');
+  const code = receiptCode(new Uint8Array(32).fill(171));
+  assert.match(code, /^[a-f0-9]{64}$/);
+  assert.throws(() => receiptCode(new Uint8Array(8)));
+  assert.match(receptionError('kids_guardian_required'), /não está autorizado/);
+  const ui = read('staff-app/src/KidsReception.tsx');
+  for (const t of ['Registrar entrada', 'Registrar saída', 'Conferi a identidade', 'Ler QR Code do comprovante', 'Enviar comprovante'])
+    assert.ok(ui.includes(t), t);
+  assert.match(ui, /'kids_pickup_guardians'/);
+  assert.match(read('staff-app/App.tsx'), /Recepção Kids/);
+});
