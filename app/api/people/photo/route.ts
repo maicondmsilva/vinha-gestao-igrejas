@@ -13,15 +13,12 @@ export async function GET(request: Request) {
     if (!a || a.response) return a?.response || json({error: 'Serviço indisponível.'}, 503);
     const id = new URL(request.url).searchParams.get('id') || '';
     if (!uuidPattern.test(id)) return json({error: 'Cadastro inválido.'}, 400);
-    const r = await db(request)
-      .from('people')
-      .select('photo_path')
-      .eq('id', id)
-      .eq('organization_id', a.access!.membership.organization_id)
-      .maybeSingle();
+    const r = await db(request).from('people').select('photo_path').eq('id', id).eq('organization_id', a.access!.membership.organization_id).maybeSingle();
     const path = String((r.data as {photo_path?: string | null} | null)?.photo_path || '');
     if (r.error || !path.startsWith('member-photos/')) return json({url: ''});
-    const s = await supabaseAdminClient().storage.from('member-photos').createSignedUrl(path.replace(/^member-photos\//, ''), 600);
+    const s = await supabaseAdminClient()
+      .storage.from('member-photos')
+      .createSignedUrl(path.replace(/^member-photos\//, ''), 600);
     return json({url: s.data?.signedUrl || ''});
   } catch {
     return json({url: ''});
