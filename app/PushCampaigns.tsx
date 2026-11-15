@@ -4,7 +4,8 @@ import {ProgrammingModal as Modal, ProgrammingPager as Pager} from './Programmin
 import {settingsUrl} from './lib/settings-navigation';
 import FieldError, {invalidProps} from './FieldError';
 import {ApiError, fieldErrors, readApiError} from '../shared/contract/errors';
-import {pushCampaignSchema} from '../shared/contract/push';
+import {pushCampaignSchema, pushImageUrl, type PushSegment} from '../shared/contract/push';
+import ImageLibrary from './ImageLibrary';
 import './programming.css';
 import './publishing.css';
 
@@ -20,7 +21,7 @@ type Audience = {
   baptized?: boolean;
   event?: string;
 };
-type Link = {screen: string; id?: string};
+type Link = {screen: string; id?: string; image?: string};
 type Stats = {recipients: number; delivered: number; failed: number; pending: number; opened: number};
 type Campaign = {
   id: string;
@@ -339,7 +340,11 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [fields, setFields] = useState<Record<string, string>>({}),
-    [request] = useState(newRequest);
+    [request] = useState(newRequest),
+    [image, setImage] = useState(campaign?.link?.image || ''),
+    [picking, setPicking] = useState(false),
+    [segments, setSegments] = useState<PushSegment[]>([]),
+    [segNote, setSegNote] = useState('');
   const visibleCells = useMemo(() => options.cells.filter((c) => targets.includes(c.unit)), [options.cells, targets]),
     visibleGroups = useMemo(() => options.groups.filter((g) => targets.includes(g.unit)), [options.groups, targets]);
   const toggle = (list: string[] | undefined, value: string) => {
@@ -353,6 +358,28 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
       else next[key] = value;
       return next;
     });
+  const loadSegments = () =>
+    fetch(settingsUrl('/api/push/segments?' + new URLSearchParams({unit})), {cache: 'no-store'})
+      .then((r) => (r.ok ? r.json() : {items: []}))
+      .then((d) => setSegments((d as {items?: PushSegment[]}).items || []))
+      .catch(() => {});
+  useEffect(() => {
+    void loadSegments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unit]);
+  async function saveSegment() {
+    const name = window.prompt('Nome do público (ex.: Pastores, Líderes de jovens):', '')?.trim();
+    if (!name) return;
+    const r = await fetch(settingsUrl('/api/push/segments'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({unit, action: 'save', data: {name, audience}})}).catch(() => null);
+    const d = (r ? await r.json().catch(() => ({})) : {}) as {error?: string};
+    setSegNote(r?.ok ? `Público "${name}" salvo.` : d.error || 'Não foi possível salvar o público.');
+    if (r?.ok) void loadSegments();
+  }
+  async function dropSegment(sg: PushSegment) {
+    if (!window.confirm(`Apagar o público "${sg.name}"? As campanhas já feitas não mudam.`)) return;
+    await fetch(settingsUrl('/api/push/segments'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({unit, action: 'delete', data: {id: sg.id}})}).catch(() => null);
+    void loadSegments();
+  }
   // Reach preview follows the audience as it is edited.
   useEffect(() => {
     if (!targets.length) return;
@@ -372,7 +399,7 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
       const data = {
         title: title.trim(),
         body: body.trim(),
-        link: link.screen === 'event' ? link : {screen: link.screen},
+        link: {...(link.screen === 'event' ? {screen: link.screen, id: link.id} : {screen: link.screen}), ...(image ? {image} : {})},
         targets,
         audience,
         mode,
@@ -416,6 +443,15 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
           <div className="push-preview" aria-label="Prévia da notificação">
             <b>{title || 'Título da notificação'}</b>
             <span>{body || 'O texto aparece assim na tela do celular.'}</span>
+            {image && <img src={pushImageUrl(image)} alt="" className="push-cover" />}
+          </div>
+          <div className="push-cover-field">
+            <span>Imagem de capa (opcional)</span>
+            <div>
+              <button type="button" onClick={() => setPicking(true)}>{image ? 'Trocar imagem' : 'Escolher no banco de imagens'}</button>
+              {image && <button type="button" onClick={() => setImage('')}>Sem capa</button>}
+            </div>
+            <FieldError fields={fields} name="link.image" />
           </div>
           <label>
             Ao tocar, abrir
@@ -458,6 +494,17 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
 
         <fieldset>
           <legend>Quem recebe (opcional; sem filtros, todos com o app)</legend>
+          <div className="push-segments">
+            <span>Públicos salvos:</span>
+            {segments.map((sg) => (
+              <span key={sg.id} className="push-segment">
+                <button type="button" onClick={() => setAudience(sg.audience as Audience)}>{sg.name}</button>
+                <button type="button" aria-label={'Apagar público ' + sg.name} onClick={() => void dropSegment(sg)}>×</button>
+              </span>
+            ))}
+            <button type="button" disabled={!Object.keys(audience).length} onClick={() => void saveSegment()}>+ Salvar este público</button>
+            {segNote && <small>{segNote}</small>}
+          </div>
           <div className="program-form-grid">
             <label>
               Idade mínima
@@ -570,6 +617,7 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
           </button>
         </footer>
       </form>
+      {picking && <ImageLibrary unit={unit} close={() => setPicking(false)} pick={(img) => {setImage(img.id);setPicking(false);}} />}
     </Modal>
   );
 }

@@ -61,3 +61,9 @@ export async function ministries(): Promise<Ministry[]> {
 export async function myAccess(org: string): Promise<StaffUnitAccess[]> {
   return (await api<{units: StaffUnitAccess[]}>('/api/staff-access?action=mine', org)).units || [];
 }
+
+/** Cabeçalhos da sessão para imagens protegidas (banco de imagens de Comunicação). */
+export async function authHeaders(org: string): Promise<Record<string, string>> {
+  const token = (await supabase?.auth.getSession())?.data.session?.access_token;
+  return token ? {Authorization: 'Bearer ' + token, 'x-vinha-tenant': org, [clientHeader]: client} : {};
+}

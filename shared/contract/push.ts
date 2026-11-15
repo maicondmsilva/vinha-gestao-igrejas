@@ -45,7 +45,7 @@ export const pushAudienceSchema = z
 
 export const pushLinkSchema = z
   .strictObject(
-    {screen: z.enum(pushScreens, {error: 'Escolha a tela que abre ao tocar.'}), id: uuidText.optional()},
+    {screen: z.enum(pushScreens, {error: 'Escolha a tela que abre ao tocar.'}), id: uuidText.optional(), image: uuidText.optional()},
     {error: 'Escolha a tela que abre ao tocar.'},
   )
   .refine((l) => !(pushScreensWithId as readonly string[]).includes(l.screen) || !!l.id, {message: 'Escolha qual item abre ao tocar.', path: ['id']});
@@ -140,3 +140,7 @@ export function parsePushCommand(v: unknown): {ok: true; value: PushCommand} | {
   }
   return {ok: true, value};
 }
+
+/** Imagem de capa do push (banco de imagens de Comunicação), no formato que o app e o Expo abrem. */
+export const pushImageUrl = (id: string) => 'https://app.vinhaigrejas.com.br/api/publishing-images/' + id;
+export type PushSegment = {id: string; name: string; audience: z.infer<typeof pushAudienceSchema>};
