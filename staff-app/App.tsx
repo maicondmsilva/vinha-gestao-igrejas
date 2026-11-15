@@ -12,8 +12,9 @@ import PushComposer from './src/PushComposer';
 import TicketScanner from './src/TicketScanner';
 import KidsBoard from './src/KidsBoard';
 import VisitorForm from './src/VisitorForm';
+import KidsSetupScreen from './src/KidsSetupScreen';
 
-type Screen = 'home' | 'push' | 'tickets' | 'kids' | 'visitor';
+type Screen = 'home' | 'push' | 'tickets' | 'kids' | 'visitor' | 'kidsSetup';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null),
@@ -118,7 +119,7 @@ function Workspace({email}: {email: string}) {
     myAccess(ministry.organization_id)
       .then((all) => {
         if (!live) return;
-        const units = all.filter((u) => u.checkin || u.push || u.kids || u.visitors);
+        const units = all.filter((u) => u.checkin || u.push || u.kids || u.visitors || u.kidsConfigure);
         setAccess(units);
         setUnit(units.length === 1 ? units[0] : units.find((u) => u.id === ministry.default_unit_id) || null);
       })
@@ -184,6 +185,7 @@ function Workspace({email}: {email: string}) {
       </ScrollView>
     );
   if (screen === 'push') return <PushComposer org={ministry.organization_id} unit={unit} units={ministry.units} back={() => setScreen('home')} />;
+  if (screen === 'kidsSetup') return <KidsSetupScreen org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'visitor') return <VisitorForm org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'kids') return <KidsBoard org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'tickets') return <TicketScanner org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
@@ -206,6 +208,13 @@ function Workspace({email}: {email: string}) {
       )}
       {here?.kids && (
         <Action title="Sala Kids" text="Crianças presentes por sala e chamar o responsável pelo aplicativo da família." onPress={() => setScreen('kids')} />
+      )}
+      {here?.kidsConfigure && (
+        <Action
+          title="Configurar Kids"
+          text="Salas, turmas, equipe fixa e sessões que se repetem (todo domingo, todo mês…)."
+          onPress={() => setScreen('kidsSetup')}
+        />
       )}
       {here?.push && <Action title="Enviar push" text="Avise o ministério, a igreja local ou as igrejas que você atende." onPress={() => setScreen('push')} />}
       <Ghost label="Trocar igreja ou ministério" onPress={() => (list.length > 1 ? chooseMinistry(null) : setUnit(null))} />
