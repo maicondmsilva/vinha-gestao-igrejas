@@ -18,3 +18,22 @@ export function receptionError(message: string) {
   if (/kids_access_denied/.test(message)) return 'Você não está na recepção desta sessão.';
   return 'Não foi possível registrar agora. Tente de novo.';
 }
+
+/** Dados que a recepção recebe ao ler o QR Code da reserva (kids_pass). */
+export type KidsPass = {
+  found: boolean;
+  reservation: string;
+  sessionId: string;
+  session: string;
+  sessionStatus: string;
+  groupId: string;
+  room: string | null;
+  profileId: string;
+  child: string;
+  care: string | null;
+  reservedBy: string | null;
+  guardians: {id: string; name: string; relationship: string; temporary: boolean; validUntil: string | null}[];
+  attendance: {id: string; version: number; status: 'present' | 'out'; tag: number | null} | null;
+};
+/** O código de 64 caracteres dentro do QR (pode vir sozinho ou dentro de um link). */
+export const kidsPassCode = (scanned: string) => /[a-f0-9]{64}/i.exec(scanned || '')?.[0].toLowerCase() || '';

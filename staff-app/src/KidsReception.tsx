@@ -9,6 +9,8 @@ import {colors, ui} from './theme';
 import type {Unit} from './api';
 import type {KidsOperationsPage} from '../../shared/contract/kids.ts';
 import {receiptCode, receptionError} from '../../shared/kids-reception.ts';
+import KidsPassFlow from './KidsPassFlow';
+import KidsChildPhoto from './KidsChildPhoto';
 
 type Admission = {id: string; name: string; birthDate: string; guardians: {id: string; name: string}[]};
 type Guardian = {id: string; name: string; relationship: string; arrived: boolean};
@@ -118,6 +120,16 @@ export default function KidsReception({org, unit, back}: {org: string; unit: Uni
               </Pressable>
             ))}
           </View>
+          <KidsPassFlow
+            org={org}
+            unit={unit.id}
+            done={(m) => {
+              setNotice(m);
+              void load();
+            }}
+            fail={setError}
+          />
+          <Text style={[ui.over, {marginTop: 8}]}>SEM QR CODE DA RESERVA</Text>
           {mode === 'in' ? (
             <CheckIn
               org={org}
@@ -366,12 +378,20 @@ function CheckOut({org, unit, page, done, fail}: {org: string; unit: string; pag
           {present.map((i) => {
             const g = page.groups.find((x) => x.id === i.groupId);
             return (
-              <Pressable key={i.id} accessibilityRole="button" onPress={() => setPick({id: i.id, name: i.name, version: i.version})} style={ui.card}>
-                <Text style={ui.h2}>
-                  {i.tag ? 'nº ' + i.tag + ' · ' : ''}
-                  {i.name}
-                </Text>
-                <Text style={ui.copy}>{g?.room || 'Sala'}</Text>
+              <Pressable
+                key={i.id}
+                accessibilityRole="button"
+                onPress={() => setPick({id: i.id, name: i.name, version: i.version})}
+                style={[ui.card, {flexDirection: 'row', gap: 12, alignItems: 'center'}]}
+              >
+                <KidsChildPhoto org={org} unit={unit} profile={i.profileId} name={i.name} />
+                <View style={{flex: 1}}>
+                  <Text style={ui.h2}>
+                    {i.tag ? 'nº ' + i.tag + ' · ' : ''}
+                    {i.name}
+                  </Text>
+                  <Text style={ui.copy}>{g?.room || 'Sala'}</Text>
+                </View>
               </Pressable>
             );
           })}

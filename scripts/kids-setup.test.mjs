@@ -68,3 +68,23 @@ test('recepção Kids no Vinha Equipe: comprovante e conferência', async () => 
   assert.match(ui, /'kids_pickup_guardians'/);
   assert.match(read('staff-app/App.tsx'), /Recepção Kids/);
 });
+
+test('QR da reserva, foto da criança e responsável temporário', async () => {
+  const {kidsPassCode} = await import('../shared/kids-reception.ts');
+  const c = 'a'.repeat(64);
+  assert.equal(kidsPassCode('https://x/y?c=' + c.toUpperCase()), c);
+  assert.equal(kidsPassCode('curto'), '');
+  const sql = read('supabase/migrations/20261115210000_kids_qr_reserva_temporario.sql');
+  assert.match(sql, /gen_random_bytes\(32\)/);
+  assert.match(sql, /days not between 1 and 30/);
+  const app = read('android-app/src/FamilyScreens.tsx');
+  assert.match(app, /<ReservationPass /);
+  assert.match(app, /<KidsGuardians /);
+  assert.match(read('android-app/src/KidsGuardians.tsx'), /Autorizar outra pessoa a buscar/);
+  const flow = read('staff-app/src/KidsPassFlow.tsx');
+  assert.match(flow, /'kids_pass'/);
+  assert.match(flow, /receiptSecret: code/, 'o mesmo QR vale como comprovante');
+  assert.match(read('staff-app/src/KidsReception.tsx'), /<KidsPassFlow/);
+  assert.match(read('app/KidsOperations.tsx'), /<KidsChildPhoto /);
+  assert.match(read('app/api/kids/photo/route.ts'), /createSignedUrl\(.*600\)/s);
+});
