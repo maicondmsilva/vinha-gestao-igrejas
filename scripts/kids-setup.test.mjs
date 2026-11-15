@@ -66,7 +66,8 @@ test('recepção Kids no Vinha Equipe: comprovante e conferência', async () => 
   for (const t of ['Registrar entrada', 'Registrar saída', 'Conferi a identidade', 'Ler QR Code do comprovante', 'Enviar comprovante'])
     assert.ok(ui.includes(t), t);
   assert.match(ui, /'kids_pickup_guardians'/);
-  assert.match(read('staff-app/App.tsx'), /Recepção Kids/);
+  assert.match(read('staff-app/App.tsx'), /<KidsHub /);
+  assert.match(read('staff-app/src/KidsHub.tsx'), /'Recepção'/);
 });
 
 test('QR da reserva, foto da criança e responsável temporário', async () => {
@@ -77,7 +78,7 @@ test('QR da reserva, foto da criança e responsável temporário', async () => {
   const sql = read('supabase/migrations/20261115210000_kids_qr_reserva_temporario.sql');
   assert.match(sql, /gen_random_bytes\(32\)/);
   assert.match(sql, /days not between 1 and 30/);
-  const app = read('android-app/src/FamilyScreens.tsx');
+  const app = read('android-app/src/FamilyScreens.tsx') + read('android-app/src/KidsFamily.tsx');
   assert.match(app, /<ReservationPass /);
   assert.match(app, /<KidsGuardians /);
   assert.match(read('android-app/src/KidsGuardians.tsx'), /Autorizar outra pessoa a buscar/);
@@ -87,4 +88,36 @@ test('QR da reserva, foto da criança e responsável temporário', async () => {
   assert.match(read('staff-app/src/KidsReception.tsx'), /<KidsPassFlow/);
   assert.match(read('app/KidsOperations.tsx'), /<KidsChildPhoto /);
   assert.match(read('app/api/kids/photo/route.ts'), /createSignedUrl\(.*600\)/s);
+});
+
+test('Área Kids da família: idade e reserva da vez', async () => {
+  const {childAge, childNextBooking} = await import('../shared/kids-family.ts');
+  assert.equal(childAge('2020-05-10', new Date('2026-11-15T12:00:00')), '6 anos');
+  assert.equal(childAge('2026-03-20', new Date('2026-11-15T12:00:00')), '7 meses');
+  const base = {status: 'reserved', ends_at: '2026-11-15T13:00:00Z'};
+  const list = [
+    {...base, id: 'a', profile_id: 'c', starts_at: '2026-11-22T12:00:00Z', ends_at: '2026-11-22T13:00:00Z', attendance: null},
+    {...base, id: 'b', profile_id: 'c', starts_at: '2026-11-15T11:00:00Z', attendance: 'present'},
+  ];
+  assert.equal(childNextBooking(list, 'c', Date.parse('2026-11-15T12:00:00Z'))?.id, 'b', 'na sala vem antes');
+  const ui = read('android-app/src/KidsFamily.tsx');
+  for (const t of ['Reservar vaga', 'Detalhes', 'Histórico', '+ Cadastrar criança']) assert.ok(ui.includes(t), t);
+});
+
+test('painel Kids em 4 seções e Vinha Equipe com uma entrada', async () => {
+  const {kidsPages, kidsSections, kidsSectionOf} = await import('../shared/dashboard-menu.ts');
+  assert.deepEqual(
+    kidsSections.map(([, l]) => l),
+    ['Hoje', 'Crianças', 'Programação', 'Relatórios'],
+  );
+  for (const [id] of kidsPages)
+    assert.ok(
+      kidsSections.some(([, , pages]) => pages.includes(id)),
+      'página sem seção: ' + id,
+    );
+  assert.equal(kidsSectionOf('attendance'), 'today');
+  assert.equal(kidsSectionOf('setup'), 'plan');
+  assert.match(read('app/DashboardNavigation.tsx'), /kidsSections\.map/);
+  const app = read('staff-app/App.tsx');
+  assert.equal((app.match(/<Action title="Kids"/g) || []).length, 1, 'uma entrada Kids');
 });

@@ -18,7 +18,7 @@ function Ghost({label, onPress}: {label: string; onPress: () => void}) {
   );
 }
 
-export default function KidsBoard({org, unit, back}: {org: string; unit: Unit; back: () => void}) {
+export default function KidsBoard({org, unit, back, embedded = false}: {org: string; unit: Unit; back: () => void; embedded?: boolean}) {
   const [page, setPage] = useState<KidsOperationsPage | null>(null),
     [calls, setCalls] = useState<KidsCall[]>([]),
     [tags, setTags] = useState<Record<string, number>>({}),
@@ -87,9 +87,12 @@ export default function KidsBoard({org, unit, back}: {org: string; unit: Unit; b
     kids = (page?.items || []).filter((k) => k.status === 'present' && (!room || k.groupId === room)),
     session = page?.sessions.find((s) => s.id === page.sessionId);
   return (
-    <ScrollView contentContainerStyle={[ui.pad, {paddingTop: 24}]} refreshControl={<RefreshControl refreshing={false} onRefresh={() => void load()} />}>
-      <Text style={ui.over}>KIDS · {unit.name.toUpperCase()}</Text>
-      <Text style={ui.h1}>Sala das crianças</Text>
+    <ScrollView
+      contentContainerStyle={[ui.pad, {paddingTop: embedded ? 12 : 24}]}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={() => void load()} />}
+    >
+      {!embedded && <Text style={ui.over}>KIDS · {unit.name.toUpperCase()}</Text>}
+      {!embedded && <Text style={ui.h1}>Sala das crianças</Text>}
       {loading ? (
         <ActivityIndicator color={colors.brand} />
       ) : error ? (
@@ -214,7 +217,7 @@ export default function KidsBoard({org, unit, back}: {org: string; unit: Unit; b
           })}
         </>
       )}
-      <Ghost label="Voltar" onPress={back} />
+      {!embedded && <Ghost label="Voltar" onPress={back} />}
     </ScrollView>
   );
 }

@@ -72,7 +72,7 @@ function Check({on, label, onPress}: {on: boolean; label: string; onPress: () =>
 }
 
 /** Vinha Equipe › Recepção Kids: entrada com comprovante (QR) e saída conferindo responsável e comprovante. */
-export default function KidsReception({org, unit, back}: {org: string; unit: Unit; back: () => void}) {
+export default function KidsReception({org, unit, back, embedded = false}: {org: string; unit: Unit; back: () => void; embedded?: boolean}) {
   const [page, setPage] = useState<KidsOperationsPage | null>(null),
     [mode, setMode] = useState<'in' | 'out'>('in'),
     [error, setError] = useState(''),
@@ -89,9 +89,9 @@ export default function KidsReception({org, unit, back}: {org: string; unit: Uni
   }, [load]);
   const session = page?.sessions.find((s) => s.id === page.sessionId);
   return (
-    <ScrollView contentContainerStyle={[ui.pad, {paddingTop: 24}]} keyboardShouldPersistTaps="handled">
-      <Text style={ui.over}>RECEPÇÃO KIDS · {unit.name.toUpperCase()}</Text>
-      <Text style={ui.h1}>{mode === 'in' ? 'Entrada' : 'Saída'}</Text>
+    <ScrollView contentContainerStyle={[ui.pad, {paddingTop: embedded ? 12 : 24}]} keyboardShouldPersistTaps="handled">
+      {!embedded && <Text style={ui.over}>RECEPÇÃO KIDS · {unit.name.toUpperCase()}</Text>}
+      {!embedded && <Text style={ui.h1}>{mode === 'in' ? 'Entrada' : 'Saída'}</Text>}
       {!!error && <Text style={ui.error}>{error}</Text>}
       {!!notice && <Text style={{color: colors.ok, fontWeight: '700'}}>{notice}</Text>}
       {!page ? (
@@ -155,7 +155,7 @@ export default function KidsReception({org, unit, back}: {org: string; unit: Uni
           )}
         </>
       )}
-      <Ghost label="Voltar" onPress={back} />
+      {!embedded && <Ghost label="Voltar" onPress={back} />}
     </ScrollView>
   );
 }
