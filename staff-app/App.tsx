@@ -13,8 +13,9 @@ import TicketScanner from './src/TicketScanner';
 import KidsBoard from './src/KidsBoard';
 import VisitorForm from './src/VisitorForm';
 import KidsSetupScreen from './src/KidsSetupScreen';
+import KidsReception from './src/KidsReception';
 
-type Screen = 'home' | 'push' | 'tickets' | 'kids' | 'visitor' | 'kidsSetup';
+type Screen = 'home' | 'push' | 'tickets' | 'kids' | 'visitor' | 'kidsSetup' | 'kidsReception';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null),
@@ -185,6 +186,7 @@ function Workspace({email}: {email: string}) {
       </ScrollView>
     );
   if (screen === 'push') return <PushComposer org={ministry.organization_id} unit={unit} units={ministry.units} back={() => setScreen('home')} />;
+  if (screen === 'kidsReception') return <KidsReception org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'kidsSetup') return <KidsSetupScreen org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'visitor') return <VisitorForm org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
   if (screen === 'kids') return <KidsBoard org={ministry.organization_id} unit={unit} back={() => setScreen('home')} />;
@@ -208,6 +210,13 @@ function Workspace({email}: {email: string}) {
       )}
       {here?.kids && (
         <Action title="Sala Kids" text="Crianças presentes por sala e chamar o responsável pelo aplicativo da família." onPress={() => setScreen('kids')} />
+      )}
+      {here?.kids && (
+        <Action
+          title="Recepção Kids"
+          text="Entrada com comprovante (QR) e saída conferindo responsável e comprovante."
+          onPress={() => setScreen('kidsReception')}
+        />
       )}
       {here?.kidsConfigure && (
         <Action

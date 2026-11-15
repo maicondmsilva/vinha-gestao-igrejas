@@ -5,7 +5,7 @@ import {boundedBody, uuidPattern} from '../../../lib/private-files';
 // Kids › Equipe fixa e repetições: GET ?unit= (visão geral) ou ?unit=&q= (buscar pessoas); POST {action, data}.
 // O banco (kids_setup) confere quem configura e todas as regras.
 const json = (data: unknown, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'private, no-store'}});
-const actions = ['team_save', 'team_remove', 'series_save', 'series_delete', 'series_skip', 'bookable'];
+const actions = ['team_save', 'team_remove', 'series_save', 'series_options', 'series_delete', 'series_skip', 'bookable'];
 const reasons: [RegExp, string, number][] = [
   [/kids_access_denied/, 'Somente a coordenação do Kids configura equipe e repetições.', 403],
   [/kids_staff_identity_required/, 'A pessoa precisa ser adulta e ter conta ativa no app da igreja.', 400],
@@ -30,7 +30,7 @@ async function run(request: Request, body: unknown) {
       unit = q.get('unit') || '';
     if (!uuidPattern.test(unit)) return json({error: 'Selecione uma igreja.'}, 400);
     if (!a.access!.membership.units.some((u) => u.id === unit)) return json({error: 'Igreja sem acesso.'}, 403);
-    let action = q.get('q') ? 'people' : 'overview',
+    let action = q.get('report') === '1' ? 'report' : q.get('q') ? 'people' : 'overview',
       data: Record<string, unknown> = q.get('q') ? {q: (q.get('q') || '').slice(0, 80)} : {};
     if (body) {
       const b = body as {action?: unknown; data?: unknown};

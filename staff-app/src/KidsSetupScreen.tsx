@@ -16,6 +16,9 @@ import {
   type KidsSeriesRoom,
   type KidsSetup,
   type KidsTeamRole,
+  type KidsReportRow,
+  occupancy,
+  rotationLetter,
 } from '../../shared/kids-setup.ts';
 
 type Tab = 'sessions' | 'team' | 'rooms' | 'classes';
@@ -125,7 +128,16 @@ export default function KidsSetupScreen({org, unit, back}: {org: string; unit: U
       ) : tab === 'team' ? (
         <Team data={data} busy={busy} setup={setup} org={org} unit={unit.id} />
       ) : (
-        <Sessions data={data} busy={busy} setup={setup} op={op} />
+        <Sessions
+          data={data}
+          busy={busy}
+          setup={setup}
+          op={op}
+          report={async () => {
+            const r = await supabase!.rpc('kids_setup', {p_org: org, p_unit: unit.id, p_action: 'report', p_data: {}});
+            return ((r.data as {items?: KidsReportRow[]})?.items || []) as KidsReportRow[];
+          }}
+        />
       )}
       <Ghost label="Voltar" onPress={back} />
     </ScrollView>
@@ -303,7 +315,24 @@ function Team({data, busy, setup, org, unit}: {data: KidsSetup; busy: boolean; s
               {kidsTeamRoles.find(([k]) => k === t.role)?.[1]}
               {['teacher', 'assistant'].includes(t.role) ? ' · ' + className(t.classId) : ''}
               {t.active ? '' : ' · afastado'}
+              {t.unavailable?.length ? ' · indisponível em ' + t.unavailable.length + ' dia(s)' : ''}
             </Text>
+            <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6}}>
+              {[0, 1, 2, 3].map((n) => (
+                <Chip
+                  key={n}
+                  on={(t.rotation || 0) === n}
+                  label={n ? 'Equipe ' + rotationLetter(n) : 'Sempre'}
+                  onPress={() =>
+                    void setup(
+                      'team_save',
+                      {id: t.id, version: t.version, role: t.role, classId: t.classId || '', canCare: t.canCare, active: t.active, rotation: n || ''},
+                      n ? 'Agora serve na equipe ' + rotationLetter(n) + ' do revezamento.' : 'Serve em todas as sessões.',
+                    )
+                  }
+                />
+              ))}
+            </View>
           </View>
           <Switch
             accessibilityLabel={'Ativo na equipe: ' + t.name}
@@ -393,7 +422,24 @@ const blankSeries = (): KidsSeries => ({
   next: [],
 });
 
-function Sessions({data, busy, setup, op}: {data: KidsSetup; busy: boolean; setup: Setup; op: Op}) {
+function Sessions({data, busy, setup, op, report}: {data: KidsSetup; busy: boolean; setup: Setup; op: Op; report: () => Promise<KidsReportRow[]>}) {
+  const [rows, setRows] = useState<KidsReportRow[] | null>(null);
+  const Report = () =>
+    rows ? (
+      <View style={ui.card}>
+        <Text style={ui.h2}>Relatório das últimas sessões</Text>
+        {!rows.length && <Text style={ui.copy}>Ainda não há sessões das repetições.</Text>}
+        {rows.slice(0, 12).map((r) => (
+          <Text key={r.id} style={ui.copy}>
+            {new Date(r.startsAt).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})} · {r.series}: {r.children} criança(s) · {occupancy(r)}% ·
+            equipe {r.confirmed}/{r.staff} confirmada
+          </Text>
+        ))}
+        <Ghost label="Fechar relatório" onPress={() => setRows(null)} />
+      </View>
+    ) : (
+      <Ghost label="Ver relatório das sessões" onPress={() => void report().then(setRows)} />
+    );
   const [edit, setEdit] = useState<KidsSeries | null>(null),
     [problem, setProblem] = useState('');
   async function save() {
@@ -408,8 +454,14 @@ function Sessions({data, busy, setup, op}: {data: KidsSetup; busy: boolean; setu
         {...payload, monthDay: edit.monthDay ?? '', monthWeek: edit.monthWeek ?? '', validUntil: edit.validUntil || ''},
         'Repetição salva. As sessões são criadas sozinhas.',
       )
-    )
+    ) {
+      await setup(
+        'series_options',
+        {id: edit.id, rotationGroups: edit.rotationGroups || 1, autoOpen: !!edit.autoOpen},
+        'Repetição salva. As sessões são criadas sozinhas.',
+      );
       setEdit(null);
+    }
   }
   const toggleRoom = (r: KidsSeriesRoom) => {
     if (!edit) return;
@@ -448,6 +500,7 @@ function Sessions({data, busy, setup, op}: {data: KidsSetup; busy: boolean; setu
           </View>
         ))
       )}
+      <Report />
       <Text style={ui.over}>REPETIÇÕES</Text>
       {data.series.map((s) => (
         <Pressable
@@ -578,6 +631,21 @@ function Sessions({data, busy, setup, op}: {data: KidsSetup; busy: boolean; setu
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
             <Switch accessibilityLabel="Escalar a equipe fixa automaticamente" value={edit.autoTeam} onValueChange={(v) => setEdit({...edit, autoTeam: v})} />
             <Text style={[ui.copy, {flex: 1}]}>Escalar a equipe fixa automaticamente (cada um na turma dele)</Text>
+          </View>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+            <Switch accessibilityLabel="Abrir sozinha no horário" value={!!edit.autoOpen} onValueChange={(v) => setEdit({...edit, autoOpen: v})} />
+            <Text style={[ui.copy, {flex: 1}]}>Abrir sozinha 30 min antes, se cada sala tiver a equipe mínima</Text>
+          </View>
+          <Text style={ui.label}>Revezamento da equipe</Text>
+          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
+            {[1, 2, 3].map((n) => (
+              <Chip
+                key={n}
+                on={(edit.rotationGroups || 1) === n}
+                label={n === 1 ? 'Sem revezamento' : n + ' equipes (A' + (n === 3 ? ', B e C' : ' e B') + ')'}
+                onPress={() => setEdit({...edit, rotationGroups: n})}
+              />
+            ))}
           </View>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
             <Switch accessibilityLabel="Repetição ativa" value={edit.active} onValueChange={(v) => setEdit({...edit, active: v})} />

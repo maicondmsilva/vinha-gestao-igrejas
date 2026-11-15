@@ -12,6 +12,8 @@ export type KidsTeamMember = {
   canCare: boolean;
   active: boolean;
   version: number;
+  rotation?: number | null;
+  unavailable?: string[];
 };
 export type KidsSeriesRule = 'daily' | 'weekly' | 'monthly_day' | 'monthly_week';
 export type KidsSeriesRoom = {roomId: string; classId: string; capacity: number; minStaff: number};
@@ -32,6 +34,8 @@ export type KidsSeries = {
   active: boolean;
   version: number;
   next: string[];
+  rotationGroups?: number;
+  autoOpen?: boolean;
 };
 export type KidsSetupSession = {
   id: string;
@@ -106,3 +110,19 @@ export const kidsSetupError = (m: string) =>
         : /in_use/.test(m)
           ? 'Está em uso numa sessão aberta. Encerre a sessão antes.'
           : 'Revise os dados e tente de novo.';
+
+export type KidsReportRow = {
+  id: string;
+  series: string;
+  startsAt: string;
+  status: string;
+  children: number;
+  reserved: number;
+  capacity: number;
+  staff: number;
+  confirmed: number;
+};
+/** Letra da equipe no revezamento (1 → A). */
+export const rotationLetter = (n?: number | null) => (n ? String.fromCharCode(64 + n) : '');
+/** Ocupação da sessão em %, para o relatório. */
+export const occupancy = (r: Pick<KidsReportRow, 'children' | 'capacity'>) => (r.capacity ? Math.round((r.children / r.capacity) * 100) : 0);
