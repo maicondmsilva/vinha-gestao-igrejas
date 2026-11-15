@@ -22,19 +22,21 @@ test('modelo, remoção e limpeza aceitam só o necessário',()=>{
 
 test('tipo de usuário exibido a partir do papel e das concessões',()=>{
  assert.equal(userTypeLabel('owner',0,false),'Dono do ministério');
- assert.equal(userTypeLabel('admin',0,true),'Administrador local');
- assert.equal(userTypeLabel('admin',0,false),'Administrador do ministério');
- assert.equal(userTypeLabel('member',0,false),'Usuário do app');
- assert.equal(userTypeLabel('member',3,false),'Membro de equipe');
+ assert.equal(userTypeLabel('admin',0,true),'Administrador');
+ assert.equal(userTypeLabel('member',0,false),'Membro (usuário do app)');
+ assert.equal(userTypeLabel('member',3,false),'Equipe');
+ assert.equal(userTypeLabel('secretary',0,false),'Equipe');
 });
 
 test('Usuários e permissões fica em Configurações, separado do cadastro de membros',()=>{
  const settings=readFileSync(new URL('../app/OrganizationSettings.tsx',import.meta.url),'utf8');
  assert.match(settings,/section==='usuarios'\?<><StaffDirectory\/><TeamAccess\/>/);
  const staff=readFileSync(new URL('../app/StaffDirectory.tsx',import.meta.url),'utf8');
- assert.match(staff,/<th>Pessoa<\/th><th>E-mail<\/th><th>Celular<\/th><th>Perfil de acesso<\/th><th>Igrejas<\/th>/,'lista em tabela com o vocabulário do Vinha');
+ assert.match(staff,/<th>Pessoa<\/th><th>E-mail<\/th><th>Celular<\/th><th>Tipo de usuário<\/th><th>Igrejas<\/th>/,'lista em tabela com o vocabulário do Vinha');
+ assert.doesNotMatch(staff,/Igrejas de acesso/,'igrejas vêm das permissões');
  assert.match(staff,/Exportar para Excel/);assert.match(staff,/import\('exceljs'\)/,'planilha carregada só ao exportar');
- assert.match(staff,/<UserPermissions key=\{open\.id[^\n]*? embedded\/>/,'permissões dentro da ficha do usuário');
+ const sheet=readFileSync(new URL('../app/UserSheet.tsx',import.meta.url),'utf8');
+ assert.match(sheet,/<UserPermissions key=\{sheet\.membership\.id[^\n]*? embedded\/>/,'permissões dentro da ficha do usuário');
  const comm=readFileSync(new URL('../app/CommunicationWorkspace.tsx',import.meta.url),'utf8');
  assert.doesNotMatch(comm,/equipe/i,'Comunicação não tem mais Equipe');
 });

@@ -1,6 +1,8 @@
 'use client';
 import {useEffect,useState,type FormEvent,type ReactNode} from 'react';
 import UserPermissions from './UserPermissions';
+import PersonGroups from './PersonGroups';
+import {roleForType,userType,userTypes} from './lib/permissions';
 import {brazilStates,genders} from '../shared/brazil-registration';
 import './user-sheet.css';
 
@@ -14,8 +16,7 @@ type Form={name:string;phone:string;email:string;password:string;role:string;uni
  postal_code:string;street:string;number:string;complement:string;district:string;city:string;state:string;
  gender:string;cpf:string;birth_date:string;marriage_date:string;baptism_date:string;is_pastor:boolean};
 
-const roles=['admin','pastor','secretary','leader','finance','member','viewer'];
-export const roleLabels:Record<string,string>={owner:'Dono',admin:'Administrador',pastor:'Pastor',secretary:'Secretaria',leader:'Líder',finance:'Tesouraria',member:'Membro (usuário do app)',viewer:'Somente leitura'};
+export const roleLabels:Record<string,string>={owner:'Dono',admin:'Administrador',pastor:'Pastor',team:'Equipe',secretary:'Equipe',leader:'Equipe',finance:'Equipe',member:'Membro (usuário do app)',viewer:'Membro (usuário do app)'};
 const statusLabels:Record<string,string>={active:'Ativo',suspended:'Suspenso',pending:'Pendente',revoked:'Sem acesso'};
 const addressKeys=['postal_code','street','number','complement','district','city','state'] as const;
 const extraKeys=['gender','cpf','birth_date','marriage_date','baptism_date'] as const;
@@ -34,10 +35,10 @@ function fromSheet(s:Sheet):Form{const p=s.person,a=p?.address;return{...empty,n
  gender:p?.gender||'',cpf:p?.cpf||'',birth_date:p?.birth_date||'',marriage_date:p?.marriage_date||'',baptism_date:p?.baptism_date||'',is_pastor:!!p?.is_pastor}}
 
 /** Configurações › Usuários e permissões: ficha que edita o mesmo cadastro do membro (Conta, Endereço, Informações adicionais, Grupos e Permissões). */
-export default function UserSheet({membershipId,units,currentId,unitAccess=[],close,saved,children}:{membershipId?:string;units:Unit[];currentId?:string;unitAccess?:{unit_id:string}[];close:()=>void;saved:(msg:string)=>void;children?:ReactNode}){
+export default function UserSheet({membershipId,units,currentId,unitAccess=[],team=false,close,saved,children}:{membershipId?:string;units:Unit[];currentId?:string;unitAccess?:{unit_id:string}[];team?:boolean;close:()=>void;saved:(msg:string)=>void;children?:ReactNode}){
  const[sheet,setSheet]=useState<Sheet|null>(null),[found,setFound]=useState<Found|null>(null),[picking,setPicking]=useState(!membershipId);
  const[form,setForm]=useState<Form>(empty),[busy,setBusy]=useState(false),[error,setError]=useState(''),[q,setQ]=useState(''),[results,setResults]=useState<Found[]|null>(null),[reload,setReload]=useState(0);
- useEffect(()=>{if(!membershipId)return;let live=true;call<Sheet>('/api/users/'+membershipId).then(s=>{if(live){setError('');setSheet(s);setForm(fromSheet(s))}}).catch(e=>{if(live)setError(e.message)});return()=>{live=false}},[membershipId,reload]);
+ useEffect(()=>{if(!membershipId)return;let live=true;call<Sheet>('/api/users/'+membershipId).then(s=>{if(live){setError('');setSheet(s);const f=fromSheet(s);setForm({...f,role:userType(f.role,team)})}}).catch(e=>{if(live)setError(e.message)});return()=>{live=false}},[membershipId,reload]);
  const set=<K extends keyof Form>(k:K,v:Form[K])=>setForm(f=>({...f,[k]:v}));
  const isNew=!membershipId,hasLogin=sheet?.hasLogin||found?.hasLogin||false,owner=sheet?.membership.role==='owner',self=!!membershipId&&membershipId===currentId;
  const editable=isNew||!!sheet?.membership.editable||self;
@@ -51,7 +52,7 @@ export default function UserSheet({membershipId,units,currentId,unitAccess=[],cl
   for(const k of addressKeys)if(full||form[k])address[k]=form[k];
   for(const k of extraKeys)if(full||form[k])extra[k]=form[k]||null;
   if(full||form.is_pastor)extra.is_pastor=form.is_pastor;
-  return{...(found?{person:found.person,version:found.version}:{}),...(sheet?{version:sheet.membership.version}:{}),role:form.role,unit:form.unit||null,
+  return{...(found?{person:found.person,version:found.version}:{}),...(sheet?{version:sheet.membership.version}:{}),role:form.role==='owner'?'owner':roleForType(form.role,sheet?.membership.role||'member'),unit:form.unit||null,
    account:{name:form.name,phone:form.phone,email:form.email,password:form.password},
    ...(Object.keys(address).length?{address}:{}),...(Object.keys(extra).length?{extra}:{})};
  }
@@ -84,14 +85,14 @@ export default function UserSheet({membershipId,units,currentId,unitAccess=[],cl
  return <section className="us" aria-labelledby="us-title">
   <nav className="us-crumbs" aria-label="Caminho"><button type="button" onClick={close}>Usuários</button><span>›</span><b>{form.name||'Novo usuário'}</b></nav>
   <div className="us-head"><i aria-hidden>{initials(form.name)}</i><div><h2 id="us-title">{form.name||'Novo usuário'}</h2>
-   <p>{roleLabels[form.role]||form.role}{status&&<span className={'us-status '+status}>{statusLabels[status]||status}</span>}{sheet?.membership.password_change_required&&<span className="us-status pending">Troca de senha pendente</span>}</p></div></div>
+   <p>{roleLabels[form.role]||form.role}{form.role==='team'&&!team&&sheet&&<span className="us-status pending">Marque abaixo as permissões da equipe</span>}{status&&<span className={'us-status '+status}>{statusLabels[status]||status}</span>}{sheet?.membership.password_change_required&&<span className="us-status pending">Troca de senha pendente</span>}</p></div></div>
   {error&&<p className="us-error" role="alert">{error}</p>}
   <form onSubmit={save}><fieldset disabled={busy||!editable} className="us-blocks">
    <section className="us-card"><h3>Conta</h3>
     <div className="us-grid">
      <label className="us-wide">Nome<input required minLength={2} maxLength={160} value={form.name} onChange={e=>set('name',e.target.value)}/></label>
      <label>Igreja principal<select value={form.unit} onChange={e=>set('unit',e.target.value)}><option value="">Selecione</option>{units.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
-     <label>Tipo de usuário<select value={form.role} disabled={owner||self} onChange={e=>set('role',e.target.value)}>{owner&&<option value="owner">{roleLabels.owner}</option>}{roles.map(r=><option key={r} value={r}>{roleLabels[r]}</option>)}</select></label>
+     <label>Tipo de usuário<select value={form.role} disabled={owner||self} onChange={e=>set('role',e.target.value)}>{owner&&<option value="owner">{roleLabels.owner}</option>}{userTypes.map(([r,l])=><option key={r} value={r}>{l}</option>)}</select><small>Equipe: quem recebe permissões ou uma função (célula, escala, Kids, atendimento, grupo) passa a ser Equipe automaticamente.</small></label>
      <label>Celular<input inputMode="tel" maxLength={30} value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="(11) 90000-0000"/></label>
      <label>E-mail<input type="email" required maxLength={254} value={form.email} onChange={e=>set('email',e.target.value)}/><small>É o e-mail de login no app e no painel.</small></label>
      <label className="us-wide">Senha<input type="password" autoComplete="new-password" minLength={8} maxLength={72} value={form.password} onChange={e=>set('password',e.target.value)} placeholder={hasLogin?'••••••••':'Mínimo de 8 caracteres'}/>
@@ -117,6 +118,7 @@ export default function UserSheet({membershipId,units,currentId,unitAccess=[],cl
      <label className="us-check"><input type="checkbox" checked={form.is_pastor} onChange={e=>set('is_pastor',e.target.checked)}/>É pastor</label>
     </div></section>
    <section className="us-card"><h3>Grupos</h3>
+    {sheet?.person&&<PersonGroups personId={sheet.person.id} disabled={!editable}/>}
     {!sheet?<p className="us-help">Os grupos aparecem depois de salvar.</p>:!sheet.groups.cells.length&&!sheet.groups.teams.length?<p className="us-help">Não participa de células nem de equipes de escala.</p>:
      <dl className="us-groups">{!!sheet.groups.cells.length&&<><dt>Células</dt><dd>{sheet.groups.cells.map(c=><span key={c}>{c}</span>)}</dd></>}{!!sheet.groups.teams.length&&<><dt>Equipes de escala</dt><dd>{sheet.groups.teams.map(c=><span key={c}>{c}</span>)}</dd></>}</dl>}
    </section>
@@ -128,6 +130,6 @@ export default function UserSheet({membershipId,units,currentId,unitAccess=[],cl
    {editable&&<button type="submit" className="us-primary" disabled={busy}>{busy?'Salvando…':isNew?'Criar usuário':'Salvar'}</button>}
   </div></form>
   {sheet&&children}
-  {sheet&&!owner&&<UserPermissions key={sheet.membership.id+':'+sheet.membership.version} user={{id:sheet.membership.id,name:form.name,email:form.email,role:sheet.membership.role,unit_access:unitAccess}} units={units} close={close} embedded/>}
+  {sheet&&!owner&&<UserPermissions key={sheet.membership.id+':'+sheet.membership.version} user={{id:sheet.membership.id,name:form.name,email:form.email,role:sheet.membership.role,unit_access:unitAccess,team}} units={units} close={close} embedded/>}
  </section>;
 }

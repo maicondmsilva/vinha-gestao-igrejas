@@ -67,3 +67,9 @@
 .user-perms-group-list label{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0}
 .user-perms-group-list label small{margin-left:auto;color:#5f6f64}
 .user-perms-group-list p{font-size:13px;color:#5f6f64;margin:4px 0 8px}
+.user-perms-units{display:flex;flex-wrap:wrap;gap:6px}.user-perms-units label{display:inline-flex;align-items:center;gap:6px;border:1px solid #d6e1d9;border-radius:16px;padding:4px 10px;font-size:12px;cursor:pointer;background:#fff}
+.user-perms-units label.on{background:#e3efe6;border-color:#9fc0aa;color:#173d32;font-weight:600}.user-perms-units input{width:14px;height:14px;accent-color:#285c45}
+.user-perms-all{display:flex;align-items:center;gap:8px;font-weight:700;padding:10px 12px;border:1px dashed #c8d8cd;border-radius:12px;margin-bottom:12px;background:#f8faf7}
+.user-perms-area h3{display:flex;align-items:center;justify-content:space-between;gap:12px}.user-perms-area-all{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#4f6658}
+.user-perms-link{background:none;border:0;color:#285c45;font-weight:700;text-decoration:underline;cursor:pointer;padding:6px}
+.user-perms-scope{display:grid;gap:8px;align-content:start}

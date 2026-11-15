@@ -26,6 +26,7 @@ export const pushAudienceSchema = z
       roles: z.array(z.enum(pushRoles), {error: 'Escolha funções válidas.'}).min(1).max(8).optional(),
       cells: ids(100, 'Escolha até 100 células.').optional(),
       groups: ids(100, 'Escolha até 100 ministérios ou departamentos.').optional(),
+      peopleGroups: ids(100, 'Escolha até 100 grupos.').optional(),
       ageMin: age.optional(),
       ageMax: age.optional(),
       gender: z.string().min(1).max(30, 'Gênero inválido.').optional(),
