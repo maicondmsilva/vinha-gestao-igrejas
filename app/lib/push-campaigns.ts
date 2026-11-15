@@ -1,3 +1,4 @@
+import {pushImageUrl} from '../../shared/contract/push.ts';
 // Push campaigns: Expo batch delivery. The database decides who receives what; this module only talks to Expo.
 export type PushJob = {id: string; token: string; project: string; title: string; body: string; data: Record<string, unknown>};
 export type PushResult = {id: string; state: 'submitted' | 'failed' | 'uncertain' | 'queued'; ticket?: string; error?: string};
@@ -38,6 +39,8 @@ export async function sendPushBatch(batch: PushJob[], transport: typeof fetch = 
           priority: 'high',
           data: j.data,
           ttl: 86400,
+          // Capa: imagem grande na notificação (Android; no iOS com extensão de notificação).
+          ...(typeof j.data.image === 'string' && /^[0-9a-f-]{36}$/.test(j.data.image) ? {richContent: {image: pushImageUrl(j.data.image)}} : {}),
         })),
       ),
     });
@@ -87,7 +90,11 @@ export async function processPushQueue(rpc: Rpc, options: {transport?: typeof fe
   summary.runs = Number((await rpc('materialize'))?.runs || 0);
   const previous = (await rpc('receipts'))?.items as {id: string; ticket: string}[];
   if (previous?.length) {
-    const receipts = await pushReceipts(previous.map((x) => x.ticket), transport, options.accessToken).catch(() => null);
+    const receipts = await pushReceipts(
+      previous.map((x) => x.ticket),
+      transport,
+      options.accessToken,
+    ).catch(() => null);
     if (receipts) {
       const settled = previous.flatMap((x) => {
         const r = receipts[x.ticket];

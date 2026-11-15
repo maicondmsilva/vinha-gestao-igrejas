@@ -15,6 +15,7 @@ const databaseFields: Record<string, [string, string]> = {
   invalid_push_schedule: ['sendAt', 'Escolha uma data e hora futura, em até um ano, e o fim da repetição depois do primeiro envio.'],
   invalid_push_link: ['link.id', 'Escolha qual item abre ao tocar.'],
   invalid_push_audience: ['audience', 'Revise os filtros de público.'],
+  invalid_push_image: ['link.image', 'Escolha uma imagem pronta do banco de imagens.'],
 };
 
 export const GET = (request: Request) => run(request, false);
