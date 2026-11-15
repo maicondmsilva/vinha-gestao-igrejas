@@ -103,3 +103,21 @@ test('Área Kids da família: idade e reserva da vez', async () => {
   const ui = read('android-app/src/KidsFamily.tsx');
   for (const t of ['Reservar vaga', 'Detalhes', 'Histórico', '+ Cadastrar criança']) assert.ok(ui.includes(t), t);
 });
+
+test('painel Kids em 4 seções e Vinha Equipe com uma entrada', async () => {
+  const {kidsPages, kidsSections, kidsSectionOf} = await import('../shared/dashboard-menu.ts');
+  assert.deepEqual(
+    kidsSections.map(([, l]) => l),
+    ['Hoje', 'Crianças', 'Programação', 'Relatórios'],
+  );
+  for (const [id] of kidsPages)
+    assert.ok(
+      kidsSections.some(([, , pages]) => pages.includes(id)),
+      'página sem seção: ' + id,
+    );
+  assert.equal(kidsSectionOf('attendance'), 'today');
+  assert.equal(kidsSectionOf('setup'), 'plan');
+  assert.match(read('app/DashboardNavigation.tsx'), /kidsSections\.map/);
+  const app = read('staff-app/App.tsx');
+  assert.equal((app.match(/<Action title="Kids"/g) || []).length, 1, 'uma entrada Kids');
+});
