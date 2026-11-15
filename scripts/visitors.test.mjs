@@ -29,5 +29,5 @@ test('telas: QR no painel, página pública e Vinha Equipe', () => {
 test('foto do cadastro só com sessão do painel e link temporário', () => {
   const route = read('app/api/people/photo/route.ts');
   assert.match(route, /authorizeSupabaseChurch\(request, 'people\.read'\)/);
-  assert.match(route, /createSignedUrl\([^)]*600\)/);
+  assert.match(route, /createSignedUrl\(.*, 600\)/s);
 });
