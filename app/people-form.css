@@ -74,3 +74,9 @@
 .pp .profile-body small{font-size:12px}
 @media(max-width:640px){.pp .profile-grid{grid-template-columns:1fr}.pp{width:100%}}
 .pp .profile-head>.person-photo{width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;border:2px solid #fff;box-shadow:0 2px 8px #1b4a3b26}
+.pp .pp-visit{margin:0 0 10px;line-height:1.5}.pp .pp-visit small{display:block;color:#5f6f64}
+.visitor-qr{display:grid;gap:14px}.visitor-qr .vq-card{display:flex;gap:24px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #dce6df;border-radius:18px;padding:22px}
+.visitor-qr .vq-card img{border:6px solid #dbbb70;border-radius:18px;flex:none}.visitor-qr .vq-card>div{flex:1;min-width:240px}.visitor-qr h2{margin:4px 0 8px;color:#163d2f}
+.visitor-qr .vq-wait{width:220px;height:220px;display:grid;place-items:center;color:#5f6f64}.visitor-qr .vq-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.visitor-qr .vq-actions a,.visitor-qr .vq-actions button:not(.create){border:1px solid #cbd9d0;border-radius:10px;padding:9px 14px;background:#fff;color:#1b4a3b;font-weight:600;text-decoration:none;font-size:13px;cursor:pointer}
+.visitor-qr .vq-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #edf1ed;padding:12px 0}.visitor-qr .vq-row small{display:block;color:#5f6f64}.visitor-qr .vq-row span{color:#7f6420;font-size:13px;font-weight:600;text-align:right}
