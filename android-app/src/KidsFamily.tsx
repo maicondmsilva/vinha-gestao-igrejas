@@ -21,7 +21,7 @@ export default function KidsFamily({m,org,unit,palette:p,consents,refreshConsent
  async function submit(){if(!form)return;const [dd,mm,yyyy]=form.birth.split('/'),date=yyyy+'-'+mm+'-'+dd;if(form.name.trim().length<2||!/^\d{4}-\d{2}-\d{2}$/.test(date)||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date){setProblem('Informe o nome e a data no formato dia/mês/ano.');return}if(await m.command(form.id?'kids.edit':'kids.create',form.id||null,null,{name:form.name,birth:date,care:form.care}))setForm(null)}
  const status=(b:FamilyBooking)=>b.attendance==='present'?{label:'Na sala agora'+(b.room?' · '+b.room:''),color:'#2f7a4f'}:b.attendance==='out'?{label:'Já saiu',color:p.muted}:{label:'Vaga reservada',color:p.accent};
  return <View style={{gap:12}}>
-  {!children.length&&!m.page?.requests?.length&&<View style={[s.card,{backgroundColor:p.surface,borderColor:p.line}]}><Text style={[s.name,{color:p.text}]}>Nenhuma criança ainda</Text><Text style={{color:p.muted,lineHeight:21}}>Cadastre sua criança. A equipe do Kids confere o vínculo antes da primeira reserva.</Text></View>}
+  {!children.length&&!m.page?.requests?.length&&<View style={[s.card,{backgroundColor:p.surface,borderColor:p.line}]}><Text style={[s.name,{color:p.text}]}>Nenhuma criança ainda</Text><Text style={{color:p.muted,lineHeight:21}}>Cadastre sua criança e já reserve a vaga. A igreja confere o cadastro depois.</Text></View>}
   {children.map((c:FamilyChild)=>{const b=childNextBooking(bookings,c.id),st=b&&status(b),open=details===c.id,choosing=selected===c.id;
    return <View key={c.id} style={[s.card,{backgroundColor:p.surface,borderColor:b?.attendance==='present'?'#2f7a4f':p.line}]}>
     <View style={s.head}>
@@ -58,7 +58,8 @@ export default function KidsFamily({m,org,unit,palette:p,consents,refreshConsent
    <TextInput accessibilityLabel="Nascimento" value={form.birth} keyboardType="number-pad" onChangeText={v=>setForm({...form,birth:v.replace(/\D/g,'').slice(0,8).replace(/^(\d{2})(\d)/,'$1/$2').replace(/^(\d{2}\/\d{2})(\d)/,'$1/$2')})} maxLength={10} placeholder="Nascimento (dd/mm/aaaa)" placeholderTextColor={p.muted} style={[s.input,{color:p.text,borderColor:p.line,backgroundColor:p.bg}]}/>
    <KidsCareFields key={form.id||'new'} value={form.care} onChange={v=>setForm(f=>f?{...f,care:v}:null)} palette={p}/>
    {!!problem&&<Text accessibilityRole="alert" style={{color:'#b8741a',fontWeight:'700'}}>{problem}</Text>}
-   {primary('Enviar para a igreja conferir',()=>void submit(),m.busy)}
+   {primary(form.id?'Enviar alteração para a igreja':'Cadastrar criança',()=>void submit(),m.busy)}
+   {!form.id&&<Text style={{color:p.muted,lineHeight:20}}>O cadastro fica ativo na hora. A secretaria confere os dados e o vínculo depois.</Text>}
    {link('Cancelar',()=>setForm(null))}
   </View>:<Pressable accessibilityRole="button" onPress={()=>{setProblem('');setForm({id:'',name:'',birth:'',care:''})}} style={[s.add,{borderColor:p.line}]}><Text style={{color:p.text,fontWeight:'800'}}>+ Cadastrar criança</Text></Pressable>}
 
@@ -67,7 +68,7 @@ export default function KidsFamily({m,org,unit,palette:p,consents,refreshConsent
    {history&&<View style={{gap:6}}>
     {m.page?.presence?.map(a=><Text key={a.id} style={{color:p.muted}}>{a.name} · {a.session} · {familyStatus[a.status]} · {familyDate(a.checked_in_at)}</Text>)}
     {bookings.filter(r=>r.status!=='reserved').map(r=><Text key={r.id} style={{color:p.muted}}>{r.name} · {r.session} · {familyStatus[r.status]||r.status}</Text>)}
-    {m.page?.requests?.map(r=><View key={r.id} style={{flexDirection:'row',gap:8,alignItems:'center'}}><Text style={{color:p.muted,flex:1}}>Cadastro: {r.data?.name||'criança'} · {familyStatus[r.status]||r.status}{r.reason?' · '+r.reason:''}</Text>{r.status==='pending'&&link('Cancelar',()=>void m.command('request.cancel',r.id,r.version))}</View>)}
+    {m.page?.requests?.map(r=><View key={r.id} style={{flexDirection:'row',gap:8,alignItems:'center'}}><Text style={{color:p.muted,flex:1}}>{r.kind==='kids.create'?'Cadastro':'Alteração'}: {r.data?.name||'criança'} · {r.kind==='kids.create'&&r.status==='pending'?'Ativo · a igreja vai conferir':r.kind==='kids.create'&&r.status==='approved'?'Conferido pela igreja':familyStatus[r.status]||r.status}{r.reason?' · '+r.reason:''}</Text>{r.status==='pending'&&r.kind!=='kids.create'&&link('Cancelar',()=>void m.command('request.cancel',r.id,r.version))}</View>)}
    </View>}
   </View>}
  </View>;
