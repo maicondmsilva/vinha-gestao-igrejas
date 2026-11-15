@@ -11,6 +11,9 @@ import {
   type KidsSeries,
   type KidsSetup,
   type KidsTeamRole,
+  type KidsReportRow,
+  occupancy,
+  rotationLetter,
 } from '../shared/kids-setup';
 
 const uuid = () => crypto.randomUUID();
@@ -83,6 +86,12 @@ export default function KidsSetupPanel({unit}: {unit: string}) {
     await load();
     return true;
   }
+  const [report, setReport] = useState<KidsReportRow[] | null>(null);
+  async function loadReport() {
+    const r = await fetch(url({report: '1'}), {cache: 'no-store'}).catch(() => null);
+    const d = (r?.ok ? await r.json().catch(() => ({})) : {}) as {items?: KidsReportRow[]};
+    setReport(d.items || []);
+  }
   async function saveSeries() {
     if (!edit) return;
     const p = seriesProblem(edit);
@@ -94,8 +103,14 @@ export default function KidsSetupPanel({unit}: {unit: string}) {
         {...payload, monthDay: edit.monthDay ?? '', monthWeek: edit.monthWeek ?? '', validUntil: edit.validUntil || ''},
         'Repetição salva. As sessões são criadas sozinhas na antecedência escolhida.',
       )
-    )
+    ) {
+      await act(
+        'series_options',
+        {id: edit.id, rotationGroups: edit.rotationGroups || 1, autoOpen: !!edit.autoOpen},
+        'Repetição salva. As sessões são criadas sozinhas na antecedência escolhida.',
+      );
       setEdit(null);
+    }
   }
   if (!data) return <section className="ko-card">{error ? <p className="ko-error">{error}</p> : <p className="ko-empty">Carregando…</p>}</section>;
   const className = (id: string | null) => data.classes.find((c) => c.id === id)?.name || 'qualquer turma';
@@ -120,9 +135,29 @@ export default function KidsSetupPanel({unit}: {unit: string}) {
                 {kidsTeamRoles.find(([k]) => k === t.role)?.[1]}
                 {['teacher', 'assistant'].includes(t.role) ? ' · ' + className(t.classId) : ''}
                 {t.active ? '' : ' · afastado'}
+                {t.unavailable?.length ? ' · indisponível: ' + t.unavailable.map((d) => br(d).slice(0, 5)).join(', ') : ''}
               </small>
             </div>
             <div className="ko-actions">
+              <select
+                aria-label={'Revezamento de ' + t.name}
+                value={t.rotation || ''}
+                disabled={busy}
+                onChange={(e) =>
+                  void act(
+                    'team_save',
+                    {id: t.id, version: t.version, role: t.role, classId: t.classId || '', canCare: t.canCare, active: t.active, rotation: e.target.value},
+                    'Revezamento atualizado.',
+                  )
+                }
+              >
+                <option value="">Serve sempre</option>
+                {[1, 2, 3].map((n) => (
+                  <option key={n} value={n}>
+                    Equipe {rotationLetter(n)}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
                 disabled={busy}
@@ -387,6 +422,18 @@ export default function KidsSetupPanel({unit}: {unit: string}) {
               Escalar a equipe fixa automaticamente
             </label>
             <label className="ko-check">
+              <input type="checkbox" checked={!!edit.autoOpen} onChange={(e) => setEdit({...edit, autoOpen: e.target.checked})} />
+              Abrir sozinha 30 min antes, se cada sala tiver a equipe mínima
+            </label>
+            <label>
+              Revezamento da equipe
+              <select value={edit.rotationGroups || 1} onChange={(e) => setEdit({...edit, rotationGroups: Number(e.target.value)})}>
+                <option value={1}>Sem revezamento</option>
+                <option value={2}>2 equipes (A e B)</option>
+                <option value={3}>3 equipes (A, B e C)</option>
+              </select>
+            </label>
+            <label className="ko-check">
               <input type="checkbox" checked={edit.active} onChange={(e) => setEdit({...edit, active: e.target.checked})} />
               Repetição ativa
             </label>
@@ -413,6 +460,45 @@ export default function KidsSetupPanel({unit}: {unit: string}) {
             </div>
           </div>
         )}
+      </section>
+      <section className="ko-card">
+        <div className="ko-card-title">
+          <h2>Relatório das repetições</h2>
+          <button type="button" disabled={busy} onClick={() => void loadReport()}>
+            {report ? 'Atualizar' : 'Ver relatório'}
+          </button>
+        </div>
+        {report &&
+          (!report.length ? (
+            <p className="ko-empty">Ainda não há sessões das repetições.</p>
+          ) : (
+            <table className="ko-report">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Sessão</th>
+                  <th>Crianças</th>
+                  <th>Reservas</th>
+                  <th>Ocupação</th>
+                  <th>Equipe confirmada</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.map((r) => (
+                  <tr key={r.id}>
+                    <td>{new Date(r.startsAt).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit', year: '2-digit'})}</td>
+                    <td>{r.series}</td>
+                    <td>{r.children}</td>
+                    <td>{r.reserved}</td>
+                    <td>{occupancy(r)}%</td>
+                    <td>
+                      {r.confirmed}/{r.staff}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ))}
       </section>
     </>
   );

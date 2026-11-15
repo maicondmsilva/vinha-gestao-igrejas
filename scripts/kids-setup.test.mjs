@@ -40,3 +40,31 @@ test('Vinha Equipe e painel configuram sem sessão ativa', () => {
   assert.match(sql, /cron\.schedule\('kids-series-run'/);
   assert.match(sql, /bookable_from<=clock_timestamp\(\)/);
 });
+
+test('melhorias: disponibilidade, revezamento, aviso, lembretes, abertura e relatório', async () => {
+  const {occupancy, rotationLetter} = await import('../shared/kids-setup.ts');
+  assert.equal(rotationLetter(2), 'B');
+  assert.equal(occupancy({children: 6, capacity: 8}), 75);
+  const sql = read('supabase/migrations/20261115190000_kids_melhorias_escala.sql');
+  assert.match(sql, /kids_team_unavailable u where u\.team_id=t\.id and u\.day=d/, 'indisponível não é escalado');
+  assert.match(sql, /select private\.kids_series_run\(\); select private\.kids_series_autoopen\(\)/);
+  for (const k of ['kids-serve:', 'kids-open:', 'kids-today:']) assert.ok(sql.includes(k), k);
+  const vol = read('android-app/src/KidsVolunteerScreen.tsx');
+  for (const t of ['Confirmo', 'Não posso', 'DIAS EM QUE NÃO POSSO']) assert.ok(vol.includes(t), t);
+  assert.match(read('android-app/src/MemberExperience.tsx'), /Minha escala no Kids/);
+  assert.match(read('staff-app/src/KidsSetupScreen.tsx'), /Ver relatório das sessões/);
+  assert.match(read('app/KidsSetupPanel.tsx'), /Relatório das repetições/);
+});
+
+test('recepção Kids no Vinha Equipe: comprovante e conferência', async () => {
+  const {receiptCode, receptionError} = await import('../shared/kids-reception.ts');
+  const code = receiptCode(new Uint8Array(32).fill(171));
+  assert.match(code, /^[a-f0-9]{64}$/);
+  assert.throws(() => receiptCode(new Uint8Array(8)));
+  assert.match(receptionError('kids_guardian_required'), /não está autorizado/);
+  const ui = read('staff-app/src/KidsReception.tsx');
+  for (const t of ['Registrar entrada', 'Registrar saída', 'Conferi a identidade', 'Ler QR Code do comprovante', 'Enviar comprovante'])
+    assert.ok(ui.includes(t), t);
+  assert.match(ui, /'kids_pickup_guardians'/);
+  assert.match(read('staff-app/App.tsx'), /Recepção Kids/);
+});

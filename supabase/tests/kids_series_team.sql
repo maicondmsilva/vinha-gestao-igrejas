@@ -25,11 +25,11 @@ create function pg_temp.first_session() returns uuid language sql security defin
 create function pg_temp.sess() returns int language sql security definer as $$select count(*)::int from private.kids_sessions where series_id=md5('kids-series-test-serie')::uuid$$;
 select ok(not has_function_privilege('anon','public.kids_setup(uuid,uuid,text,jsonb)','execute'),'visitante não configura');
 -- Regras de repetição (sem login).
-select ok(private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','weekly','{0}',null,null,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now())::private.kids_session_series,'2026-11-15'),'domingo cai na repetição de domingo');
-select ok(not private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','weekly','{0}',null,null,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now())::private.kids_session_series,'2026-11-16'),'segunda não cai');
-select ok(private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','monthly_week','{6}',null,1,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now())::private.kids_session_series,'2026-11-07'),'1º sábado do mês');
-select ok(not private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','monthly_week','{6}',null,1,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now())::private.kids_session_series,'2026-11-14'),'2º sábado não');
-select ok(private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','monthly_day','{}',31,null,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now())::private.kids_session_series,'2026-11-30'),'dia 31 vira o último dia em meses curtos');
+select ok(private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','weekly','{0}',null,null,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now(),1,false)::private.kids_session_series,'2026-11-15'),'domingo cai na repetição de domingo');
+select ok(not private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','weekly','{0}',null,null,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now(),1,false)::private.kids_session_series,'2026-11-16'),'segunda não cai');
+select ok(private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','monthly_week','{6}',null,1,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now(),1,false)::private.kids_session_series,'2026-11-07'),'1º sábado do mês');
+select ok(not private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','monthly_week','{6}',null,1,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now(),1,false)::private.kids_session_series,'2026-11-14'),'2º sábado não');
+select ok(private.kids_series_matches(row(gen_random_uuid(),pg_temp.ki('org'),pg_temp.ki('unit'),'Culto','monthly_day','{}',31,null,'09:00',90,'2026-01-01',null,24,'[]',true,'{}',true,1,null,now(),1,false)::private.kids_session_series,'2026-11-30'),'dia 31 vira o último dia em meses curtos');
 set local role authenticated;
 select pg_temp.actor('teacher');
 select throws_ok($$select pg_temp.setup('overview')$$,'42501','kids_access_denied','professor não configura');
