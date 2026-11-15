@@ -59,6 +59,8 @@ export type StaffUnitAccess = Unit & {
   kidsStations?: boolean;
   /** May register visitors (reception). */
   visitors?: boolean;
+  /** May create rooms, classes, the fixed Kids team and repeating sessions. */
+  kidsConfigure?: boolean;
 };
 export type StaffTeamMember = {user: string; role: string; name: string; email: string; units: string[]; grants: Record<string, StaffScope[]>};
 export type StaffAccessList = {
