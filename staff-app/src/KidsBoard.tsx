@@ -196,6 +196,7 @@ export default function KidsBoard({org, unit, back, embedded = false}: {org: str
                     {tags[k.id] || k.tag ? 'nº ' + (tags[k.id] || k.tag) + ' · ' : ''}
                     {k.name}
                   </Text>
+                  {k.review && <Text style={{color: colors.warn, fontWeight: '800', fontSize: 12}}>Cadastro a conferir pela secretaria</Text>}
                   <Text style={ui.copy}>
                     {g?.room || 'Sala'} · desde {new Date(k.inAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}
                   </Text>

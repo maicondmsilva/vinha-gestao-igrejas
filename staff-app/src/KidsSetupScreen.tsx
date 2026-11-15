@@ -2,6 +2,7 @@ import {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, Alert, Pressable, ScrollView, Switch, Text, TextInput, View} from 'react-native';
 import {randomUUID} from 'expo-crypto';
 import {supabase} from './supabase';
+import KidsSessionEditor from './KidsSessionEditor';
 import {colors, ui} from './theme';
 import type {Unit} from './api';
 import {
@@ -22,10 +23,9 @@ import {
   sessionTimes,
 } from '../../shared/kids-setup.ts';
 
-type Tab = 'sessions' | 'team' | 'rooms' | 'classes';
+type Tab = 'sessions' | 'rooms' | 'classes';
 const tabs: [Tab, string][] = [
   ['sessions', 'Sessões'],
-  ['team', 'Equipe'],
   ['rooms', 'Salas'],
   ['classes', 'Turmas'],
 ];
@@ -126,10 +126,10 @@ export default function KidsSetupScreen({org, unit, back, embedded = false}: {or
         <Rooms data={data} busy={busy} op={op} setup={setup} />
       ) : tab === 'classes' ? (
         <Classes data={data} busy={busy} op={op} setup={setup} />
-      ) : tab === 'team' ? (
-        <Team data={data} busy={busy} setup={setup} org={org} unit={unit.id} />
       ) : (
         <Sessions
+          org={org}
+          unit={unit.id}
           data={data}
           busy={busy}
           setup={setup}
@@ -378,148 +378,23 @@ function Classes({data, busy, op, setup}: {data: KidsSetup; busy: boolean; op: O
   );
 }
 
-function Team({data, busy, setup, org, unit}: {data: KidsSetup; busy: boolean; setup: Setup; org: string; unit: string}) {
-  const [q, setQ] = useState(''),
-    [found, setFound] = useState<{id: string; name: string}[]>([]),
-    [role, setRole] = useState<KidsTeamRole>('teacher'),
-    [classId, setClassId] = useState('');
-  useEffect(() => {
-    let live = true;
-    if (q.trim().length < 2 || !supabase) {
-      setFound([]);
-      return;
-    }
-    const t = setTimeout(() => {
-      void supabase!.rpc('kids_setup', {p_org: org, p_unit: unit, p_action: 'people', p_data: {q: q.trim()}}).then((r) => {
-        if (live && !r.error)
-          setFound(((r.data as {items?: {id: string; name: string}[]})?.items || []).filter((p) => !data.team.some((t) => t.personId === p.id)));
-      });
-    }, 300);
-    return () => {
-      live = false;
-      clearTimeout(t);
-    };
-  }, [q, org, unit, data.team]);
-  const className = (id: string | null) => data.classes.find((c) => c.id === id)?.name || 'qualquer turma';
-  return (
-    <>
-      <Text style={ui.copy}>Monte a equipe sem precisar de sessão. Nas sessões repetidas, cada pessoa já entra escalada na turma dela.</Text>
-      {data.team.map((t) => (
-        <View key={t.id} style={[ui.card, {flexDirection: 'row', alignItems: 'center', gap: 8}]}>
-          <View style={{flex: 1}}>
-            <Text style={ui.h2}>{t.name}</Text>
-            <Text style={ui.copy}>
-              {kidsTeamRoles.find(([k]) => k === t.role)?.[1]}
-              {['teacher', 'assistant'].includes(t.role) ? ' · ' + className(t.classId) : ''}
-              {t.active ? '' : ' · afastado'}
-              {t.unavailable?.length ? ' · indisponível em ' + t.unavailable.length + ' dia(s)' : ''}
-            </Text>
-            <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6}}>
-              {[0, 1, 2, 3].map((n) => (
-                <Chip
-                  key={n}
-                  on={(t.rotation || 0) === n}
-                  label={n ? 'Equipe ' + rotationLetter(n) : 'Sempre'}
-                  onPress={() =>
-                    void setup(
-                      'team_save',
-                      {id: t.id, version: t.version, role: t.role, classId: t.classId || '', canCare: t.canCare, active: t.active, rotation: n || ''},
-                      n ? 'Agora serve na equipe ' + rotationLetter(n) + ' do revezamento.' : 'Serve em todas as sessões.',
-                    )
-                  }
-                />
-              ))}
-            </View>
-          </View>
-          <Switch
-            accessibilityLabel={'Ativo na equipe: ' + t.name}
-            value={t.active}
-            disabled={busy}
-            onValueChange={(v) =>
-              void setup(
-                'team_save',
-                {id: t.id, version: t.version, role: t.role, classId: t.classId || '', canCare: t.canCare, active: v},
-                v ? 'Voltou para a equipe.' : 'Afastado da equipe.',
-              )
-            }
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={'Remover ' + t.name}
-            onPress={() => void setup('team_remove', {id: t.id}, 'Removido da equipe.')}
-          >
-            <Text style={{color: colors.muted, fontWeight: '900', fontSize: 18}}>×</Text>
-          </Pressable>
-        </View>
-      ))}
-      <View style={[ui.card, {borderColor: colors.gold}]}>
-        <Text style={ui.h2}>Adicionar à equipe</Text>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
-          {kidsTeamRoles.map(([k, l]) => (
-            <Chip key={k} on={role === k} label={l} onPress={() => setRole(k)} />
-          ))}
-        </View>
-        {['teacher', 'assistant'].includes(role) && (
-          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
-            <Chip on={!classId} label="Qualquer turma" onPress={() => setClassId('')} />
-            {data.classes
-              .filter((c) => c.active)
-              .map((c) => (
-                <Chip key={c.id} on={classId === c.id} label={c.name} onPress={() => setClassId(c.id)} />
-              ))}
-          </View>
-        )}
-        <TextInput style={ui.input} placeholder="Buscar pelo nome" placeholderTextColor={colors.muted} value={q} onChangeText={setQ} maxLength={80} />
-        {found.map((p) => (
-          <Pressable
-            key={p.id}
-            accessibilityRole="button"
-            disabled={busy}
-            style={[ui.chip, {alignSelf: 'flex-start'}]}
-            onPress={() =>
-              void setup(
-                'team_save',
-                {
-                  id: randomUUID(),
-                  personId: p.id,
-                  role,
-                  classId: ['teacher', 'assistant'].includes(role) ? classId : '',
-                  canCare: role === 'teacher',
-                  active: true,
-                },
-                p.name + ' entrou na equipe.',
-              ).then((ok) => ok && setQ(''))
-            }
-          >
-            <Text style={{color: colors.brand, fontWeight: '800'}}>+ {p.name}</Text>
-          </Pressable>
-        ))}
-        <Text style={[ui.copy, {fontSize: 13}]}>Só aparecem adultos com conta ativa no app da igreja.</Text>
-      </View>
-    </>
-  );
-}
-
-const blankSeries = (): KidsSeries => ({
-  id: randomUUID(),
-  name: '',
-  rule: 'weekly',
-  weekdays: [0],
-  monthDay: 1,
-  monthWeek: 1,
-  startsTime: '09:00',
-  durationMinutes: 120,
-  validFrom: today(),
-  validUntil: null,
-  openBeforeHours: 24,
-  rooms: [],
-  autoTeam: true,
-  active: true,
-  version: 0,
-  next: [],
-});
-
-function Sessions({data, busy, setup, op, report}: {data: KidsSetup; busy: boolean; setup: Setup; op: Op; report: () => Promise<KidsReportRow[]>}) {
+function Sessions({
+  data,
+  busy,
+  setup,
+  op,
+  report,
+  org,
+  unit,
+}: {
+  data: KidsSetup;
+  busy: boolean;
+  setup: Setup;
+  op: Op;
+  report: () => Promise<KidsReportRow[]>;
+  org: string;
+  unit: string;
+}) {
   const [rows, setRows] = useState<KidsReportRow[] | null>(null),
     [sessionEdit, setSessionEdit] = useState<{id: string; version: number; name: string; date: string; start: string; end: string} | null>(null);
   const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
@@ -545,39 +420,10 @@ function Sessions({data, busy, setup, op, report}: {data: KidsSetup; busy: boole
     ) : (
       <Ghost label="Ver relatório das sessões" onPress={() => void report().then(setRows)} />
     );
-  const [edit, setEdit] = useState<KidsSeries | null>(null),
-    [problem, setProblem] = useState('');
-  async function save() {
-    if (!edit) return;
-    const p = seriesProblem(edit);
-    if (p) return setProblem(p);
-    setProblem('');
-    const {next: _next, ...payload} = edit;
-    if (
-      await setup(
-        'series_save',
-        {...payload, monthDay: edit.monthDay ?? '', monthWeek: edit.monthWeek ?? '', validUntil: edit.validUntil || ''},
-        'Repetição salva. As sessões são criadas sozinhas.',
-      )
-    ) {
-      await setup(
-        'series_options',
-        {id: edit.id, rotationGroups: edit.rotationGroups || 1, autoOpen: !!edit.autoOpen},
-        'Repetição salva. As sessões são criadas sozinhas.',
-      );
-      setEdit(null);
-    }
-  }
-  const toggleRoom = (r: KidsSeriesRoom) => {
-    if (!edit) return;
-    const has = edit.rooms.some((x) => x.roomId === r.roomId && x.classId === r.classId);
-    setEdit({...edit, rooms: has ? edit.rooms.filter((x) => !(x.roomId === r.roomId && x.classId === r.classId)) : [...edit.rooms, r]});
-  };
-  const roomName = (id: string) => data.rooms.find((r) => r.id === id)?.name || 'Sala';
-  const className = (id: string) => data.classes.find((c) => c.id === id)?.name || 'Turma';
   return (
     <>
-      <Text style={ui.over}>PRÓXIMAS SESSÕES</Text>
+      <KidsSessionEditor data={data} busy={busy} setup={setup} org={org} unit={unit} />
+      <Text style={ui.over}>PRÓXIMAS DATAS</Text>
       {!data.sessions.length ? (
         <Text style={ui.copy}>Nenhuma sessão nos próximos dias.</Text>
       ) : (
@@ -704,171 +550,6 @@ function Sessions({data, busy, setup, op, report}: {data: KidsSetup; busy: boole
         ))
       )}
       <Report />
-      <Text style={ui.over}>REPETIÇÕES</Text>
-      {data.series.map((s) => (
-        <Pressable
-          key={s.id}
-          accessibilityRole="button"
-          onPress={() => setEdit({...s, weekdays: [...s.weekdays]})}
-          style={[ui.card, !s.active && {opacity: 0.6}]}
-        >
-          <Text style={ui.h2}>{s.name}</Text>
-          <Text style={ui.copy}>
-            {describeSeries(s)} · {s.durationMinutes} min · {s.rooms.length} sala(s)
-          </Text>
-          <Text style={[ui.copy, {fontSize: 13}]}>
-            {s.active ? 'Próximas: ' + (s.next.map((d) => d.split('-').reverse().slice(0, 2).join('/')).join(', ') || '—') : 'Pausada'} · famílias reservam{' '}
-            {openBeforeOptions.find(([h]) => h === s.openBeforeHours)?.[1] || s.openBeforeHours + ' h antes'}
-          </Text>
-        </Pressable>
-      ))}
-      {!edit ? (
-        <Pressable accessibilityRole="button" style={ui.primary} onPress={() => setEdit(blankSeries())}>
-          <Text style={ui.primaryText}>+ Nova sessão que se repete</Text>
-        </Pressable>
-      ) : (
-        <View style={[ui.card, {borderColor: colors.gold, borderWidth: 2}]}>
-          <Text style={ui.h2}>{edit.version ? 'Editar repetição' : 'Nova repetição'}</Text>
-          <TextInput
-            style={ui.input}
-            placeholder="Nome (ex.: Kids domingo manhã)"
-            placeholderTextColor={colors.muted}
-            value={edit.name}
-            onChangeText={(v) => setEdit({...edit, name: v})}
-            maxLength={100}
-          />
-          <Text style={ui.label}>Repete</Text>
-          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
-            {kidsRuleLabels.map(([k, l]) => (
-              <Chip
-                key={k}
-                on={edit.rule === k}
-                label={l}
-                onPress={() => setEdit({...edit, rule: k, weekdays: k === 'monthly_week' ? edit.weekdays.slice(0, 1) : edit.weekdays})}
-              />
-            ))}
-          </View>
-          {(edit.rule === 'weekly' || edit.rule === 'monthly_week') && (
-            <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
-              {weekdayShort.map((d, i) => (
-                <Chip
-                  key={d}
-                  on={edit.weekdays.includes(i)}
-                  label={d}
-                  onPress={() =>
-                    setEdit({
-                      ...edit,
-                      weekdays: edit.rule === 'monthly_week' ? [i] : edit.weekdays.includes(i) ? edit.weekdays.filter((x) => x !== i) : [...edit.weekdays, i],
-                    })
-                  }
-                />
-              ))}
-            </View>
-          )}
-          {edit.rule === 'monthly_week' && (
-            <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <Chip key={n} on={edit.monthWeek === n} label={n + 'ª semana'} onPress={() => setEdit({...edit, monthWeek: n})} />
-              ))}
-            </View>
-          )}
-          {edit.rule === 'monthly_day' && (
-            <TextInput
-              style={[ui.input, {width: 110}]}
-              keyboardType="number-pad"
-              placeholder="Dia"
-              value={String(edit.monthDay || '')}
-              onChangeText={(v) => setEdit({...edit, monthDay: Math.min(31, Number(v.replace(/\D/g, '')) || 0) || null})}
-            />
-          )}
-          <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-            <Text style={ui.label}>Início</Text>
-            <TextInput
-              style={[ui.input, {width: 90}]}
-              keyboardType="number-pad"
-              value={edit.startsTime}
-              onChangeText={(v) => setEdit({...edit, startsTime: timeMask(v)})}
-            />
-            <Text style={ui.label}>Duração (min)</Text>
-            <TextInput
-              style={[ui.input, {width: 80}]}
-              keyboardType="number-pad"
-              value={String(edit.durationMinutes)}
-              onChangeText={(v) => setEdit({...edit, durationMinutes: Number(v.replace(/\D/g, '').slice(0, 3)) || 0})}
-            />
-          </View>
-          <Text style={ui.copy}>{describeSeries(edit)}</Text>
-          <Text style={ui.label}>Famílias podem reservar</Text>
-          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
-            {openBeforeOptions.map(([h, l]) => (
-              <Chip key={h} on={edit.openBeforeHours === h} label={l} onPress={() => setEdit({...edit, openBeforeHours: h})} />
-            ))}
-          </View>
-          <Text style={ui.label}>Salas e turmas</Text>
-          {!data.rooms.length || !data.classes.length ? (
-            <Text style={ui.copy}>Crie salas e turmas nas abas ao lado.</Text>
-          ) : (
-            data.rooms
-              .filter((r) => r.active)
-              .map((r) => (
-                <View key={r.id} style={{gap: 6}}>
-                  <Text style={{color: colors.text, fontWeight: '700'}}>{r.name}</Text>
-                  <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
-                    {data.classes
-                      .filter((c) => c.active)
-                      .map((c) => (
-                        <Chip
-                          key={c.id}
-                          on={edit.rooms.some((x) => x.roomId === r.id && x.classId === c.id)}
-                          label={c.name}
-                          onPress={() => toggleRoom({roomId: r.id, classId: c.id, capacity: r.capacity, minStaff: 1})}
-                        />
-                      ))}
-                  </View>
-                </View>
-              ))
-          )}
-          {!!edit.rooms.length && (
-            <Text style={[ui.copy, {fontSize: 13}]}>{edit.rooms.map((x) => roomName(x.roomId) + ' · ' + className(x.classId)).join('  |  ')}</Text>
-          )}
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-            <Switch accessibilityLabel="Escalar a equipe fixa automaticamente" value={edit.autoTeam} onValueChange={(v) => setEdit({...edit, autoTeam: v})} />
-            <Text style={[ui.copy, {flex: 1}]}>Escalar a equipe fixa automaticamente (cada um na turma dele)</Text>
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-            <Switch accessibilityLabel="Abrir sozinha no horário" value={!!edit.autoOpen} onValueChange={(v) => setEdit({...edit, autoOpen: v})} />
-            <Text style={[ui.copy, {flex: 1}]}>Abrir sozinha 30 min antes, se cada sala tiver a equipe mínima</Text>
-          </View>
-          <Text style={ui.label}>Revezamento da equipe</Text>
-          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
-            {[1, 2, 3].map((n) => (
-              <Chip
-                key={n}
-                on={(edit.rotationGroups || 1) === n}
-                label={n === 1 ? 'Sem revezamento' : n + ' equipes (A' + (n === 3 ? ', B e C' : ' e B') + ')'}
-                onPress={() => setEdit({...edit, rotationGroups: n})}
-              />
-            ))}
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-            <Switch accessibilityLabel="Repetição ativa" value={edit.active} onValueChange={(v) => setEdit({...edit, active: v})} />
-            <Text style={[ui.copy, {flex: 1}]}>{edit.active ? 'Ativa' : 'Pausada'}</Text>
-          </View>
-          {!!problem && <Text style={ui.error}>{problem}</Text>}
-          <Pressable accessibilityRole="button" disabled={busy} style={[ui.primary, busy && {opacity: 0.6}]} onPress={() => void save()}>
-            {busy ? <ActivityIndicator color="#fff" /> : <Text style={ui.primaryText}>Salvar repetição</Text>}
-          </Pressable>
-          {!!edit.version && (
-            <Ghost
-              label="Apagar repetição"
-              onPress={() =>
-                void setup('series_delete', {id: edit.id}, 'Repetição apagada. As sessões já criadas continuam.').then((ok) => ok && setEdit(null))
-              }
-            />
-          )}
-          <Ghost label="Cancelar" onPress={() => setEdit(null)} />
-        </View>
-      )}
     </>
   );
 }

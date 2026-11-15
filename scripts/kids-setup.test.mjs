@@ -108,7 +108,7 @@ test('painel Kids em 4 seções e Vinha Equipe com uma entrada', async () => {
   const {kidsPages, kidsSections, kidsSectionOf} = await import('../shared/dashboard-menu.ts');
   assert.deepEqual(
     kidsSections.map(([, l]) => l),
-    ['Hoje', 'Crianças', 'Programação', 'Relatórios'],
+    ['Hoje', 'Crianças', 'Configurar', 'Relatórios'],
   );
   for (const [id] of kidsPages)
     assert.ok(
@@ -134,4 +134,25 @@ test('editar e excluir sem perder histórico', () => {
   const sql = read('supabase/migrations/20261115240000_kids_editar_excluir.sql');
   assert.match(sql, /kids_has_records/);
   assert.match(sql, /skip_dates/);
+});
+
+test('sessão única: não repete ou toda semana, com responsáveis por sala', async () => {
+  const {blankSessionForm, sessionFormProblem, sessionPayload, sessionFormFrom, describeSession} = await import('../shared/kids-setup.ts');
+  const today = new Date(2026, 10, 16);
+  const f = {...blankSessionForm('x', today), name: 'Kids domingo', weekdays: [0, 3], rooms: [{roomId: 'r', classId: 'c', staff: ['t1']}]};
+  assert.equal(sessionFormProblem(f, today), '');
+  assert.equal(describeSession(f), 'Toda semana: Dom e Qua às 09:00');
+  const p = sessionPayload(f, () => 12, today);
+  assert.equal(p.rule, 'weekly');
+  assert.deepEqual(p.rooms[0], {roomId: 'r', classId: 'c', capacity: 12, minStaff: 1, staff: ['t1']});
+  assert.equal(p.autoTeam, false);
+  const once = {...f, repeat: 'once', date: '22/11/2026'};
+  const q = sessionPayload(once, () => 10, today);
+  assert.equal(q.validFrom, '2026-11-22');
+  assert.equal(q.validUntil, '2026-11-22');
+  assert.deepEqual(q.weekdays, [0]);
+  assert.equal(sessionFormFrom({...q, next: [], version: 1, monthDay: null, monthWeek: null}).repeat, 'once');
+  assert.match(sessionFormProblem({...once, date: '01/11/2026'}, today), /passou/);
+  assert.match(sessionFormProblem({...f, weekdays: []}, today), /dia da semana/);
+  assert.match(sessionFormProblem({...f, rooms: []}, today), /sala/);
 });
