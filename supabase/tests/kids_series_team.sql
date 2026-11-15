@@ -52,5 +52,15 @@ select ok((select bookable_from<=now() from private.kids_sessions where series_i
 select ok(pg_get_functiondef('private.member_family(uuid,uuid,text,uuid,integer,jsonb,integer)'::regprocedure) like '%bookable_from<=clock_timestamp()%','app da família vê sessões abertas para reserva');
 select is((select pg_temp.sess()),(select private.kids_series_run()*0+pg_temp.sess()),'rodar de novo não duplica');
 select ok(exists(select 1 from cron.job where jobname='kids-series-run'),'rotina a cada 15 minutos');
+-- Sessão com responsáveis por sala.
+set local role authenticated;select pg_temp.actor('owner');
+select lives_ok($$select pg_temp.setup('series_save',jsonb_build_object('id',pg_temp.ki('serie2'),'name','Kids com sala','rule','daily','weekdays','[]'::jsonb,'startsTime',pg_temp.in3h(),'durationMinutes',60,'validFrom',current_date-1,'openBeforeHours',24,'rooms',jsonb_build_array(jsonb_build_object('roomId',pg_temp.ki('room'),'classId',pg_temp.ki('class'),'capacity',8,'minStaff',1,'staff',jsonb_build_array(pg_temp.ki('t1')))),'autoTeam',false,'active',true))$$,'sessão com responsáveis da sala');
+reset role;
+create function pg_temp.s2() returns uuid language sql security definer as $$select id from private.kids_sessions where series_id=md5('kids-series-test-serie2')::uuid order by starts_at limit 1$$;
+select is((select count(*)::int from private.kids_assignments where session_id=pg_temp.s2() and group_id is not null),1,'responsável escalado na sala');
+set local role authenticated;select pg_temp.actor('owner');
+select lives_ok($$select pg_temp.setup('series_save',jsonb_build_object('id',pg_temp.ki('serie2'),'version',1,'name','Kids com sala','rule','daily','weekdays','[]'::jsonb,'startsTime',pg_temp.in3h(),'durationMinutes',60,'validFrom',current_date-1,'openBeforeHours',24,'rooms',jsonb_build_array(jsonb_build_object('roomId',pg_temp.ki('room'),'classId',pg_temp.ki('class'),'capacity',8,'minStaff',1,'staff',jsonb_build_array(pg_temp.ki('t2')))),'autoTeam',false,'active',true))$$,'troca o responsável da sala');
+reset role;
+select is((select string_agg(role,',') from private.kids_assignments where session_id=pg_temp.s2()),'reception','próxima sessão sem lançamentos é refeita com a equipe nova');
 select * from finish();
 rollback;

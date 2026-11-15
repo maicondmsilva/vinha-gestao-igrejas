@@ -16,7 +16,7 @@ export type KidsTeamMember = {
   unavailable?: string[];
 };
 export type KidsSeriesRule = 'daily' | 'weekly' | 'monthly_day' | 'monthly_week';
-export type KidsSeriesRoom = {roomId: string; classId: string; capacity: number; minStaff: number};
+export type KidsSeriesRoom = {roomId: string; classId: string; capacity: number; minStaff: number; staff?: string[]};
 export type KidsSeries = {
   id: string;
   name: string;
@@ -144,4 +144,111 @@ export function sessionTimes(date: string, start: string, end: string) {
     return null;
   if (e <= s) return null;
   return {startsAt: s.toISOString(), endsAt: e.toISOString()};
+}
+
+/** Formulário único de Sessão: "Não repete" (uma data) ou "Toda semana" (dias marcados). */
+export type SessionForm = {
+  id: string;
+  version: number;
+  name: string;
+  repeat: 'once' | 'weekly' | 'legacy';
+  date: string; // dd/mm/aaaa
+  weekdays: number[];
+  start: string; // HH:MM
+  duration: number;
+  rooms: {roomId: string; classId: string; staff: string[]}[];
+  active: boolean;
+  openBeforeHours: number;
+  legacy?: KidsSeries;
+};
+const isoToBr = (d: string) => d.split('-').reverse().join('/');
+const brToIso = (d: string) => {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d.trim());
+  if (!m) return '';
+  const iso = m[3] + '-' + m[2] + '-' + m[1],
+    t = new Date(iso + 'T12:00:00Z');
+  return Number.isFinite(t.getTime()) && t.toISOString().slice(0, 10) === iso ? iso : '';
+};
+export function blankSessionForm(id: string, today = new Date()): SessionForm {
+  const d = today.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric'});
+  return {id, version: 0, name: '', repeat: 'weekly', date: d, weekdays: [0], start: '09:00', duration: 120, rooms: [], active: true, openBeforeHours: 24};
+}
+export function sessionFormFrom(s: KidsSeries): SessionForm {
+  const once = !!s.validUntil && s.validUntil === s.validFrom && s.rule === 'weekly',
+    weekly = s.rule === 'weekly' || s.rule === 'daily';
+  return {
+    id: s.id,
+    version: s.version,
+    name: s.name,
+    repeat: once ? 'once' : weekly ? 'weekly' : 'legacy',
+    date: isoToBr(s.validFrom),
+    weekdays: s.rule === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : [...s.weekdays],
+    start: s.startsTime,
+    duration: s.durationMinutes,
+    rooms: s.rooms.map((r) => ({roomId: r.roomId, classId: r.classId, staff: [...(r.staff || [])]})),
+    active: s.active,
+    openBeforeHours: s.openBeforeHours,
+    legacy: s,
+  };
+}
+/** O que falta para salvar (texto curto) ou ''. */
+export function sessionFormProblem(f: SessionForm, today = new Date()) {
+  if (f.name.trim().length < 2) return 'Dê um nome para a sessão.';
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(f.start)) return 'Informe o horário (ex.: 09:00).';
+  if (f.repeat === 'once') {
+    const iso = brToIso(f.date);
+    if (!iso) return 'Informe a data (dd/mm/aaaa).';
+    const t = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    if (iso < t) return 'A data já passou.';
+  }
+  if (f.repeat === 'weekly' && !f.weekdays.length) return 'Marque ao menos um dia da semana.';
+  if (!f.rooms.length) return 'Escolha ao menos uma sala com turma.';
+  return '';
+}
+/** Dados para kids_setup('series_save'). */
+export function sessionPayload(f: SessionForm, capacity: (roomId: string) => number, today = new Date()) {
+  const iso = brToIso(f.date),
+    todayIso = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0'),
+    l = f.legacy;
+  const base =
+    f.repeat === 'once'
+      ? {rule: 'weekly', weekdays: [new Date(iso + 'T12:00:00Z').getUTCDay()], monthDay: '', monthWeek: '', validFrom: iso, validUntil: iso}
+      : f.repeat === 'legacy' && l
+        ? {rule: l.rule, weekdays: l.weekdays, monthDay: l.monthDay ?? '', monthWeek: l.monthWeek ?? '', validFrom: l.validFrom, validUntil: l.validUntil || ''}
+        : {
+            rule: 'weekly',
+            weekdays: [...f.weekdays].sort(),
+            monthDay: '',
+            monthWeek: '',
+            validFrom: l && l.validUntil !== l.validFrom ? l.validFrom : todayIso,
+            validUntil: '',
+          };
+  return {
+    id: f.id,
+    version: f.version,
+    name: f.name.trim(),
+    ...base,
+    startsTime: f.start,
+    durationMinutes: f.duration,
+    openBeforeHours: f.openBeforeHours,
+    rooms: f.rooms.map((r) => ({roomId: r.roomId, classId: r.classId, capacity: capacity(r.roomId), minStaff: 1, staff: r.staff})),
+    autoTeam: !!l?.autoTeam && f.rooms.every((r) => !r.staff.length),
+    active: f.active,
+  };
+}
+export const durationOptions: [number, string][] = [
+  [60, '1 h'],
+  [90, '1 h 30'],
+  [120, '2 h'],
+  [150, '2 h 30'],
+  [180, '3 h'],
+];
+/** "Toda semana: Dom e Qua às 09:00" · "Só em 20/11 às 19:30". */
+export function describeSession(f: SessionForm) {
+  if (f.repeat === 'once') return 'Só em ' + f.date.slice(0, 5) + ' às ' + f.start;
+  if (f.repeat === 'legacy' && f.legacy) return describeSeries(f.legacy);
+  const days = [...f.weekdays].sort().map((d) => weekdayShort[d]);
+  return (
+    (days.length === 7 ? 'Todo dia' : 'Toda semana: ' + (days.length > 1 ? days.slice(0, -1).join(', ') + ' e ' + days.at(-1) : days[0])) + ' às ' + f.start
+  );
 }

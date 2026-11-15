@@ -51,6 +51,8 @@ export type KidsPresence = {
   version: number;
   /** Número da etiqueta no encontro (aparece no telão no lugar do nome). */
   tag?: number;
+  /** Cadastro feito pelo app ainda não conferido pela secretaria (não impede a entrada). */
+  review?: boolean;
   inAt: string;
   outAt: string | null;
   hold: boolean;
