@@ -1,7 +1,7 @@
 // Kids · configuração sem sessão ativa: salas, turmas, equipe fixa e sessões que se repetem.
 // Usado pelo painel (Kids › Equipe e repetições) e pelo Vinha Equipe (Configurar Kids).
-export type KidsSetupRoom = {id: string; name: string; location: string; capacity: number; active: boolean; version: number};
-export type KidsSetupClass = {id: string; name: string; minMonths: number; maxMonths: number; active: boolean; version: number};
+export type KidsSetupRoom = {id: string; name: string; location: string; capacity: number; active: boolean; version: number; locked?: boolean};
+export type KidsSetupClass = {id: string; name: string; minMonths: number; maxMonths: number; active: boolean; version: number; locked?: boolean};
 export type KidsTeamRole = 'supervisor' | 'reception' | 'teacher' | 'assistant';
 export type KidsTeamMember = {
   id: string;
@@ -48,6 +48,8 @@ export type KidsSetupSession = {
   rooms: number;
   staff: number;
   version: number;
+  /** Já tem lançamentos (entrada, reserva ou retirada): não pode ser excluído, só desativado. */
+  locked?: boolean;
 };
 export type KidsSetup = {rooms: KidsSetupRoom[]; classes: KidsSetupClass[]; team: KidsTeamMember[]; series: KidsSeries[]; sessions: KidsSetupSession[]};
 
@@ -107,9 +109,11 @@ export const kidsSetupError = (m: string) =>
       ? 'Somente a coordenação do Kids configura salas, equipe e sessões.'
       : /version_conflict/.test(m)
         ? 'Alguém alterou isso agora. Atualize e tente de novo.'
-        : /in_use/.test(m)
-          ? 'Está em uso numa sessão aberta. Encerre a sessão antes.'
-          : 'Revise os dados e tente de novo.';
+        : /has_records/.test(m)
+          ? 'Já tem lançamentos (entradas ou reservas). Para guardar o histórico, desative em vez de excluir.'
+          : /in_use/.test(m)
+            ? 'Está em uso numa sessão aberta. Encerre a sessão antes.'
+            : 'Revise os dados e tente de novo.';
 
 export type KidsReportRow = {
   id: string;
@@ -126,3 +130,18 @@ export type KidsReportRow = {
 export const rotationLetter = (n?: number | null) => (n ? String.fromCharCode(64 + n) : '');
 /** Ocupação da sessão em %, para o relatório. */
 export const occupancy = (r: Pick<KidsReportRow, 'children' | 'capacity'>) => (r.capacity ? Math.round((r.children / r.capacity) * 100) : 0);
+
+/** Data dd/mm/aaaa + horários HH:MM (hora do aparelho) → início e fim em ISO; null se inválido. */
+export function sessionTimes(date: string, start: string, end: string) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(date.trim()),
+    a = /^(\d{2}):(\d{2})$/.exec(start.trim()),
+    b = /^(\d{2}):(\d{2})$/.exec(end.trim());
+  if (!m || !a || !b) return null;
+  const at = (h: string, mi: string) => new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(h), Number(mi));
+  const s = at(a[1]!, a[2]!),
+    e = at(b[1]!, b[2]!);
+  if (s.getDate() !== Number(m[1]) || s.getMonth() !== Number(m[2]) - 1 || Number(a[1]) > 23 || Number(b[1]) > 23 || Number(a[2]) > 59 || Number(b[2]) > 59)
+    return null;
+  if (e <= s) return null;
+  return {startsAt: s.toISOString(), endsAt: e.toISOString()};
+}
