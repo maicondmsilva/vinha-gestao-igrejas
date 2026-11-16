@@ -89,3 +89,15 @@
 .pb-msg{flex:none;font-size:13px;font-weight:700;color:#fff;background:#1f8f4e;border-radius:9px;padding:6px 10px;text-decoration:none}
 .pb-nophone{flex:none;font-size:12px;color:#8a978e}
 @media(max-width:640px){.pb-seg{width:100%}.pb-seg button{flex:1;padding:8px 6px}.pb-list{grid-template-columns:1fr}}
+/* Pessoas v2: círculo com foto, criança, nome sem cortes e celular sem sobreposição */
+.pa{position:relative;flex:none;border-radius:50%;display:inline-grid;place-items:center;background:#e4efe8;color:var(--tenant,#285c45)}.pa img{width:100%;height:100%;border-radius:50%;object-fit:cover}.pa i{font-style:normal;font-weight:700;font-size:14px}
+.pa-kid{box-shadow:0 0 0 2px #fff,0 0 0 4px #e0a82e;background:#fff4dc;color:#8a5a00}.pa-badge{position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;background:#e0a82e;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;border:2px solid #fff}
+.pd-person b{white-space:normal;overflow:visible;text-overflow:clip;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
+.pd-person small{white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pd-age{font-style:normal;font-weight:500;color:#5f6f64;font-size:13px}
+.pd-kid-tag{display:inline-block;margin-right:6px;padding:0 7px;border-radius:999px;background:#fff1cf;color:#8a5a00;font-weight:700;font-size:11px;line-height:18px}
+.pd-pill.kid{background:#fff1cf;color:#8a5a00}
+.pd-group{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pd-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:900px){.pd-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.pd-views{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.pd-views::-webkit-scrollbar{display:none}.pd-views button{flex:none}}
+@media(max-width:480px){.pd-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pd-kpis button:first-child{grid-column:1/-1}}

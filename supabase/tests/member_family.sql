@@ -45,7 +45,9 @@ select throws_ok($$select pg_temp.admin('kids.requests')$$,'42501','family_denie
 select lives_ok($$select pg_temp.self('kids.create',null,null,jsonb_build_object('nonce','new-child-fixture','name','Nova criança fictícia','birth',(current_date-interval '5 years')::date,'care','Cuidado fictício para conferência'))$$,'envia criança para revisão');
 select lives_ok($$select pg_temp.self('kids.create',null,null,jsonb_build_object('nonce','new-child-fixture','name','Nova criança fictícia','birth',(current_date-interval '5 years')::date,'care','Cuidado fictício para conferência'))$$,'reenvio da solicitação é idempotente');
 select is(jsonb_array_length(pg_temp.self('kids.list')->'children'),2,'cadastro feito no app já fica ativo para o responsável');
-reset role;select is((select g.relationship from private.member_family_requests r join private.kids_guardians g on g.profile_id=r.profile_id where r.data->>'name'='Nova criança fictícia'),'Responsável (a conferir)','vínculo fica marcado para a secretaria conferir');
+reset role;select is((select g.relationship from private.member_family_requests r join private.kids_guardians g on g.profile_id=r.profile_id where r.data->>'name'='Nova criança fictícia'),'Pai/Mãe (a conferir)','vínculo fica marcado para a secretaria conferir');
+select is((select count(*)::int from private.person_relationships x join private.member_family_requests r on r.data->>'name'='Nova criança fictícia' join private.kids_profiles k on k.id=r.profile_id where x.person_id=k.person_id and x.related_person_id=r.person_id and x.relation='pai_mae'),1,'criança entra na família do responsável');
+select is((select journey_status from public.people p join private.kids_profiles k on k.person_id=p.id join private.member_family_requests r on r.profile_id=k.id where r.data->>'name'='Nova criança fictícia'),'Criança','etapa Criança, não Visitante');
 select pg_temp.actor('member');set local role authenticated;
 select is(jsonb_array_length(pg_temp.self('kids.list')->'requests'),1,'solicitação única visível ao autor');
 select lives_ok($$select pg_temp.self('kids.edit',pg_temp.fi('child-profile'),null,jsonb_build_object('nonce','child-edit-stale','name','child criança fictícia','birth',(current_date-interval '7 years')::date,'care','Orientação anterior enviada para revisão'))$$,'responsável solicita alteração sem reescrever o cadastro');
@@ -69,7 +71,7 @@ select is(jsonb_array_length(pg_temp.admin('kids.requests')->'items'),2,'gestão
 select throws_ok($$select pg_temp.admin('kids.review',pg_temp.request_id('new-child-fixture'),1,'{"decision":"approved","reason":"Cadastro fictício conferido","verification":"","existingProfile":""}')$$,'22023','family_verification_required','aprovação exige conferência documentada');
 select lives_ok($$select pg_temp.admin('kids.review',pg_temp.request_id('new-child-fixture'),1,'{"decision":"approved","reason":"Cadastro fictício conferido","verification":"Vínculo e identidade conferidos em homologação fictícia","existingProfile":""}')$$,'aprovação cria Pessoas, perfil e responsável conferido');
 reset role;
-select is((select g.relationship from private.member_family_requests r join private.kids_guardians g on g.profile_id=r.profile_id where r.data->>'name'='Nova criança fictícia'),'Responsável conferido','secretaria confere o vínculo criado no app');
+select is((select g.relationship from private.member_family_requests r join private.kids_guardians g on g.profile_id=r.profile_id where r.data->>'name'='Nova criança fictícia'),'Pai/Mãe','secretaria confere o vínculo criado no app e mantém o grau');
 select is((select count(*)::int from public.people where full_name='Nova criança fictícia'),1,'aprovação não duplica a criança');
 update private.kids_care set instructions='Orientação mais recente da equipe',version=version+1 where profile_id=pg_temp.fi('child-profile');
 select pg_temp.actor('owner');set local role authenticated;

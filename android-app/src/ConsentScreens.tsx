@@ -5,12 +5,12 @@ import {supabase} from './supabase';
 import {onBrand} from './experience-model';
 
 type Palette={bg:string;surface:string;text:string;muted:string;line:string;brand:string;accent:string};
-export type ConsentKind='adult_data'|'adult_image'|'kids_guardian'|'kids_image';
+export type ConsentKind=string;
 type Template={version:number;title:string;body:string};
 export type ConsentItem={id:string;code:string;kind:ConsentKind;version:number;title:string;choices:Record<string,boolean>;signerName:string;subjectName:string;kidsProfile:string|null;acceptedAt:string;sha256:string};
-type Data={templates:Record<ConsentKind,Template>;items:ConsentItem[]};
+type Data={templates:Record<ConsentKind,Template>;items:ConsentItem[];custom?:{kind:string;title:string;audience:'adult'|'kids'}[]};
 const choiceLabels:[string,string][]=[['photos','Fotos'],['videos','Vídeos'],['social','Redes sociais da igreja'],['live','Transmissões ao vivo']];
-const short:Record<ConsentKind,string>={adult_data:'Dados pessoais',adult_image:'Uso de imagem e voz',kids_guardian:'Responsável pela criança',kids_image:'Imagem da criança'};
+const fixedShort:Record<string,string>={adult_data:'Dados pessoais',adult_image:'Uso de imagem e voz',kids_guardian:'Responsável pela criança',kids_image:'Imagem da criança'};
 const device=()=>(Platform.OS==='android'?'Android ':Platform.OS==='ios'?'iOS ':'')+String(Platform.Version||'')+' · aplicativo da igreja';
 
 /** Termos da conta: textos vigentes da igreja e aceites válidos. */
@@ -42,7 +42,7 @@ function SignForm({org,unit,kind,child,childName,template,palette:p,defaultName,
   onDone((r.data as {item:ConsentItem}).item);
  }
  return <View style={[s.card,{backgroundColor:p.surface,borderColor:ac}]}>
-  <Text style={[s.over,{color:ac}]}>{short[kind].toUpperCase()}{childName?' · '+childName.toUpperCase():''}</Text>
+  <Text style={[s.over,{color:ac}]}>{(fixedShort[kind]||template.title).toUpperCase()}{childName?' · '+childName.toUpperCase():''}</Text>
   <Text style={{color:p.text,fontWeight:'900',fontSize:17}}>{template.title}</Text>
   <ScrollView nestedScrollEnabled style={[s.body,{borderColor:p.line,backgroundColor:p.bg}]}><Text style={{color:p.text,lineHeight:22}}>{template.body}</Text></ScrollView>
   {image&&<><Text style={{color:p.text,fontWeight:'800',marginTop:10}}>{kind==='kids_image'?'O que você autoriza para a criança':'O que você autoriza'}</Text>
@@ -62,13 +62,16 @@ function SignForm({org,unit,kind,child,childName,template,palette:p,defaultName,
 export function ConsentBlock({org,unit,kinds,child,childName,data,palette:p,defaultName,onChanged}:{org:string;unit:string;kinds:ConsentKind[];child?:string;childName?:string;data:Data|null;palette:Palette;defaultName:string;onChanged:()=>void}){
  const [signing,setSigning]=useState<ConsentKind|null>(null),[notice,setNotice]=useState(''),ac=p.accent;
  if(!data)return null;
+ // Termos criados pela igreja entram junto: os de adulto no perfil, os de criança no Kids.
+ const kids=kinds.some(k=>k.startsWith('kids_')),all=[...kinds,...(data.custom||[]).filter(c=>(c.audience==='kids')===kids&&data.templates[c.kind]).map(c=>c.kind)];
+ const short=(k:string)=>fixedShort[k]||data.templates[k]?.title||'Termo';
  const mine=(k:ConsentKind)=>data.items.find(i=>i.kind===k&&(child?i.kidsProfile===child:!i.kidsProfile));
  return <View>
   {!!notice&&<Text accessibilityRole="alert" style={{color:p.text,marginBottom:6}}>{notice}</Text>}
-  {kinds.map(k=>{const it=mine(k);if(signing===k)return <SignForm key={k} org={org} unit={unit} kind={k} child={child} childName={childName} template={data.templates[k]} palette={p} defaultName={defaultName} onCancel={()=>setSigning(null)} onDone={i=>{setSigning(null);setNotice('Termo assinado. Código '+i.code+'.');onChanged()}}/>;
+  {all.map(k=>{const it=mine(k);if(signing===k)return <SignForm key={k} org={org} unit={unit} kind={k} child={child} childName={childName} template={data.templates[k]} palette={p} defaultName={defaultName} onCancel={()=>setSigning(null)} onDone={i=>{setSigning(null);setNotice('Termo assinado. Código '+i.code+'.');onChanged()}}/>;
    return <View key={k} style={[s.line,{borderColor:p.line}]}>
     <View style={[s.dot,{backgroundColor:it?ac:'transparent',borderColor:it?ac:p.muted}]}>{it&&<Text style={{color:onBrand(ac),fontSize:11,fontWeight:'900'}}>✓</Text>}</View>
-    <View style={{flex:1}}><Text style={{color:p.text,fontWeight:'800'}}>{short[k]}</Text>
+    <View style={{flex:1}}><Text style={{color:p.text,fontWeight:'800'}}>{short(k)}</Text>
      <Text style={{color:p.muted,fontSize:12}}>{it?`Assinado em ${new Date(it.acceptedAt).toLocaleDateString('pt-BR')} · ${it.code}`+(Object.keys(it.choices||{}).length?' · '+choiceLabels.filter(([c])=>it.choices[c]).map(([,l])=>l).join(', ')||' · nenhuma autorização':''):'Ainda não assinado'}</Text></View>
     {it?<Pressable accessibilityRole="link" onPress={()=>void openPdf(org,unit,it.id).catch(e=>setNotice(e.message))}><Text style={{color:ac,fontWeight:'800'}}>PDF</Text></Pressable>:null}
     <Pressable accessibilityRole="button" onPress={()=>{setNotice('');setSigning(k)}} style={[s.small,{backgroundColor:it?'transparent':p.brand,borderWidth:it?1:0,borderColor:p.line}]}><Text style={{color:it?p.text:onBrand(p.brand),fontWeight:'800',fontSize:13}}>{it?'Atualizar':'Assinar'}</Text></Pressable>

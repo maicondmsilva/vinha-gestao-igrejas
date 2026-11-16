@@ -4,6 +4,8 @@ import {useCallback,useEffect,useState} from 'react';
 import './people-directory.css';
 import './people-tools.css';
 import type {Person} from './pessoas/types';
+import PersonAvatar from './pessoas/PersonAvatar';
+import {personAgeLabel} from '../shared/person-age';
 import MemberChurchAdmin from './MemberChurchAdmin';
 import PendingProfiles from './PendingProfiles';
 import PeopleBirthdays from './PeopleBirthdays';
@@ -29,7 +31,7 @@ export default function PeopleDirectory({unitId,unitName='',onAdd,onSelect,revis
  const[q,setQ]=useState(''),[status,setStatus]=useState(''),[group,setGroup]=useState(''),[adv,setAdv]=useState<Adv>(noAdv),[options,setOptions]=useState<Options|null>(null),[showFilters,setShowFilters]=useState(false),[page,setPage]=useState(1),[people,setPeople]=useState<Person[]>([]),[pagination,setPagination]=useState<Pagination>({page:1,limit:25,total:0,pages:1}),[loading,setLoading]=useState(true),[error,setError]=useState('');
  const[selected,setSelected]=useState<Map<string,string>>(new Map()),[exporting,setExporting]=useState(''),[notice,setNotice]=useState('');
  const tenant=typeof window==='undefined'?'':new URLSearchParams(location.search).get('tenant')||'';
- const [counts,setCounts]=useState<Record<string,number|null>>({all:null,Membro:null,'Em integração':null,Visitante:null});
+ const [counts,setCounts]=useState<Record<string,number|null>>({all:null,Membro:null,'Em integração':null,Visitante:null,'Criança':null});
  const rev=revision+localRev;
  const listParams=useCallback(()=>{const params=new URLSearchParams();if(q.trim())params.set('q',q.trim());if(status)params.set('status',status);if(group.trim())params.set('group',group.trim());if(/^[0-9a-f]{8}-/i.test(unitId))params.set('unitId',unitId);if(tenant)params.set('tenant',tenant);for(const [k,v] of Object.entries(advParams(adv)))params.set(k,v);return params},[q,status,group,unitId,tenant,adv]);
  useEffect(()=>{Promise.resolve().then(()=>setPage(1))},[q,status,group,unitId,adv]);
@@ -41,14 +43,14 @@ export default function PeopleDirectory({unitId,unitName='',onAdd,onSelect,revis
  },[listParams,page,rev]);
  // Contadores das abas numa chamada só.
  useEffect(()=>{const c=new AbortController();const p=new URLSearchParams({counts:'1'});if(/^[0-9a-f]{8}-/i.test(unitId))p.set('unitId',unitId);if(tenant)p.set('tenant',tenant);
-  fetch('/api/people?'+p,{signal:c.signal}).then(r=>r.ok?r.json():null).then((d:{counts?:Record<string,number>}|null)=>{if(!c.signal.aborted&&d?.counts)setCounts({all:d.counts.all??null,Membro:d.counts.Membro??null,'Em integração':d.counts['Em integração']??null,Visitante:d.counts.Visitante??null})}).catch(()=>undefined);
+  fetch('/api/people?'+p,{signal:c.signal}).then(r=>r.ok?r.json():null).then((d:{counts?:Record<string,number>}|null)=>{if(!c.signal.aborted&&d?.counts)setCounts({all:d.counts.all??null,Membro:d.counts.Membro??null,'Em integração':d.counts['Em integração']??null,Visitante:d.counts.Visitante??null,'Criança':d.counts['Criança']??null})}).catch(()=>undefined);
   return()=>c.abort()},[unitId,tenant,rev]);
  useEffect(()=>{if(!showFilters||options||!/^[0-9a-f-]{36}$/i.test(unitId))return;const c=new AbortController();
   fetch('/api/people/options?'+new URLSearchParams({unit:unitId,...(tenant?{tenant}:{})}),{cache:'no-store',signal:c.signal}).then(r=>r.ok?r.json():null).then((d:Options|null)=>{if(d)setOptions(d)}).catch(()=>undefined);
   return()=>c.abort()},[showFilters,options,unitId,tenant]);
  const onDupCount=useCallback((n:number)=>setDupCount(n),[]);
  const pages=Array.from({length:Math.min(5,pagination.pages)},(_,index)=>Math.max(1,Math.min(page-2,pagination.pages-4))+index);
- const statusTabs:[string,string,number|null][]=[['','Todos',counts.all],['Membro','Membros',counts.Membro],['Em integração','Em integração',counts['Em integração']],['Visitante','Visitantes',counts.Visitante]];
+ const statusTabs:[string,string,number|null][]=[['','Todos',counts.all],['Membro','Membros',counts.Membro],['Em integração','Em integração',counts['Em integração']],['Visitante','Visitantes',counts.Visitante],['Criança','Crianças',counts['Criança']]];
  const initials=(p:Person)=>p.initials||p.name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
  const openById=(id:string)=>void fetch('/api/people?'+new URLSearchParams({id,limit:'1',...(tenant?{tenant}:{})}),{cache:'no-store'}).then(r=>r.ok?r.json():null).then((d:{people?:Person[]}|null)=>{const p=d?.people?.[0];if(p)onSelect(p)}).catch(()=>undefined);
  const filters=advCount(adv,group);
@@ -107,9 +109,9 @@ export default function PeopleDirectory({unitId,unitName='',onAdd,onSelect,revis
     <div className="pd-row pd-th"><label className="pd-check"><span className="sr-only">Selecionar a página</span><input type="checkbox" checked={allOnPage} disabled={!pageIds.length} onChange={togglePage}/></label><span aria-hidden="true">Pessoa</span><span aria-hidden="true">Contato</span><span aria-hidden="true">Etapa</span><span aria-hidden="true">Grupo</span><span aria-hidden="true">Desde</span></div>
     {loading&&!people.length?<div className="pd-empty" role="status">Carregando pessoas…</div>:people.map(person=><div className={'pd-row'+(person.id&&selected.has(person.id)?' sel':'')} key={person.id}>
      <label className="pd-check"><span className="sr-only">Selecionar {person.name}</span><input type="checkbox" checked={!!person.id&&selected.has(person.id)} onChange={()=>toggle(person)}/></label>
-     <button type="button" className="pd-person" onClick={()=>person.id&&openById(person.id)}><i aria-hidden="true">{initials(person)}</i><span><b>{person.name}</b><small>{person.code?'Nº '+person.code:''}{person.code&&person.email?' · ':''}{person.email}</small></span></button>
+     <button type="button" className="pd-person" onClick={()=>person.id&&openById(person.id)}><PersonAvatar photo={person.photo} initials={initials(person)} name={person.name} child={person.status==='Criança'}/><span><b>{person.name}{person.birthDate?<em className="pd-age"> · {personAgeLabel(person.birthDate)}</em>:null}</b><small>{person.status==='Criança'?<span className="pd-kid-tag" title="Cadastro de criança">Kids</span>:null}{person.code?'Nº '+person.code:''}{person.code&&person.email?' · ':''}{person.email}</small></span></button>
      <span className="pd-contact">{person.phone||'—'}</span>
-     <span className="pd-pillcell"><em className={'pd-pill '+(person.status==='Membro'?'member':person.status==='Visitante'?'visitor':'integration')}>{person.status}</em></span>
+     <span className="pd-pillcell"><em className={'pd-pill '+(person.status==='Membro'?'member':person.status==='Visitante'?'visitor':person.status==='Criança'?'kid':'integration')}>{person.status}</em></span>
      <span className="pd-group">{person.group}</span><span className="pd-since">{person.since}</span></div>)}
     {!loading&&!error&&!people.length&&<div className="pd-empty"><b>Nenhuma pessoa encontrada</b><p>{q||status||filters?'Ajuste a busca ou os filtros.':'Cadastre a primeira pessoa ou importe uma planilha.'}</p></div>}
    </div>
