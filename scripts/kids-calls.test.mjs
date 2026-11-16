@@ -58,3 +58,12 @@ test('rascunho do perfil vai para a plataforma', () => {
   assert.match(app, /'member_profile_draft'/);
   assert.match(app, /},1500\)/);
 });
+
+test('telão: aguarda a resposta do Holyrics e explica o resultado', () => {
+  const sql = read('supabase/migrations/20261116140000_kids_telao_diagnostico.sql');
+  assert.match(sql, /\/request\/SetAlert/);
+  assert.match(sql, /display_ahead/);
+  const ui = read('app/KidsProjector.tsx');
+  assert.match(ui, /action: 'last'/);
+  for (const t of ['Chegou ao Holyrics', 'SetAlert', 'acesso pela internet']) assert.ok(ui.includes(t), t);
+});

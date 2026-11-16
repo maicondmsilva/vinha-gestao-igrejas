@@ -92,6 +92,21 @@ select is(jsonb_array_length(public.member_push_work('claim')->'items'),0,'segun
 reset role;
 select ok((select count(*)>0 from private.member_push_deliveries where device_id=pg_temp.fi('device') and state='sending'),'fila registra processamento durável');
 delete from auth.sessions where id=pg_temp.fi('session');
+-- Cartões de contribuição pela conta principal.
+reset role;update private.finance_receivers set is_primary=true where id=pg_temp.fi('receiver');
+set local role authenticated;select pg_temp.actor('owner');
+select ok(public.giving_admin(pg_temp.fi('org'),pg_temp.fi('a'),'list')->'primary' is not null and public.giving_admin(pg_temp.fi('org'),pg_temp.fi('a'),'list')->'primary' <> 'null'::jsonb,'painel mostra a conta principal');
+select lives_ok($$select public.giving_admin(pg_temp.fi('org'),pg_temp.fi('a'),'save',jsonb_build_object('id',pg_temp.fi('card'),'version',0,'title','Dízimo','subtitle','Honra ao Senhor','image','','color','#285c45','amounts',jsonb_build_array(2000,5000),'active',true,'category',pg_temp.fi('income')))$$,'cria cartão de contribuição');
+select throws_ok($$select public.giving_admin(pg_temp.fi('org'),pg_temp.fi('a'),'save',jsonb_build_object('id',pg_temp.fi('card2'),'version',0,'title','X','subtitle','','image','','color','azul','amounts','[]'::jsonb,'active',true,'category',pg_temp.fi('income')))$$,'22023','giving_invalid','cor e nome conferidos');
+select is((public.giving_admin(pg_temp.fi('org'),pg_temp.fi('a'),'list')->'cards'->0->>'ready'),'true','cartão pronto para receber pela principal');
+select pg_temp.actor('member');
+select throws_ok($$select public.giving_admin(pg_temp.fi('org'),pg_temp.fi('a'),'list')$$,'42501','giving_denied','membro não configura cartões');
+select is(public.member_payments(pg_temp.fi('org'),pg_temp.fi('a'),'list')->'cards'->0->>'title','Dízimo','membro vê o cartão no app');
+select lives_ok($$select public.member_payments(pg_temp.fi('org'),pg_temp.fi('a'),'create',jsonb_build_object('id',pg_temp.fi('order-card'),'purpose',(public.member_payments(pg_temp.fi('org'),pg_temp.fi('a'),'list')->'cards'->0->>'purpose'),'amount','5000'))$$,'contribui pelo cartão');
+select pg_temp.actor('owner');
+select lives_ok($$select public.giving_admin(pg_temp.fi('org'),pg_temp.fi('a'),'delete',jsonb_build_object('id',pg_temp.fi('card')))$$,'exclui cartão');
+select pg_temp.actor('member');
+select is(jsonb_array_length(public.member_payments(pg_temp.fi('org'),pg_temp.fi('a'),'list')->'cards'),0,'cartão some do app');
 set local role service_role;select public.member_push_work('claim');reset role;
 select is((select enabled from private.member_push_devices where id=pg_temp.fi('device')),false,'sessão revogada desativa aparelho no worker');
 select * from finish();rollback;
