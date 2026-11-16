@@ -63,7 +63,7 @@ export const portalModules: PortalModule[] = [
         title: 'Lista, busca e filtros',
         text: [
           'Os cartões no topo contam Todos, Membros, Em integração, Visitantes e Crianças; tocar num cartão filtra a lista.',
-          'Em “Filtros” há célula, rede, gênero, faixa etária, batismo, marcador e novos convertidos. Marque pessoas para mudar a etapa em lote, aplicar marcador ou enviar um comunicado no app.',
+          'Em “Filtros” há célula, rede, ministério, cargo, gênero, faixa etária, batismo, marcador, “só liderança” e novos convertidos. Marque pessoas para mudar a etapa em lote, aplicar marcador ou enviar um comunicado no app.',
           '“Exportar Excel” gera a planilha com os filtros escolhidos.',
         ],
       },
@@ -117,10 +117,38 @@ export const portalModules: PortalModule[] = [
         text: [
           'Aniversariantes: do dia, da semana e do mês, com atalho de mensagem.',
           'Duplicados: encontra cadastros repetidos e une os dois sem perder histórico.',
-          'Novos convertidos: acompanhamento de quem tomou a decisão por Jesus.',
           'QR de visitantes: cartaz com QR Code para o visitante se cadastrar sozinho.',
-          'Agenda pastoral: horários de atendimento e pedidos feitos pelo app.',
         ],
+      },
+      {
+        id: 'integracao',
+        title: 'Integração Visitante',
+        text: [
+          'Integração Visitante (antes “Novos convertidos”) acompanha quem chegou à igreja, convertido ou não. A decisão de fé é registrada à parte da etapa: ainda não se decidiu, decidiu-se nesta igreja (com a data), reconciliação ou já convertido vindo de outra igreja (com o nome da igreja).',
+          'Cada pessoa tem um acompanhante, que recebe aviso no app e encontra a área Integração Visitante para ligar, mandar mensagem, registrar cada contato e mudar a etapa (contato feito, em uma célula, integrado, sem retorno).',
+          'Os indicadores mostram as decisões do mês, quantos já vieram de outra igreja e quem está há mais de 7 dias sem contato.',
+        ],
+        steps: [
+          'Em Pessoas › Integração Visitante, use “Incluir na integração” e escolha a decisão de fé.',
+          'Em “Acompanhar”, escolha quem acompanha e a data do próximo contato.',
+          'Use “Registrar contato” depois de cada ligação, visita ou encontro: o registro entra no Histórico de atendimento da pessoa.',
+        ],
+      },
+      {
+        id: 'agenda',
+        title: 'Agenda pastoral e relatório de atendimento',
+        text: [
+          'Quem atende define horários, datas específicas, bloqueios e as regras: quem pode pedir pelo app (todos, só líderes, só a própria célula ou rede, ou só por convite), antecedência mínima, limite de pedidos, máximo de atendimentos por dia e intervalo entre atendimentos.',
+          'Todo agendamento respeita a disponibilidade, inclusive quando é o próprio atendente ou a secretaria que marca. Quem atende também é atendido: o horário fica ocupado nos dois papéis.',
+          'Quando o atendente convida um membro, ele recebe a notificação no app e aceita, recusa ou pede outro horário. Sem resposta, o horário é liberado 12 h antes. Há lembrete 24 h antes.',
+          'Depois do atendimento, o atendente preenche o relatório (resumo, assuntos, oração, encaminhamentos e próximo contato) e escolhe quem pode ler: Equipe pastoral, Restrito ou Sigiloso. O membro nunca vê o relatório; toda leitura fica registrada e, depois de 7 dias, o texto trava e só aceita complemento.',
+        ],
+        steps: [
+          'Em Configurações › Usuários e permissões, dê a quem precisa: “Histórico de atendimento (sem conteúdo)”, “Relatórios de atendimento”, “Relatórios restritos” ou “Relatórios sigilosos”. Mesmo um pastor só lê com a permissão.',
+          'Em Pessoas › Agenda pastoral › Quem atende › Configurar, ajuste horários e regras.',
+          'No Calendário, as cores mostram: confirmado, aguardando aceite, pedido para decidir, relatório pendente e realizado.',
+        ],
+        tip: 'No app, “Minha agenda de atendimento” mostra os próximos 14 dias com atendimentos, convites, relatórios pendentes e contatos de integração.',
       },
       {
         id: 'app',

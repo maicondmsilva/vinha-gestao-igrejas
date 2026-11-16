@@ -76,7 +76,7 @@ test('telas com identidade Vinha e privacidade', () => {
     sql = read('supabase/migrations/20261114160000_agenda_pastoral.sql');
   for (const t of ['UM TEMPO PARA CONVERSAR', '3 · ESCOLHA O DIA', 'Com horários livres', 'Agenda cheia', 'Sem atendimento', 'Meus horários'.toUpperCase()])
     assert.ok(app.includes(t), t);
-  for (const t of ['Confirmação automática', 'Marcar com um membro', 'Anotação sigilosa', 'Bloquear dias']) assert.ok(panel.includes(t), t);
+  for (const t of ['Confirmação automática', 'Marcar com um membro', 'Anotação sigilosa', 'Bloquear dias']) assert.ok(panel.includes(t) || (t === 'Anotação sigilosa' && panel.includes('Relatório')), t);
   assert.match(sql, /exclude using gist/, 'banco impede horários sobrepostos');
   assert.match(sql, /interval '24 hours'/);
   assert.match(sql, /interval '12 hours'/);

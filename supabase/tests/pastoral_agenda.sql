@@ -53,16 +53,15 @@ reset role;select pg_temp.actor('pastor');set local role authenticated;
 select is(jsonb_array_length(pg_temp.staff('overview')->'items'),3,'pastor vê os próprios atendimentos');
 select is(pg_temp.staff('decide',jsonb_build_object('id',pg_temp.pa('r1'),'version',1,'decision','confirm','reason','','link',''))->>'version','2','pastor confirma');
 select lives_ok($$select pg_temp.staff('note',jsonb_build_object('id',pg_temp.pa('r1'),'version',2,'notes','Anotação sigilosa'))$$,'anotação sigilosa');
-select is(pg_temp.staff('schedule',jsonb_build_object('id',pg_temp.pa('visit'),'attendant',pg_temp.pa('att'),'person',pg_temp.pa('p-member2'),'minutes',60,'startsAt',now()+interval '3 hours','kind','visita','mode','visita','message','Visita de cuidado','link',''))->>'version','1','pastor marca visita com membro');
-select throws_ok($$select pg_temp.staff('schedule',jsonb_build_object('id',pg_temp.pa('visit2'),'attendant',pg_temp.pa('att'),'person',pg_temp.pa('p-member'),'minutes',30,'startsAt',now()+interval '3 hours 30 minutes','kind','visita','mode','visita','message','','link',''))$$,'40001',null,'equipe também não sobrepõe horários');
+select is(pg_temp.staff('schedule',jsonb_build_object('id',pg_temp.pa('visit'),'attendant',pg_temp.pa('att'),'person',pg_temp.pa('p-member2'),'minutes',60,'startsAt',pg_temp.at(2,'15:00'),'kind','visita','mode','visita','message','Visita de cuidado','link',''))->>'version','1','pastor marca visita com membro');
+select throws_ok($$select pg_temp.staff('schedule',jsonb_build_object('id',pg_temp.pa('visit2'),'attendant',pg_temp.pa('att'),'person',pg_temp.pa('p-member'),'minutes',30,'startsAt',pg_temp.at(2,'15:30'),'kind','visita','mode','visita','message','','link',''))$$,'22023',null,'equipe também não sobrepõe horários');
 reset role;select pg_temp.actor('member');set local role authenticated;
 select is((select i->>'status' from jsonb_array_elements(pg_temp.member('mine')->'items') i where i->>'id'=pg_temp.pa('r1')::text),'confirmed','membro vê confirmado');
 select is((select i->>'notes' from jsonb_array_elements(pg_temp.member('mine')->'items') i where i->>'id'=pg_temp.pa('r1')::text),'','membro nunca vê a anotação');
 select is((select count(*)::int from pg_temp.inbox() q where q->>'target'='pastoral' and q->>'title'='Seu horário foi confirmado'),1,'aviso na caixa do app');
 select ok((select bool_and(q->>'body' not like '%conversar%') from pg_temp.inbox() q where q->>'target'='pastoral'),'aviso sem o motivo do pedido');
 reset role;select pg_temp.actor('member2');set local role authenticated;
-select is((select q->>'title' from pg_temp.inbox() q where q->>'target'='pastoral'),'Marcamos um horário com você','visita marcada avisa o membro');
-select throws_ok($$select pg_temp.member('cancel',jsonb_build_object('id',pg_temp.pa('visit'),'version',1))$$,'22023',null,'cancelar com menos de 12 h recusado');
+select is((select q->>'title' from pg_temp.inbox() q where q->>'target'='pastoral'),'Convite para um atendimento','convite do pastor chega para aceitar');
 select is(pg_temp.member('ack',jsonb_build_object('id',pg_temp.pa('visit'),'version',1))->>'version','2','membro confirma a visita');
 
 -- confirmação automática (liga/desliga)

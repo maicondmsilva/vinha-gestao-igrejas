@@ -14,5 +14,7 @@ export function pastoralStaffError(code?: string, message = '') {
   if (code === '42501') return {status: 403, error: 'Seu acesso não permite esta ação na agenda pastoral.'};
   if (code === '40001')
     return {status: 409, error: /slot_taken/.test(message) ? 'Esse horário já está ocupado. Escolha outro.' : 'A agenda mudou. Atualize e tente de novo.'};
+  if (/pastoral_outside_hours/.test(message))
+    return {status: 400, error: 'Fora da disponibilidade de quem atende (horário, bloqueio, intervalo, limite do dia ou outro compromisso). Abra o horário naquela data ou escolha outro.'};
   return {status: 400, error: 'Revise os dados: horários, durações e pessoas.'};
 }

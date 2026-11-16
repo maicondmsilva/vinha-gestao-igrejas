@@ -2,11 +2,12 @@
 import {useCallback,useEffect,useState} from 'react';
 import {durationLabel,pastoralKinds,pastoralModes,pastoralStatus} from '../shared/pastoral';
 import './pastoral.css';
+import {AttendantRules,ReportForm,WeekCalendar} from './pessoas/PastoralCare';
 
 type Hour={weekday:number;starts:string;ends:string};
 type Block={id:string;from:string;to:string;reason:string};
 type Attendant={id:string;personId:string;name:string;role:string;about:string;autoConfirm:boolean;durations:number[];kinds:string[];modes:string[];active:boolean;version:number;self:boolean;hours:Hour[];blocks:Block[]};
-type Item={id:string;attendantId:string;attendant:string;personId:string;person:string;kind:string;mode:string;startsAt:string;endsAt:string;status:string;origin:string;memberAck:boolean;message:string;link:string;reason:string;notes:string;version:number;address:string};
+type Item={id:string;attendantId:string;attendant:string;personId:string;person:string;kind:string;mode:string;startsAt:string;endsAt:string;status:string;origin:string;memberAck:boolean;message:string;link:string;reason:string;notes:string;version:number;address:string;reported?:boolean};
 type Data={timezone:string;canEdit:boolean;canSettings:boolean;attendants:Attendant[];items:Item[]};
 type Found={id:string;name:string;phone?:string};
 const days=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
@@ -26,33 +27,37 @@ function PersonSearch({unit,label,onPick}:{unit:string;label:string;onPick:(p:Fo
 
 /** Pessoas › Agenda pastoral: pedidos para confirmar, semana de atendimentos, marcar com membro e configurar quem atende. */
 export default function PastoralAgenda({unitId}:{unitId:string}){
- const[data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[rev,setRev]=useState(0),[tab,setTab]=useState<'week'|'pending'|'people'>('week'),[busy,setBusy]=useState(false),[scheduling,setScheduling]=useState(false),[editing,setEditing]=useState<Attendant|'new'|null>(null);
+ const[data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[rev,setRev]=useState(0),[tab,setTab]=useState<'week'|'pending'|'people'>('week'),[busy,setBusy]=useState(false),[scheduling,setScheduling]=useState(false),[editing,setEditing]=useState<Attendant|'new'|null>(null),[reportFor,setReportFor]=useState<Item|null>(null),[focus,setFocus]=useState('');
  useEffect(()=>{if(!/^[0-9a-f-]{36}$/i.test(unitId))return;const c=new AbortController();const from=new Date(Date.now()-7*864e5).toISOString(),to=new Date(Date.now()+42*864e5).toISOString();
   fetch('/api/pastoral?'+new URLSearchParams({unit:unitId,from,to,...tenantQuery()}),{cache:'no-store',signal:c.signal}).then(async r=>{const d=await r.json() as Data&{error?:string};if(!r.ok)throw Error(d.error||'Não foi possível carregar.');setError('');setData(d)}).catch(e=>{if(!c.signal.aborted)setError(e instanceof Error?e.message:'Falha de conexão.')});
   return()=>c.abort()},[unitId,rev]);
  const run=useCallback(async(action:string,payload:Record<string,unknown>,done:string)=>{setBusy(true);setError('');setNotice('');try{const r=await fetch('/api/pastoral?'+new URLSearchParams(tenantQuery()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({unit:unitId,action,data:payload})}),d=await r.json() as {ok?:boolean;error?:string;slots?:unknown};if(!r.ok)throw Error(d.error||'Não confirmado.');if(done){setNotice(done);setRev(n=>n+1)}return d}catch(e){setError(e instanceof Error?e.message:'Não confirmado.');return null}finally{setBusy(false)}},[unitId]);
  if(!data)return <section className="pa-page"><p className="pd-empty">{error||'Carregando a agenda pastoral…'}</p></section>;
  const pending=data.items.filter(i=>i.status==='requested'),now=Date.now(),upcoming=data.items.filter(i=>Date.parse(i.endsAt)>now-6*36e5);
+ const selfIds=new Set(data.attendants.filter(a=>a.self).map(a=>a.id)),toReport=data.items.filter(i=>selfIds.has(i.attendantId)&&['confirmed','done'].includes(i.status)&&Date.parse(i.startsAt)<now&&!i.reported&&Date.parse(i.endsAt)<=now-6*36e5);
  const byDay=new Map<string,Item[]>();for(const i of upcoming){const k=fmt(i.startsAt,{weekday:'long',day:'2-digit',month:'long'});byDay.set(k,[...(byDay.get(k)||[]),i])}
- const card=(i:Item)=><article key={i.id} className={'pa-item '+i.status}>
+ const card=(i:Item)=><article key={i.id} id={'pa-'+i.id} className={'pa-item '+i.status+(focus===i.id?' focus':'')}>
   <div className="pa-time"><b>{fmt(i.startsAt,{hour:'2-digit',minute:'2-digit'})}</b><small>{Math.round((Date.parse(i.endsAt)-Date.parse(i.startsAt))/6e4)} min</small></div>
   <div className="pa-body"><strong>{i.person}</strong><span>com {i.attendant} · {pastoralKinds[i.kind]||i.kind} · {pastoralModes[i.mode]||i.mode}</span>
    {i.message&&<em>“{i.message}”</em>}{i.address&&<span>Endereço: {i.address}</span>}{i.link&&<a href={i.link} target="_blank" rel="noreferrer">Link da conversa online</a>}
-   {i.notes&&<details><summary>Anotação sigilosa</summary><p>{i.notes}</p></details>}
-   <span className={'pa-status '+i.status}>{i.origin==='staff'&&!i.memberAck&&i.status==='confirmed'?'Aguardando o membro confirmar presença':pastoralStatus[i.status]}</span></div>
+   
+   <span className={'pa-status '+i.status}>{i.origin==='staff'&&!i.memberAck&&i.status==='confirmed'?'Aguardando aceite do membro':i.reported?pastoralStatus[i.status]+' · relatório registrado':pastoralStatus[i.status]}</span></div>
   <div className="pa-actions">{i.status==='requested'&&<><button type="button" className="pa-go" disabled={busy} onClick={()=>void run('decide',{id:i.id,version:i.version,decision:'confirm',reason:'',link:i.mode==='online'?(prompt('Link da conversa online (opcional, https://…)')||''):''},'Atendimento confirmado. O membro recebe o aviso no app.')}>Confirmar</button>
     <button type="button" disabled={busy} onClick={()=>{const reason=prompt('Motivo (opcional, aparece para o membro)')??'';void run('decide',{id:i.id,version:i.version,decision:'decline',reason:reason.slice(0,200),link:''},'Pedido recusado. O membro pode escolher outro dia.')}}>Recusar</button></>}
    {i.status==='confirmed'&&Date.parse(i.startsAt)<now&&<><button type="button" disabled={busy} onClick={()=>void run('status',{id:i.id,version:i.version,status:'done',reason:''},'Marcado como realizado.')}>Realizado</button><button type="button" disabled={busy} onClick={()=>void run('status',{id:i.id,version:i.version,status:'missed',reason:''},'Marcado como não compareceu.')}>Não veio</button></>}
    {['requested','confirmed'].includes(i.status)&&Date.parse(i.startsAt)>now&&<button type="button" className="pa-quiet" disabled={busy} onClick={()=>{if(confirm('Cancelar este atendimento?'))void run('status',{id:i.id,version:i.version,status:'cancelled',reason:''},'Atendimento cancelado.')}}>Cancelar</button>}
-   {data.attendants.find(a=>a.id===i.attendantId)?.self&&<button type="button" className="pa-quiet" disabled={busy} onClick={()=>{const n=prompt('Anotação sigilosa (só você e quem tem permissão veem)',i.notes);if(n!==null)void run('note',{id:i.id,version:i.version,notes:n.slice(0,4000)},'Anotação salva.')}}>Anotação</button>}</div>
+   {data.attendants.find(a=>a.id===i.attendantId)?.self&&['confirmed','done'].includes(i.status)&&Date.parse(i.startsAt)<now&&!i.reported&&<button type="button" className="pa-go" disabled={busy} onClick={()=>setReportFor(i)}>Relatório</button>}</div>
  </article>;
 
  return <section className="pa-page">
   <header className="pa-head"><div><p className="section-over">CUIDADO PASTORAL</p><h2>Agenda pastoral</h2><p>Pedidos de horário feitos pelo app, atendimentos e visitas.</p></div>
    <div className="pa-head-actions">{(data.canEdit||data.attendants.some(a=>a.self))&&<button type="button" className="pa-go" onClick={()=>setScheduling(true)}>＋ Marcar com membro</button>}</div></header>
-  <nav className="pd-views" aria-label="Agenda pastoral">{([['week','Próximos atendimentos',null],['pending','Aguardando confirmação',pending.length||null],['people','Quem atende',data.attendants.length]] as const).map(([k,l,n])=><button key={k} type="button" aria-pressed={tab===k} onClick={()=>setTab(k)}>{l}{n?<b>{n}</b>:null}</button>)}</nav>
+  <nav className="pd-views" aria-label="Agenda pastoral">{([['week','Calendário',null],['pending','Aguardando confirmação',pending.length||null],['people','Quem atende',data.attendants.length]] as const).map(([k,l,n])=><button key={k} type="button" aria-pressed={tab===k} onClick={()=>setTab(k)}>{l}{n?<b>{n}</b>:null}</button>)}</nav>
   {notice&&<p className="program-notice" role="status">{notice}</p>}{error&&<p className="program-error" role="alert">{error}</p>}
   {tab==='pending'&&(pending.length?pending.map(card):<p className="pd-empty">Nenhum pedido aguardando. Quem atende com confirmação automática não passa por aqui.</p>)}
+  {tab==='week'&&<WeekCalendar items={data.items} onOpen={id=>{setFocus(id);setTimeout(()=>document.getElementById('pa-'+id)?.scrollIntoView({behavior:'smooth',block:'center'}),50)}}/>}
+  {tab==='week'&&toReport.length>0&&<><h3 className="pa-list-title">Relatórios pendentes</h3>{toReport.map(card)}</>}
+  {tab==='week'&&<h3 className="pa-list-title">Próximos atendimentos</h3>}
   {tab==='week'&&(byDay.size?[...byDay].map(([d,list])=><div key={d} className="pa-day"><h3>{d}</h3>{list.map(card)}</div>):<p className="pd-empty">Nenhum atendimento nas próximas semanas.</p>)}
   {tab==='people'&&<div className="pa-people">{data.attendants.map(a=><article key={a.id} className="pa-person">
     <header><div><strong>{a.name}</strong><span>{a.role}{a.active?'':' · pausado'}</span></div><span className={'pa-switch'+(a.autoConfirm?' on':'')}>{a.autoConfirm?'Confirmação automática':'Confirmação manual'}</span></header>
@@ -64,6 +69,7 @@ export default function PastoralAgenda({unitId}:{unitId:string}){
    {!data.attendants.length&&<p className="pd-empty">Ninguém atendendo ainda. Cadastre o pastor ou líder que vai receber pedidos pelo app.</p>}
    {data.canSettings&&<button type="button" className="pa-go" onClick={()=>setEditing('new')}>＋ Adicionar quem atende</button>}</div>}
   {editing&&<AttendantEditor unit={unitId} item={editing==='new'?null:editing} canSettings={data.canSettings} busy={busy} run={run} close={()=>setEditing(null)}/>}
+  {reportFor&&<ReportForm unit={unitId} appointment={reportFor.id} personName={reportFor.person} close={()=>setReportFor(null)} onDone={m=>{setNotice(m);setRev(n=>n+1)}}/>}
   {scheduling&&<ScheduleForm unit={unitId} attendants={data.attendants.filter(a=>a.active&&(data.canEdit||a.self))} busy={busy} run={run} close={()=>setScheduling(false)}/>}
  </section>;
 }
@@ -92,6 +98,7 @@ function AttendantEditor({unit,item,canSettings,busy,run,close}:{unit:string;ite
   {item&&<fieldset><legend>Bloquear dias (férias, viagens)</legend><div className="pa-hour"><input type="date" value={block.from} onChange={e=>setBlock({...block,from:e.target.value})}/><span>até</span><input type="date" value={block.to} onChange={e=>setBlock({...block,to:e.target.value})}/><input value={block.reason} maxLength={120} placeholder="Motivo (interno)" onChange={e=>setBlock({...block,reason:e.target.value})}/>
     <button type="button" disabled={busy||!block.from||!block.to} onClick={()=>void run('block',{attendant:item.id,...block},'Dias bloqueados.').then(ok=>{if(ok)close()})}>Bloquear</button></div>
    {item.blocks.map(b=><p key={b.id} className="pa-muted">{b.from.split('-').reverse().join('/')} a {b.to.split('-').reverse().join('/')} {b.reason} <button type="button" className="pa-quiet" onClick={()=>void run('unblock',{attendant:item.id,id:b.id},'Bloqueio removido.').then(ok=>{if(ok)close()})}>remover</button></p>)}</fieldset>}
+  {item&&<AttendantRules unit={unit} attendant={item.id}/>}
   <footer><button type="button" onClick={close}>Voltar</button><button type="button" className="pa-go" disabled={busy||!person||!durations.length||!kinds.length||!modes.length} onClick={()=>void save()}>{busy?'Salvando…':'Salvar'}</button></footer>
  </div></div>;
 }
