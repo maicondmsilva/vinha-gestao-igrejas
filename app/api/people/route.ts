@@ -25,6 +25,18 @@ async function supabaseGET(request:Request){
  const access=auth.access!,organizationId=access.membership.organization_id;
  let parameters:ReturnType<typeof peopleQuery>;
  try{parameters=peopleQuery(request)}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Filtros inválidos.'},{status:400})}
+ const search=new URL(request.url).searchParams;
+ // Contadores das abas (Todos, Membros, Em integração, Visitantes) numa chamada só.
+ if(search.get('counts')==='1'){
+  const base=()=>{let q=access.client.from('people').select('id',{count:'exact',head:true}).eq('organization_id',organizationId);if(parameters.unitId)q=q.eq('unit_id',parameters.unitId);return q};
+  const keys=['','Membro','Em integração','Visitante'] as const;
+  const results=await Promise.all(keys.map(k=>k?base().eq('journey_status',k):base()));
+  if(results.some(x=>x.error))return NextResponse.json({error:'Não foi possível contar as pessoas.'},{status:500});
+  const [all,members,integration,visitors]=results.map(x=>x.count||0);
+  return NextResponse.json({counts:{all,Membro:members,'Em integração':integration,Visitante:visitors}},{headers:{'Cache-Control':'no-store'}});
+ }
+ // Lista: só o que a tela mostra (sem CPF, endereço, contatos, notas e termos); a ficha completa vem ao abrir a pessoa.
+ const lite=search.get('view')==='list'&&!parameters.id;
  let advanced:ReturnType<typeof peopleFilters>;
  try{advanced=peopleFilters(new URL(request.url).searchParams)}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Filtros inválidos.'},{status:400})}
  let people:PersonRow[]|null,error:unknown,count:number|null;
@@ -51,6 +63,9 @@ async function supabaseGET(request:Request){
  const ids=(people||[]).map(person=>person.id);
  const numbering=ids.length?await(access.client as unknown as OperationsClient).rpc('record_numbering',{p_org:organizationId,p_action:'people',p_data:{ids}}):{data:{codes:{}},error:null};
  if(numbering.error)return NextResponse.json({error:'Não foi possível consultar os códigos de cadastro.'},{status:503});
+ if(lite)return NextResponse.json({people:(people||[]).map(person=>({id:person.id,code:numbering.data?.codes?.[person.id]||null,name:person.full_name,email:person.email||'',phone:person.phone||'',status:person.journey_status,group:person.group_name||'Sem grupo',
+  initials:person.full_name.split(' ').map(part=>part[0]).join('').slice(0,2).toUpperCase(),since:displayPostgresDate(person.joined_at)})),
+  pagination:{page:parameters.page,limit:parameters.limit,total:count||0,pages:Math.max(1,Math.ceil((count||0)/parameters.limit))}},{headers:{'Cache-Control':'no-store'}});
  const empty:any[]=[];
  const [addresses,contacts,notes,units,consents]=await Promise.all([
   ids.length?access.client.from('person_addresses').select('*').eq('organization_id',organizationId).in('person_id',ids):Promise.resolve({data:empty,error:null}),

@@ -1,6 +1,0 @@
-import { withLegacyContainment } from '../../../lib/release-availability';
-import { env } from 'cloudflare:workers';
-import { NextResponse } from 'next/server';
-async function legacyGET(request:Request){const u=new URL(request.url),id=u.searchParams.get('checkinId'),token=u.searchParams.get('token');const row=await env.DB.prepare(`SELECT k.status,k.checked_in_at,k.checked_out_at,c.full_name child_name,r.name room_name FROM kids_checkins k JOIN children c ON c.id=k.child_id JOIN kids_sessions s ON s.id=k.session_id JOIN kids_rooms r ON r.id=s.room_id WHERE k.id=? AND k.label_token=?`).bind(id,token).first();if(!row)return NextResponse.json({valid:false},{status:404});return NextResponse.json({valid:true,...row})}
-
-export const GET = withLegacyContainment(legacyGET);

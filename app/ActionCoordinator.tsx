@@ -11,7 +11,7 @@ const destinations:[RegExp,string][]=[
   [/escala/i,'escalas'],
   [/evento|programaç/i,'eventos'],
   [/canal|comunicaç/i,'comunicacao'],
-  [/família/i,'familias'],
+  [/família/i,'pessoas'],
   [/sala/i,'kids'],
   [/logo|vídeo|modelo|configuraç/i,'configuracoes']
 ];

@@ -63,12 +63,12 @@ for(const [code,status] of [['P0002',404],['42501',403],['23505',409],['23514',4
 test('route has no parallel writes or compensating deletes; form uses live units',()=>{
  const api=readFileSync(new URL('../app/api/people/route.ts',import.meta.url),'utf8');
  assert.doesNotMatch(api,/\.insert\(|\.update\(|\.upsert\(|\.delete\(|supabaseAudit/);
- const ui=readFileSync(new URL('../app/DashboardApp.tsx',import.meta.url),'utf8').split('function PersonModal')[1].split('function FamiliesAndTerms')[0];
+ const ui=readFileSync(new URL('../app/pessoas/PersonForms.tsx',import.meta.url),'utf8').split('function PersonModal')[1];
  assert.match(ui,/units.map/);assert.match(ui,/memberFormPayload/);assert.match(ui,/goToStep/);
  assert.doesNotMatch(ui,/Unidade Norte|Família Souza|Convidar como administrador/);
 });
 test('continuar cancels the native click before changing step and never reuses the submit button',()=>{
- const ui=readFileSync(new URL('../app/DashboardApp.tsx',import.meta.url),'utf8').split('function PersonModal')[1].split('function FamiliesAndTerms')[0];
+ const ui=readFileSync(new URL('../app/pessoas/PersonForms.tsx',import.meta.url),'utf8').split('function PersonModal')[1];
  const source=ui.match(/function advance\([^\n]+/)[0];
  const js=ts.transpile(source,{target:ts.ScriptTarget.ES2022});
  const events=[];
