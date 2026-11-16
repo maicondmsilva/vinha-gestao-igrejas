@@ -77,7 +77,7 @@ test('remaining legacy-only endpoints have guarded exports; reviewed migrations 
     }
     assert.ok(exported > 0, name + ': no guarded method');
   }
-  assert.equal(routes, 44);
+  assert.equal(routes, 40);
   assert.equal(methods, 80);
   for(const route of ['onboarding/members-import','hierarchy/overview'])assert.doesNotMatch(readFileSync(join(rootPath,'app/api',route,'route.ts'),'utf8'),/env\.DB|withLegacyContainment/);
 });

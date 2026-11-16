@@ -35,13 +35,14 @@ export default function PeopleDirectory({unitId,unitName='',onAdd,onSelect,revis
  useEffect(()=>{Promise.resolve().then(()=>setPage(1))},[q,status,group,unitId,adv]);
  useEffect(()=>{Promise.resolve().then(()=>{setSelected(new Map());setAdv(noAdv);setOptions(null)})},[unitId]);
  useEffect(()=>{
-  const controller=new AbortController();const timer=setTimeout(()=>{setLoading(true);setError('');const params=listParams();params.set('page',String(page));params.set('limit','25');
+  const controller=new AbortController();const timer=setTimeout(()=>{setLoading(true);setError('');const params=listParams();params.set('page',String(page));params.set('limit','25');params.set('view','list');
    fetch('/api/people?'+params,{signal:controller.signal}).then(async response=>{const data=await response.json() as {error?:string;people?:Person[];pagination?:Pagination};if(!response.ok)throw new Error(data.error||'Não foi possível carregar os membros.');if(!Array.isArray(data.people)||!data.pagination)throw new Error('Resposta inválida ao carregar membros.');if(controller.signal.aborted)return;setPeople(data.people);setPagination(data.pagination);if(page>data.pagination.pages)setPage(data.pagination.pages)}).catch(reason=>{if(!controller.signal.aborted){setPeople([]);setError(reason instanceof Error?reason.message:'Falha de conexão.')}}).finally(()=>{if(!controller.signal.aborted)setLoading(false)});
   },200);return()=>{clearTimeout(timer);controller.abort()};
  },[listParams,page,rev]);
- useEffect(()=>{const c=new AbortController();const base=new URLSearchParams({page:'1',limit:'1'});if(/^[0-9a-f]{8}-/i.test(unitId))base.set('unitId',unitId);if(tenant)base.set('tenant',tenant);
-  Promise.all(['','Membro','Em integração','Visitante'].map(v=>{const p=new URLSearchParams(base);if(v)p.set('status',v);return fetch('/api/people?'+p,{signal:c.signal}).then(r=>r.ok?r.json():null).then((d:{pagination?:Pagination}|null)=>d?.pagination?.total??null).catch(()=>null)}))
-   .then(([all,m,i,v])=>{if(!c.signal.aborted)setCounts({all,Membro:m,'Em integração':i,Visitante:v})});return()=>c.abort()},[unitId,tenant,rev]);
+ // Contadores das abas numa chamada só.
+ useEffect(()=>{const c=new AbortController();const p=new URLSearchParams({counts:'1'});if(/^[0-9a-f]{8}-/i.test(unitId))p.set('unitId',unitId);if(tenant)p.set('tenant',tenant);
+  fetch('/api/people?'+p,{signal:c.signal}).then(r=>r.ok?r.json():null).then((d:{counts?:Record<string,number>}|null)=>{if(!c.signal.aborted&&d?.counts)setCounts({all:d.counts.all??null,Membro:d.counts.Membro??null,'Em integração':d.counts['Em integração']??null,Visitante:d.counts.Visitante??null})}).catch(()=>undefined);
+  return()=>c.abort()},[unitId,tenant,rev]);
  useEffect(()=>{if(!showFilters||options||!/^[0-9a-f-]{36}$/i.test(unitId))return;const c=new AbortController();
   fetch('/api/people/options?'+new URLSearchParams({unit:unitId,...(tenant?{tenant}:{})}),{cache:'no-store',signal:c.signal}).then(r=>r.ok?r.json():null).then((d:Options|null)=>{if(d)setOptions(d)}).catch(()=>undefined);
   return()=>c.abort()},[showFilters,options,unitId,tenant]);
@@ -106,7 +107,7 @@ export default function PeopleDirectory({unitId,unitName='',onAdd,onSelect,revis
     <div className="pd-row pd-th"><label className="pd-check"><span className="sr-only">Selecionar a página</span><input type="checkbox" checked={allOnPage} disabled={!pageIds.length} onChange={togglePage}/></label><span aria-hidden="true">Pessoa</span><span aria-hidden="true">Contato</span><span aria-hidden="true">Etapa</span><span aria-hidden="true">Grupo</span><span aria-hidden="true">Desde</span></div>
     {loading&&!people.length?<div className="pd-empty" role="status">Carregando pessoas…</div>:people.map(person=><div className={'pd-row'+(person.id&&selected.has(person.id)?' sel':'')} key={person.id}>
      <label className="pd-check"><span className="sr-only">Selecionar {person.name}</span><input type="checkbox" checked={!!person.id&&selected.has(person.id)} onChange={()=>toggle(person)}/></label>
-     <button type="button" className="pd-person" onClick={()=>onSelect(person)}><i aria-hidden="true">{initials(person)}</i><span><b>{person.name}</b><small>{person.code?'Nº '+person.code:''}{person.code&&person.email?' · ':''}{person.email}</small></span></button>
+     <button type="button" className="pd-person" onClick={()=>person.id&&openById(person.id)}><i aria-hidden="true">{initials(person)}</i><span><b>{person.name}</b><small>{person.code?'Nº '+person.code:''}{person.code&&person.email?' · ':''}{person.email}</small></span></button>
      <span className="pd-contact">{person.phone||'—'}</span>
      <span className="pd-pillcell"><em className={'pd-pill '+(person.status==='Membro'?'member':person.status==='Visitante'?'visitor':'integration')}>{person.status}</em></span>
      <span className="pd-group">{person.group}</span><span className="pd-since">{person.since}</span></div>)}

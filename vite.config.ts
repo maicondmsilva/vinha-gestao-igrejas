@@ -46,6 +46,7 @@ export default defineConfig(async ({command}) => {
   process.env.MINIFLARE_REGISTRY_PATH ??= '.wrangler/registry';
 
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.
+  // Funções da Vercel em São Paulo (gru1), junto do banco Supabase (sa-east-1) e dos usuários.
   const isVercelBuild = Boolean(process.env.VERCEL || process.env.NITRO_PRESET === 'vercel');
   // Nitro's fetchable dev environment has no RSC `runner`. Use Vinext's native
   // runner only for the Docker-local preview; deployment builds retain Nitro.
@@ -66,7 +67,7 @@ export default defineConfig(async ({command}) => {
       },
     } : undefined,
     plugins: isVercelBuild
-      ? [vinext(), tailwindcss(), ...(localPreview ? [] : [nitro()])]
+      ? [vinext(), tailwindcss(), ...(localPreview ? [] : [nitro({vercel: {functions: {regions: ['gru1']}}})])]
       : [
           vinext(),
           tailwindcss(),
