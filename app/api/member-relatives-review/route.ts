@@ -9,7 +9,7 @@ async function run(request:Request,write:boolean){try{
  let data:Record<string,unknown>={};
  if(write){try{const b=JSON.parse(new TextDecoder().decode(await boundedBody(request,4000)));
   if(!b||typeof b!=='object'||Object.keys(b).some((k:string)=>!['id','decision','person','journey','reason'].includes(k))||!uuidPattern.test(b.id||'')||!['approve','reject'].includes(b.decision)
-   ||b.person!==undefined&&b.person!==''&&!uuidPattern.test(b.person)||b.journey!==undefined&&!['','Membro','Em integração','Visitante'].includes(b.journey)
+   ||b.person!==undefined&&b.person!==''&&!uuidPattern.test(b.person)||b.journey!==undefined&&!['','Membro','Em integração','Visitante','Criança'].includes(b.journey)
    ||b.reason!==undefined&&(typeof b.reason!=='string'||b.reason.length>500)||b.decision==='reject'&&(typeof b.reason!=='string'||b.reason.trim().length<5))throw Error();
   data={id:b.id,decision:b.decision,...(b.person?{person:b.person}:{}),...(b.journey?{journey:b.journey}:{}),...(b.reason?{reason:b.reason.trim()}:{})}}catch{return json({error:'Revise a decisão. Para não aprovar, informe o motivo (mínimo de 5 caracteres).'},400)}}
  const r=await (auth.access!.client as unknown as Rpc).rpc('member_relatives_admin',{p_org:auth.access!.membership.organization_id,p_action:write?'review':'list',p_data:data});

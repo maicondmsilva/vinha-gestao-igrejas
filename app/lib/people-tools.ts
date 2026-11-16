@@ -30,7 +30,7 @@ export const followupOrder=['pending','contacted','in_cell','integrated','stoppe
 export const reasonLabels:Record<string,string>={cpf:'Mesmo CPF',phone:'Mesmo celular',name:'Mesmo nome',birth:'Mesmo primeiro nome e nascimento'};
 export const timelineIcons:Record<string,string>={record:'✎',visit:'⌂',faith:'✝',journey:'➜',family:'♥',cell:'◎',app:'▣',service:'♪'};
 export const bulkActions=[['journey','Mudar etapa'],['tag','Adicionar marcador'],['untag','Remover marcador'],['notify','Enviar comunicado']] as const;
-export const journeys=['Visitante','Em integração','Membro'] as const;
+export const journeys=['Visitante','Em integração','Membro','Criança'] as const;
 
 const ids=(v:unknown,max:number)=>{
  if(!Array.isArray(v)||v.length<1||v.length>max||v.some(x=>typeof x!=='string'||!uuidPattern.test(x)))throw Error(`Escolha de 1 a ${max} pessoas.`);

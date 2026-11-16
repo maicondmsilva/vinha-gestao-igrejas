@@ -77,7 +77,7 @@ test('continuar cancels the native click before changing step and never reuses t
  assert.deepEqual(events,['cancel-native-submit',4]);
  assert.match(ui,/key="member-continue" type="button"/);
  assert.match(ui,/key="member-save" type="submit"/);
- assert.match(ui,/e.preventDefault\(\);if\(step!==4\)/);
+ assert.match(ui,/e.preventDefault\(\);if\(step!==4&&!initial\)/);
 });
 test('global button fallback ignores handled events and nodes removed during React navigation',()=>{
  const file=readFileSync(new URL('../app/ActionCoordinator.tsx',import.meta.url),'utf8');

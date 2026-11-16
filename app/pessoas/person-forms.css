@@ -1,0 +1,78 @@
+/* Pessoas · ficha e cadastro (v2): mais espaço, leitura fácil e celular em tela cheia. */
+.person-profile.pp{width:min(760px,100vw)}
+.pp .profile-head{display:grid;justify-items:center;gap:8px;text-align:center}
+.pp-avatar{width:96px;height:96px;font-size:28px}.pp-avatar .person-photo,.pp-avatar img{width:96px!important;height:96px!important;border-radius:50%;object-fit:cover}.pp-avatar i{font-size:28px}.pp-avatar .pa-badge{width:26px;height:26px;font-size:13px}
+.pp .profile-head h2{margin:4px 0 0;line-height:1.2;overflow-wrap:anywhere}
+.pp-id{margin:0;font-size:13px;opacity:.9;display:flex;align-items:center;gap:6px;justify-content:center}
+.pp-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:2px 0 6px}.pp-chips em{font-style:normal;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:#ffffff26}
+.pp .profile-grid b{overflow-wrap:anywhere}
+.modal.member-modal.pf{width:min(1080px,calc(100vw - 32px));max-height:calc(100dvh - 40px)}
+.pf .step-content{min-height:min(520px,60vh)}
+.pf input,.pf select,.pf textarea{font-size:15px}
+.pf-age{font-style:normal;font-weight:700;color:var(--tenant,#285c45)}
+@media(min-width:1100px){.pf .step-content .form-row{gap:20px}}
+@media(max-width:760px){.modal.member-modal.pf{width:100vw;max-height:100dvh;height:100dvh;border-radius:0}.person-profile.pp{width:100vw}}
+/* Ficha v3: cabeçalho horizontal, destaques, atalhos e cartões limpos. */
+.pp2{width:min(880px,100%);background:#f4f7f5;display:block;border-radius:20px 0 0 20px}
+.pp2 .profile-grid b{overflow-wrap:break-word;word-break:break-word}
+.pp2 .pp-hero{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:22px;text-align:left;justify-items:start;padding:34px 32px 58px;position:relative;background:radial-gradient(circle at 92% -20%,#d8b76940 0,transparent 45%),linear-gradient(140deg,var(--tenant,#285c45),#122f24)}
+.pp2 .pp-hero .pp-close{position:absolute;top:14px;right:14px;width:38px;height:38px;border-radius:12px;border:0;background:#ffffff1f;color:#fff;font-size:22px;cursor:pointer}
+.pp2 .pp-hero .pp-close:hover{background:#ffffff33}
+.pp2 .pp-avatar{width:104px;height:104px;box-shadow:0 0 0 4px #ffffff30,0 10px 24px #0000003a}
+.pp2 .pp-avatar .person-photo,.pp2 .pp-avatar img{width:104px!important;height:104px!important}
+.pp2 .pp-who{min-width:0;display:grid;gap:6px}
+.pp2 .pp-who h2{font-size:28px;font-weight:600;letter-spacing:-.01em;margin:0;color:#fff;line-height:1.15}
+.pp2 .pp-id{justify-content:flex-start;color:#d9e6df;letter-spacing:.04em;font-size:12px;text-transform:uppercase;margin:0}
+.pp2 .pp-chips{justify-content:flex-start;margin:2px 0 0}
+.pp2 .pp-chips em{background:#ffffff1f;color:#fff;border:1px solid #ffffff2b;padding:4px 12px}
+.pp2 .pp-chips .pp-status{background:#d8b769;color:#1d2a22;border-color:#d8b769}
+.pp2 .pp-actions{display:grid;gap:8px;align-self:center;margin-right:28px}
+.pp2 .pp-actions .create,.pp2 .pp-actions a{display:flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap;cursor:pointer}
+.pp2 .pp-actions .create{border:0;background:#fff;color:var(--tenant,#285c45);margin:0}
+.pp2 .pp-actions a{border:1px solid #ffffff4d;color:#fff;background:#ffffff14}
+.pp2 .pp-actions a:hover{background:#ffffff2b}
+.pp2 .pp-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin:-34px 24px 0;position:relative;background:#e2e9e5;border-radius:16px;overflow:hidden;box-shadow:0 12px 30px #10261d1f}
+.pp2 .pp-facts span{background:#fff;padding:14px 16px;display:grid;gap:4px;min-width:0}
+.pp2 .pp-facts small{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6a7b72}
+.pp2 .pp-facts b{font-size:15px;color:#183e31;overflow-wrap:anywhere}
+.pp2 .pp-nav{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;padding:14px 24px 10px;background:#f4f7f5e6;backdrop-filter:blur(6px);scrollbar-width:none}
+.pp2 .pp-nav::-webkit-scrollbar{display:none}
+.pp2 .pp-nav button{flex:none;border:1px solid #d5e0da;background:#fff;color:#2c4a3d;border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.pp2 .pp-nav button:hover{border-color:var(--tenant,#285c45);color:var(--tenant,#285c45)}
+.pp2 .pp-body{padding:6px 24px 28px}
+.pp2 .pp-cols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+.pp2 .profile-body section{background:#fff;border:1px solid #e3eae6;border-radius:16px;padding:18px 20px;margin:0 0 14px;box-shadow:0 1px 2px #10261d0a;scroll-margin-top:64px}
+.pp2 .pp-cols section{margin:0}
+.pp2 .pp-cols{margin-bottom:14px}
+.pp2 .profile-body h3{display:flex;align-items:center;gap:10px;font-size:15px;margin:0 0 14px;color:#183e31}
+.pp2 .profile-body h3 i{font-style:normal;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:#eaf2ed;color:var(--tenant,#285c45);font-size:14px}
+.pp2 .pp-cols .profile-grid{grid-template-columns:1fr}
+.pp2 .profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px}
+.pp2 .profile-grid span{display:grid;gap:3px;min-width:0}
+.pp2 .profile-grid small{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#6a7b72}
+.pp2 .profile-grid b{font-size:15px;font-weight:600;color:#1d3a2f}
+.pp2 .profile-grid b.pp-empty{font-weight:400;color:#9aa8a0;font-style:italic;font-size:14px}
+.pp2 .profile-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.pp2 .profile-tags em{font-style:normal;font-size:12px;font-weight:600;background:#fbf4e3;color:#7a5c1e;border-radius:999px;padding:3px 10px}
+.pp2 .pastoral{background:#fffaf0!important;border-color:#eadbb5!important}
+.pp2 .pp-docs{scroll-margin-top:64px}
+@media(max-width:760px){
+ .profile-overlay:has(.pp2){padding:0}
+ .pp2{width:100%;border-radius:0}
+ .pp2 .pp-hero{grid-template-columns:auto 1fr;padding:26px 18px 54px;gap:16px}
+ .pp2 .pp-avatar,.pp2 .pp-avatar .person-photo,.pp2 .pp-avatar img{width:76px!important;height:76px!important}
+ .pp2 .pp-who h2{font-size:22px;padding-right:34px}
+ .pp2 .pp-actions{grid-column:1/-1;grid-auto-flow:column;grid-auto-columns:1fr;width:100%;margin:0}
+ .pp2 .pp-facts{grid-template-columns:1fr 1fr;margin:-30px 14px 0}
+ .pp2 .pp-nav{padding:12px 14px 8px}
+ .pp2 .pp-body{padding:6px 14px 24px}
+ .pp2 .pp-cols,.pp2 .profile-grid{grid-template-columns:1fr}
+}
+/* Cadastro: etapas como abas clicáveis (vai direto para qualquer etapa). */
+.pf .stepper.pf-tabs{gap:8px;padding:0 24px 14px}
+.pf .pf-tabs button{justify-content:flex-start;padding:10px 12px;border-radius:12px;border:1px solid transparent;transition:background .15s,border-color .15s}
+.pf .pf-tabs button:hover{background:#f1f6f3;border-color:#dbe6df;color:#285c45}
+.pf .pf-tabs button.on{background:#eaf2ed;border-color:#cfe0d6;box-shadow:inset 0 -3px 0 var(--tenant,#285c45)}
+.pf .pf-tabs button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf .modal-actions .pf-save-now{margin-left:auto;border:1px solid var(--tenant,#285c45);background:#fff;color:var(--tenant,#285c45);font-weight:700;border-radius:10px;padding:0 16px;min-height:42px;cursor:pointer}
+@media(max-width:760px){.pf .stepper.pf-tabs{display:flex;overflow-x:auto;scrollbar-width:none;padding:0 14px 12px}.pf .pf-tabs button{flex:none}}
