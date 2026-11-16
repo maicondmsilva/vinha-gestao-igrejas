@@ -14,7 +14,7 @@ const tenantQuery=()=>{const t=typeof window==='undefined'?'':new URLSearchParam
 export function PersonPicker({unitId,label,onPick,exclude}:{unitId:string;label:string;onPick:(p:Found)=>void;exclude?:string}){
  const[q,setQ]=useState(''),[list,setList]=useState<Found[]>([]);
  useEffect(()=>{if(q.trim().length<2){Promise.resolve().then(()=>setList([]));return}const c=new AbortController();const t=setTimeout(()=>{
-  fetch('/api/people?'+new URLSearchParams({q:q.trim(),limit:'6',unitId,...tenantQuery()}),{cache:'no-store',signal:c.signal}).then(r=>r.ok?r.json():null)
+  fetch('/api/people?'+new URLSearchParams({q:q.trim(),limit:'6',unitId,...tenantQuery()}),{cache:'no-store',signal:c.signal}).then(r=>r.ok?r.json() as Promise<{people?:Found[]}>:null)
    .then((d:{people?:Found[]}|null)=>setList((d?.people||[]).filter(p=>p.id!==exclude))).catch(()=>undefined)},250);return()=>{clearTimeout(t);c.abort()}},[q,unitId,exclude]);
  return <div className="pcv-pick"><label>{label}<input value={q} maxLength={100} onChange={e=>setQ(e.target.value)} placeholder="Digite ao menos 2 letras do nome"/></label>
   {list.length>0&&<ul>{list.map(p=><li key={p.id}><button type="button" onClick={()=>{onPick(p);setQ('');setList([])}}>{p.name}{p.phone?<small> · {p.phone}</small>:null}</button></li>)}</ul>}</div>;

@@ -86,6 +86,24 @@ export const portalModules: PortalModule[] = [
         ],
       },
       {
+        id: 'cargos',
+        title: 'Cargos e funções',
+        text: [
+          'Cargo é o que a pessoa é na igreja (Pastor ou Pastora, Presbítero, Diácono ou Diaconisa, Missionário…); uma pessoa pode ter vários ao mesmo tempo. A igreja escolhe como chamar (Cargo, Título, Ofício) e cria os seus próprios em Configurações › Cargos e funções.',
+          'Função é o que a pessoa faz em um grupo: Líder, Vice-líder, Anfitrião ou Participante numa célula; Supervisor ou Pastor de rede numa rede; Líder ou Integrante num ministério. O antigo campo de texto “Grupo / ministério” deu lugar à busca dos grupos cadastrados.',
+          'Funções de liderança sugerem um acesso limitado ao próprio grupo (a célula, a rede ou as escalas do ministério). O acesso só vale depois que o dono ou um administrador confirma em Configurações › Cargos e funções › Acessos sugeridos; quando a pessoa deixa a função, a retirada também é proposta.',
+          'No app, cada membro vê as suas funções no perfil e a carteirinha mostra o cargo. A página Liderança da igreja lista pastores e líderes com botão de mensagem; o telefone só aparece se o próprio líder autorizar.',
+        ],
+        steps: [
+          'Em Configurações › Cargos e funções, revise os cargos sugeridos, ajuste os nomes e a ordem (é a ordem da página Liderança).',
+          'Em Funções nos grupos, confira o acesso sugerido de cada função de liderança.',
+          'Em Ministérios, ligue cada ministério às suas equipes de escala (Louvor › Banda, Vocal…).',
+          'Na ficha ou no cadastro da pessoa, adicione os cargos e os grupos com a função.',
+          'Em Conferir grupos antigos, vincule os cadastros que tinham o grupo escrito à mão.',
+        ],
+        tip: 'Líder definido no módulo Células ou supervisor definido em Redes já aparecem como função automaticamente.',
+      },
+      {
         id: 'termos',
         title: 'Termos de consentimento',
         text: [

@@ -26,6 +26,8 @@ export function memberFormPayload(draft:Record<string,unknown>,initial:Record<st
   if(consentFields.has(key)&&initial&&!changedConsents.includes(key))continue;
   // Pastoral history is append-only; an empty editor does not erase a note.
   if(key==='notes'&&!draft.notes)continue;
+  // "Grupo" agora vem de Cargos e funções (células, redes e ministérios); o cadastro não grava mais texto livre.
+  if(key==='group')continue;
   payload[key]=typeof draft[key]==='string'&&['phone','emergencyPhone','cpf','zip','birthDate'].includes(key)?normalizeRegistrationField(key,draft[key] as string):draft[key];
  }
  if(draft.campus)payload.campus=draft.campus;

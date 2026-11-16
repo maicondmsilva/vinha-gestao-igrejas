@@ -11,8 +11,8 @@ export default function PeopleBirthdays({unitId,onOpen}:{unitId:string;onOpen:(p
   fetch('/api/people/birthdays?'+new URLSearchParams({unit:unitId,range,...(t?{tenant:t}:{})}),{cache:'no-store',signal:c.signal})
    .then(async r=>{if(r.status===403){setDenied(true);return}if(!r.ok)return;setDenied(false);setData(await r.json() as Data)}).catch(()=>undefined);
   return()=>c.abort()},[unitId,range]);
- if(denied||!data)return null;
- const n=data.counts?.[range as keyof Data['counts']]??0;
+ if(denied||!data?.counts||!data.today)return null;
+ const n=data.counts[range as keyof Data['counts']]??0;
  return <section className="pb" aria-labelledby="pb-title">
   <header><button type="button" className="pb-toggle" aria-expanded={open} onClick={()=>setOpen(v=>!v)}><h2 id="pb-title">Aniversariantes</h2><span>{data.counts.today?`${data.counts.today} hoje`:'Ninguém hoje'} · {data.counts.week} nos próximos 7 dias</span></button>
    {open&&<div className="pb-seg" role="group" aria-label="Período">{ranges.map(([v,l])=><button key={v} type="button" aria-pressed={range===v} onClick={()=>setRange(v)}>{l} <b>{data.counts[v]}</b></button>)}</div>}</header>

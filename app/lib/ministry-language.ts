@@ -2,6 +2,7 @@ export const languageDefaults={
  'celulas.indicacoes':'Indicações','celulas.materiais':'Materiais e estudos','celulas.consolidado':'Indicadores por rede','celulas.pendencias':'Pendências e avisos','celulas.supervisao':'Supervisão e acesso',
  'celulas.redes':'Redes e supervisão','celulas.supervisor':'Responsável pela rede',
  'celulas.visitantes':'Visitantes',
+ 'pessoas.cargo':'Cargo','pessoas.cargos':'Cargos',
  inicio:'Visão geral',pessoas:'Pessoas',familias:'Famílias e termos',aplicativo:'Aplicativo do membro',kids:'Área Kids',igrejas:'Igrejas e unidades',usuarios:'Usuários e permissões',eventos:'Cultos e eventos',celulas:'Células',escalas:'Escalas',louvor:'Louvor',comunicacao:'Comunicação',transmissoes:'Transmissões',financeiro:'Financeiro',relatorios:'Relatórios',configuracoes:'Configurações',
  'celulas.geral':'Visão geral','celulas.singular':'célula','celulas.plural':'células','celulas.cadastro':'Cadastro','celulas.encontros':'Encontros','celulas.participantes':'Participantes','celulas.relatorios':'Relatórios','celulas.categorias':'Categorias','celulas.responsavel':'Responsável','celulas.local':'Local ou orientação',
 } as const;
