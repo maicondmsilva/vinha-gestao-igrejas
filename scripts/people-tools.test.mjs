@@ -46,7 +46,23 @@ test('rotas e telas ligadas',()=>{
  assert.match(r,/p_org:a\.membership\.organization_id/);assert.match(r,/membership\.units\.some/);
  assert.match(read('app/api/people/route.ts'),/people_search/);
  const d=read('app/PeopleDirectory.tsx');for(const s of ['Novos convertidos','Duplicados','Exportar Excel','Ações em lote','Enviar agora','Faixa etária','Rede'])assert.ok(d.includes(s),s);
- assert.match(read('app/DashboardApp.tsx'),/<PersonTimeline person=/);
+ assert.match(read('app/pessoas/PersonForms.tsx'),/<PersonTimeline person=/);
  assert.match(read('app/PeopleDuplicates.tsx'),/não pode ser desfeita/);
  assert.match(read('shared/contract/push.ts'),/people: ids\(250/);
+});
+
+test('desempenho de Pessoas: servidor em São Paulo, contadores numa chamada e lista enxuta', () => {
+  const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+  assert.deepEqual(JSON.parse(rd('vercel.json')).regions, ['gru1']);
+  assert.match(rd('vite.config.ts'), /regions: \['gru1'\]/);
+  const api = rd('app/api/people/route.ts');
+  assert.match(api, /search\.get\('counts'\)==='1'/);
+  assert.match(api, /const lite=search\.get\('view'\)==='list'/);
+  const dir = rd('app/PeopleDirectory.tsx');
+  assert.match(dir, /params\.set\('view','list'\)/);
+  assert.match(dir, /counts:'1'/);
+  assert.doesNotMatch(dir, /\['','Membro','Em integração','Visitante'\]\.map/);
+  const shell = rd('app/DashboardApp.tsx');
+  assert.doesNotMatch(shell, /limit:'100'/);
+  for (const dead of ['function KidsArea', 'function LegacyPermissions', 'function FamilyTermManager', 'MemberAppPlatform', 'AccountingCenter']) assert.ok(!shell.includes(dead), dead);
 });
