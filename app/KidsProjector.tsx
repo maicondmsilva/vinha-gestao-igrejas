@@ -5,6 +5,19 @@ import {readApiError} from '../shared/contract/errors';
 
 type State = {enabled: boolean; configured: boolean; updatedAt: string | null};
 
+/** Explica o resultado do teste do telão em linguagem simples. */
+export function projectorMessage(state: string, response = '') {
+  if (state === 'ok') return 'Chegou ao Holyrics. A faixa "Teste do telão Kids pela Vinha" deve aparecer por 10 segundos.';
+  if (state === 'denied')
+    return 'O Holyrics recusou: confira a chave (API_KEY) e o token, e se o token tem permissão para "SetAlert" (Holyrics › Arquivo › Configurações › API Server › gerenciar permissões).';
+  if (state === 'network') return 'Não foi possível falar com o servidor do Holyrics agora. Tente de novo em instantes.';
+  if (state === 'not_sent') return 'O envio não saiu do servidor. Avise o suporte Vinha.';
+  return (
+    'O Holyrics respondeu com erro. Confira se o programa está aberto e se o "acesso pela internet" do API Server está ativado.' +
+    (response ? ' Resposta: ' + response.slice(0, 160) : '')
+  );
+}
+
 /** Telão (Holyrics): quando a sala chama um responsável, o telão mostra só o número da etiqueta e a sala. */
 export default function KidsProjector({unit}: {unit: string}) {
   const [state, setState] = useState<State | null>(null),
@@ -51,10 +64,20 @@ export default function KidsProjector({unit}: {unit: string}) {
       setApiKey('');
       setToken('');
       setNotice(d.enabled ? 'Telão ligado. Os chamados da sala aparecem no Holyrics.' : 'Configuração salva. O telão está desligado.');
-    } else
-      setNotice(
-        d.ok ? 'Teste enviado. Confira se a faixa "Teste do telão Kids pela Vinha" apareceu no telão.' : 'O teste não foi enviado. Revise a chave e o token.',
-      );
+    } else if (!d.ok) setNotice('O teste não foi enviado. Revise a chave e o token.');
+    else {
+      setNotice('Teste enviado. Aguardando a resposta do Holyrics…');
+      // O Holyrics responde em alguns segundos: consulta o resultado e explica o que aconteceu.
+      for (let i = 0; i < 6; i++) {
+        await new Promise((ok) => setTimeout(ok, 2000));
+        const x = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action: 'last'})}).catch(() => null);
+        const s = (x?.ok ? await x.json().catch(() => ({})) : {}) as {state?: string; code?: number; response?: string};
+        if (!s.state || s.state === 'waiting') continue;
+        setNotice(projectorMessage(s.state, s.response));
+        return;
+      }
+      setNotice('O Holyrics não respondeu. Confira se o programa está aberto no computador do telão e conectado à internet.');
+    }
   }
   return (
     <section className="ko-card">
