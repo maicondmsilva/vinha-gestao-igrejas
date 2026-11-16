@@ -1,0 +1,14 @@
+.pa .pa-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:16px}
+.pa .pa-card{background:#fff;border:1px solid #dfe7e2;border-radius:16px;padding:16px;display:grid;gap:10px;min-width:0}
+.pa .pa-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.pa .pa-head small{color:#5d6d65}
+.pa label{display:grid;gap:6px;font-weight:600;font-size:14px}
+.pa input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cfdad4;border-radius:10px;font:inherit}
+.pa .pa-preview{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#10261d}
+.pa .pa-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.pa .pa-actions button{padding:9px 16px;border-radius:10px;border:1px solid #cfdad4;background:#fff;font:inherit;cursor:pointer}
+.pa .pa-actions .pa-primary{background:#285c45;border-color:#285c45;color:#fff}
+.pa .pa-actions button:disabled{opacity:.5;cursor:default}
+.pa .pa-notice{color:#285c45;font-weight:600}
+.pa .pa-error{color:#a3332b}
+@media (max-width:520px){.pa .pa-list{grid-template-columns:1fr}}

@@ -130,3 +130,39 @@ Pontos a melhorar:
 7. **Organização:** mover o cadastro e a ficha para `app/pessoas/`.
 8. **Carregar cada módulo sob demanda** (`React.lazy`): o pacote inicial cai de cerca de 850 KB para a moldura mais o módulo aberto.
 9. **Segurança:** captcha no visitante e proteção contra senha vazada.
+
+## 9. Execução (16/11/2026), PR #190
+
+**Correção da seção 3:** "Famílias e termos" e "Aplicativo do membro" não chegavam a abrir as telas antigas. A lista de liberação as marca como "em desenvolvimento", então mostravam só um aviso; os componentes antigos eram, na prática, código morto. Saíram do menu e os endereços redirecionam para Pessoas e Configurações.
+
+| Etapa | Situação |
+|---|---|
+| 1. Servidor em São Paulo (`gru1`) | Feito |
+| 2. Total da Visão geral sem baixar 100 cadastros | Feito |
+| 3. Contadores numa chamada | Feito |
+| 4. Lista enxuta, ficha completa ao abrir | Feito |
+| 5. Código morto | Feito: 16 componentes, 2 arquivos, 4 CSS e 4 rotas antigas. Remoção conferida duas vezes, com o grafo de uso refeito depois de cada mudança. |
+| 6. Telas antigas fora do menu | Feito |
+| 7. Cadastro e ficha em `app/pessoas/` | Feito |
+| 8. Módulos sob demanda | Feito: JS inicial de 849 KB para 30 KB e CSS de 246 KB para 40 KB |
+| 9. Captcha no visitante | **Pendente, depende de chave**: um site key do Cloudflare Turnstile (gratuito) |
+| 9. Proteção contra senha vazada | **Pendente, depende do responsável pela conta**: ligar em Supabase › Authentication › Policies |
+
+Ainda fora de Pessoas, mas observado: o "Louvor" está marcado como "em desenvolvimento" na lista de liberação, embora as telas L2 e L3 estejam prontas. Será revisto na análise do módulo.
+
+## Pessoas v2 — impacto no módulo Área Kids
+
+| Mudança | Onde | Impacto no Kids | Resultado |
+|---|---|---|---|
+| Etapa **Criança** automática | gatilho `kids_child_journey` em `kids_profiles` | Toda criança com ficha Kids que estava como Visitante passa a Criança (inclusive as antigas, pelo ajuste único). Membros/Em integração não são alterados. | Filtros, contadores e relatórios de Pessoas separam crianças de visitantes. Check-in, salas e telão não usam a etapa: sem efeito. |
+| Grau do responsável | app (`KidsFamily`, `KidsGuardians`), `kids_app_create`, `member_kids_temporary` | O responsável informa o que é da criança. Parente → vínculo de família nos dois cadastros. “Outro” → só autorização de retirada, sem família. | A etiqueta do responsável no Kids mostra o grau (ex.: “Avô/Avó (a conferir)”); a recepção vê quem é parente. |
+| Conferência da secretaria | `member_family_admin` | Ao aprovar, o grau é mantido (sai só “(a conferir)”). | Nada se perde na aprovação; responsáveis antigos continuam como estavam. |
+| Criança ativa na hora | já existente (PR 180) | Sem mudança: pode entrar na sala antes da conferência. | — |
+| Foto no círculo | `PersonAvatar` (painel) | Mesma foto já usada na recepção, salas e app. | Anel dourado e selo K identificam a criança em Pessoas. |
+| Termos da igreja para crianças | `consent_kinds`, `member_consent` | Termos com público “crianças” aparecem no app do responsável, por criança, como os dois termos Kids padrão. | Retiro, passeio etc. sem código novo. A retirada de um termo mantém os aceites. |
+
+Riscos verificados: a retirada no Kids continua exigindo responsável autorizado (fixo ou temporário válido) — o grau não amplia permissões; “outro” não cria laço familiar; os testes `member_family`, `kids_qr_temporary` e `consent_terms` cobrem os três caminhos.
+
+## Portal da Vinha — vídeos
+
+Os links dos vídeos ficam em **Central Vinha › ▶ Portal da Vinha** (`/admin-vinha/portal`), um por módulo. Só operadores com gestão da plataforma salvam (`save_portal_video` → `require_platform_manager`, com auditoria). Todos os usuários conectados leem (`vinha_portal_videos`). O primeiro vídeo (Pessoas) foi entregue fora do repositório, para publicar no YouTube.

@@ -4,7 +4,7 @@ export function peopleQuery(request:Request){
  const page=integer('page',1,10000),limit=integer('limit',25,100);
  const q=(params.get('q')||'').trim(),status=(params.get('status')||'').trim(),group=(params.get('group')||'').trim(),unitId=(params.get('unitId')||'').trim(),id=(params.get('id')||'').trim();
  if(q.length>100||group.length>160||status.length>40)throw new Error('Filtro muito longo.');
- if(status&&!['Membro','Em integração','Visitante'].includes(status))throw new Error('Status inválido.');
+ if(status&&!['Membro','Em integração','Visitante','Criança'].includes(status))throw new Error('Status inválido.');
  const uuid=/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
  if(unitId&&!uuid.test(unitId)||id&&!uuid.test(id))throw new Error('Identificador inválido.');
  return{page,limit,q,status,group,unitId,id,from:(page-1)*limit,to:page*limit-1};

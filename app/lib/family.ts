@@ -3,7 +3,7 @@ import {uuidPattern} from './private-files.ts';
 import {relations,relationLabels,type Relation} from '../../shared/relations.ts';
 export {relations,relationLabels,type Relation};
 
-export const journeys=['Membro','Em integração','Visitante'] as const;
+export const journeys=['Membro','Em integração','Visitante','Criança'] as const;
 
 const id=(v:unknown):v is string=>typeof v==='string'&&uuidPattern.test(v);
 const fail=(m='Revise os dados informados.')=>{throw Error(m)};
