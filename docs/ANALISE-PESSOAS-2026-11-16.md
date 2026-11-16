@@ -133,7 +133,7 @@ Pontos a melhorar:
 
 ## 9. Execução (16/11/2026), PR #190
 
-**Correção da seção 3:** "Famílias e termos" e "Aplicativo do membro" não chegavam a abrir as telas antigas. A liderança de liberação as marca como "em desenvolvimento", então mostravam só um aviso; os componentes antigos eram, na prática, código morto. Saíram do menu e os endereços redirecionam para Pessoas e Configurações.
+**Correção da seção 3:** "Famílias e termos" e "Aplicativo do membro" não chegavam a abrir as telas antigas. A lista de liberação as marca como "em desenvolvimento", então mostravam só um aviso; os componentes antigos eram, na prática, código morto. Saíram do menu e os endereços redirecionam para Pessoas e Configurações.
 
 | Etapa | Situação |
 |---|---|
