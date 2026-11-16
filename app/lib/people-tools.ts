@@ -71,6 +71,10 @@ export function convertInput(body:unknown){
  if('status' in b){if(!(followupOrder as readonly string[]).includes(b.status as string))throw Error('Etapa do acompanhamento inválida.');data.status=b.status}
  if('followup' in b){if(b.followup!==''&&(typeof b.followup!=='string'||!uuidPattern.test(b.followup)))throw Error('Responsável inválido.');data.followup=b.followup}
  if('note' in b){if(typeof b.note!=='string'||b.note.length>500)throw Error('A observação pode ter até 500 caracteres.');data.note=b.note}
+ if('faith' in b){if(!['unknown','none','here','reconciled','other_church'].includes(String(b.faith)))throw Error('Decisão de fé inválida.');data.faith=b.faith}
+ if('previousChurch' in b){if(typeof b.previousChurch!=='string'||b.previousChurch.length>120)throw Error('Nome da igreja muito longo.');data.previousChurch=b.previousChurch}
+ if('next' in b){if(b.next!==''&&(typeof b.next!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(b.next)))throw Error('Data do próximo contato inválida.');data.next=b.next}
+ if(b.stop===true)data.stop=true;
  return{unit:unit(b.unit),data};
 }
 

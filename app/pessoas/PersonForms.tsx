@@ -2,6 +2,7 @@
 // Pessoas › ficha (PersonProfile) e cadastro completo (PersonModal). Carregados só quando abertos.
 import {FormEvent,useEffect,useRef,useState,type ReactNode} from 'react';
 import FamilyLinks from '../FamilyLinks';
+import {PastoralHistory} from './PastoralCare';
 import PersonRoles,{applyStaged,emptyStaged,type StagedRoles} from './PersonRoles';
 import {useMinistryLanguage} from '../MinistryLanguage';
 import PersonTimeline from '../PersonTimeline';
@@ -46,7 +47,7 @@ export function PersonProfile({person,close,edit}:{person:Person,close:()=>void,
    <span><small>Na igreja desde</small><b>{person.since||'—'}</b></span>
    <span><small>{child?'Sala / grupo':'Grupo'}</small><b>{group||'—'}</b></span>
   </div>
-  <nav className="pp-nav" aria-label="Seções da ficha">{([['contato','Contato'],['pessoais','Dados'],['funcoes',plural],['familia','Família'],['igreja','Vida na igreja'],['docs','Termos e arquivos'],['historico','Histórico']] as [string,string][]).map(([id,l])=><button key={id} type="button" onClick={()=>go(id)}>{l}</button>)}</nav>
+  <nav className="pp-nav" aria-label="Seções da ficha">{([['contato','Contato'],['pessoais','Dados'],['funcoes',plural],['familia','Família'],['igreja','Vida na igreja'],['atendimento','Atendimento'],['docs','Termos e arquivos'],['historico','Histórico']] as [string,string][]).map(([id,l])=><button key={id} type="button" onClick={()=>go(id)}>{l}</button>)}</nav>
   <div className="profile-body pp-body">
    <div className="pp-cols">
     {sec('contato','☎','Contato',<div className="profile-grid">{item('E-mail',person.email)}{item('Telefone',person.phone)}</div>)}
@@ -57,6 +58,7 @@ export function PersonProfile({person,close,edit}:{person:Person,close:()=>void,
    {sec('igreja','✦','Vida na igreja',<><div className="profile-grid">{item('Etapa',person.status)}{item('Batizado',person.baptized)}{item('Grupo / ministério',group)}{item('Desde',person.since)}{person.convertedAt&&item('Decisão por Jesus',brDate(person.convertedAt))}</div>{person.tags&&<p className="profile-tags">{person.tags.split(',').map(tag=><em key={tag}>{tag.trim()}</em>)}</p>}</>)}
    {sec('endereco','⌂','Endereço e emergência',<div className="profile-grid">{item('Endereço',address)}{item('Contato de emergência',person.emergencyName?(person.emergencyName+(person.emergencyPhone?' · '+person.emergencyPhone:'')):'')}</div>)}
    {person.notes&&sec('pastoral','🔒','Observação pastoral',<p>{person.notes}</p>,'pastoral')}
+   {person.id&&sec('atendimento','✚','Histórico de atendimento',<PastoralHistory person={person.id} personName={person.name} unit={person.campusId||(typeof window==='undefined'?'':new URLSearchParams(location.search).get('unidade')||'')}/>)}
    <div id="pp-docs" className="pp-docs"><PersonConsents personId={person.id||''}/><PersonVisits personId={person.id||''}/><MemberFiles personId={person.id||''}/></div>
    {person.id&&sec('historico','↺','Histórico',<PersonTimeline person={person.id}/>)}
   </div></aside></div>;
@@ -64,9 +66,9 @@ export function PersonProfile({person,close,edit}:{person:Person,close:()=>void,
 
 export function PersonModal({initial,close,save,units,unitId,canPastoral}:{initial:Person|null,close:()=>void,save:(p:Person,after?:(id:string)=>Promise<void>)=>Promise<void>,units:ChurchUnit[],unitId:string,canPastoral:boolean}){
  const [step,setStep]=useState(1); const [staged,setStaged]=useState<StagedRoles>(emptyStaged); const plural=useMinistryLanguage().t('pessoas.cargos'); const [birthAge,setBirthAge]=useState(()=>personAgeLabel(initial?.birthDate)); const [saving,setSaving]=useState(false); const [error,setError]=useState(''); const [draft,setDraft]=useState<Record<string,unknown>>(()=>({...initial,notes:'',campus:initial?.campusId||initial?.campus||unitId})); const formRef=useRef<HTMLFormElement>(null);const [changedConsents,setChangedConsents]=useState<string[]>([]);
- useEffect(()=>{if(!formRef.current)return;Object.entries(draft).forEach(([key,value])=>{const field=formRef.current?.elements.namedItem(key);if(field instanceof HTMLInputElement&&field.type==='checkbox')field.checked=Boolean(value);else if(field&&'value' in field){const formatted=formatRegistrationField(key,String(value??''));if(field instanceof HTMLSelectElement&&formatted&&!Array.from(field.options).some(option=>option.value===formatted)){const option=document.createElement('option');option.value=formatted;option.textContent=formatted+' (cadastro anterior)';field.appendChild(option)}(field as HTMLInputElement).value=formatted}})},[step,units]);
+ useEffect(()=>{if(!formRef.current)return;Object.entries(draft).forEach(([key,value])=>{const field=formRef.current?.elements.namedItem(key);if(field instanceof HTMLInputElement&&field.type==='checkbox')field.checked=Boolean(value);else if(field&&'value' in field){const formatted=formatRegistrationField(key,String(value??''));if(field instanceof HTMLSelectElement&&formatted&&!Array.from(field.options).some(option=>option.value===formatted)){const option=document.createElement('option');option.value=formatted;option.textContent=formatted+' (cadastro anterior)';field.appendChild(option)}(field as unknown as HTMLInputElement).value=formatted}})},[step,units]);
  const registration=useRegistrationFormatting(formRef,step);
- function collect(){const data=new FormData(formRef.current!);const next={...draft};data.forEach((value,key)=>next[key]=String(value));['privacy','imageConsent','messages'].forEach(key=>{const field=formRef.current?.elements.namedItem(key) as HTMLInputElement|null;if(field)next[key]=field.checked});setDraft(next);return next}
+ function collect(){const data=new FormData(formRef.current!);const next={...draft};data.forEach((value,key)=>next[key]=String(value));['privacy','imageConsent','messages'].forEach(key=>{const field=formRef.current?.elements.namedItem(key) as unknown as HTMLInputElement|null;if(field)next[key]=field.checked});setDraft(next);return next}
  function goToStep(next:number){collect();if(next>step&&!formRef.current?.reportValidity())return;setError('');setStep(next)}
  function advance(event:{preventDefault:()=>void}){event.preventDefault();goToStep(step+1)}
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();if(step!==4&&!initial){setError('Revise as etapas antes de concluir.');return}if(!formRef.current?.reportValidity())return;const all=collect();if(String(all.name||'').trim().length<2){setError('Informe o nome completo.');return}if(!units.some(u=>u.id===all.campus)){setError('Selecione uma unidade autorizada.');return}setSaving(true);setError('');try{await save(memberFormPayload(all,initial,changedConsents) as unknown as Person,!initial&&(staged.positions.length||staged.groups.length)?id=>applyStaged(id,staged):undefined)}catch(error){setError(error instanceof Error?error.message:'Não foi possível salvar agora.');setSaving(false)}}
