@@ -37,3 +37,16 @@ test('telas: capa e públicos salvos no painel e no Vinha Equipe', () => {
   assert.match(staff, /pushRoles/);
   assert.match(read('supabase/migrations/20261115140000_push_capa_publicos.sql'), /c\.status in\('scheduled','sending','sent'\)/);
 });
+
+test('evento avisa no app, avisos por grupo e salas/turmas excluíveis no painel', () => {
+  const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+  assert.match(rd('app/ProgrammingDetail.tsx'), /Avisar no app/);
+  assert.match(rd('app/PushCampaigns.tsx'), /get\('evento'\)/);
+  assert.match(rd('app/PublishingWorkspace.tsx'), /Quem vê no app/);
+  assert.match(rd('app/PublishingWorkspace.tsx'), /\/api\/publishing\/audience/);
+  const sql = rd('supabase/migrations/20261116120000_publicacoes_por_grupos.sql');
+  assert.match(sql, /viewer_in_groups/);
+  assert.match(sql, /grant execute on function public\.publishing_audience/);
+  assert.match(rd('app/KidsOperations.tsx'), /removeSpace\('room'/);
+  assert.match(rd('app/api/kids/setup/route.ts'), /'room_delete', 'class_delete'/);
+});

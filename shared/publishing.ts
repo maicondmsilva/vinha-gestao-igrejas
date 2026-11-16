@@ -1,7 +1,7 @@
 import {mediaHttps,mediaSource} from './ministry-media.ts';
 export const publishingKinds=['notice','video','live','channel','category','banner','file','page','series'] as const;
 export type PublishingKind=typeof publishingKinds[number];
-export type Publication={id:string;kind:PublishingKind;title:string;body:string;source:string;poster:string;category_id:string|null;channel_id:string|null;targets:string[];group_id:string|null;group_version:number|null;scope:string;provider:string;starts_at:string|null;ends_at:string|null;download_allowed:boolean;share_allowed:boolean;status:'draft'|'published'|'archived';live_state:'scheduled'|'live'|'ended';version:number;can_manage:boolean;updated_at:string};
+export type Publication={id:string;kind:PublishingKind;title:string;body:string;source:string;poster:string;category_id:string|null;channel_id:string|null;targets:string[];group_id:string|null;group_version:number|null;scope:string;provider:string;starts_at:string|null;ends_at:string|null;download_allowed:boolean;share_allowed:boolean;status:'draft'|'published'|'archived';live_state:'scheduled'|'live'|'ended';version:number;can_manage:boolean;updated_at:string;people_groups?:string[]};
 export type PublicationGroup={id:string;title:string;targets:string[];active:boolean;version:number};
 export type PublisherUnit={id:string;name:string;communication:boolean;broadcasts:boolean};
 export type PublisherPage={items:Publication[];total:number;units:PublisherUnit[];groups:PublicationGroup[];categories:Publication[];channels:Publication[];series?:Publication[]};
