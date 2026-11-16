@@ -292,5 +292,10 @@
   ],
   "regions": [
     "gru1"
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "apk-teste": false
+    }
+  }
 }

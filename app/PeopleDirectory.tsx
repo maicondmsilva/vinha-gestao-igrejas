@@ -3,7 +3,7 @@ import {useMinistryLanguage} from './MinistryLanguage';
 import {useCallback,useEffect,useState} from 'react';
 import './people-directory.css';
 import './people-tools.css';
-import type {Person} from './DashboardApp';
+import type {Person} from './pessoas/types';
 import MemberChurchAdmin from './MemberChurchAdmin';
 import PendingProfiles from './PendingProfiles';
 import PeopleBirthdays from './PeopleBirthdays';

@@ -20,8 +20,8 @@ test('respostas aceitas pelo banco', () => {
 test('telas: QR no painel, página pública e Vinha Equipe', () => {
   assert.match(read('app/visitante/[unit]/page.tsx'), /'visitor_checkin'/);
   assert.match(read('app/PeopleDirectory.tsx'), /<VisitorQr /);
-  assert.match(read('app/DashboardApp.tsx'), /<PersonVisits /);
-  assert.match(read('app/DashboardApp.tsx'), /<PersonPhoto /);
+  assert.match(read('app/pessoas/PersonForms.tsx'), /<PersonVisits /);
+  assert.match(read('app/pessoas/PersonForms.tsx'), /<PersonPhoto /);
   assert.match(read('staff-app/App.tsx'), /here\?\.visitors/);
   assert.match(read('staff-app/src/VisitorForm.tsx'), /'visitor_staff'/);
 });

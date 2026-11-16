@@ -46,7 +46,7 @@ test('rotas e telas ligadas',()=>{
  assert.match(r,/p_org:a\.membership\.organization_id/);assert.match(r,/membership\.units\.some/);
  assert.match(read('app/api/people/route.ts'),/people_search/);
  const d=read('app/PeopleDirectory.tsx');for(const s of ['Novos convertidos','Duplicados','Exportar Excel','Ações em lote','Enviar agora','Faixa etária','Rede'])assert.ok(d.includes(s),s);
- assert.match(read('app/DashboardApp.tsx'),/<PersonTimeline person=/);
+ assert.match(read('app/pessoas/PersonForms.tsx'),/<PersonTimeline person=/);
  assert.match(read('app/PeopleDuplicates.tsx'),/não pode ser desfeita/);
  assert.match(read('shared/contract/push.ts'),/people: ids\(250/);
 });
