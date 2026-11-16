@@ -130,3 +130,22 @@ Pontos a melhorar:
 7. **Organização:** mover o cadastro e a ficha para `app/pessoas/`.
 8. **Carregar cada módulo sob demanda** (`React.lazy`): o pacote inicial cai de cerca de 850 KB para a moldura mais o módulo aberto.
 9. **Segurança:** captcha no visitante e proteção contra senha vazada.
+
+## 9. Execução (16/11/2026), PR #190
+
+**Correção da seção 3:** "Famílias e termos" e "Aplicativo do membro" não chegavam a abrir as telas antigas. A liderança de liberação as marca como "em desenvolvimento", então mostravam só um aviso; os componentes antigos eram, na prática, código morto. Saíram do menu e os endereços redirecionam para Pessoas e Configurações.
+
+| Etapa | Situação |
+|---|---|
+| 1. Servidor em São Paulo (`gru1`) | Feito |
+| 2. Total da Visão geral sem baixar 100 cadastros | Feito |
+| 3. Contadores numa chamada | Feito |
+| 4. Lista enxuta, ficha completa ao abrir | Feito |
+| 5. Código morto | Feito: 16 componentes, 2 arquivos, 4 CSS e 4 rotas antigas. Remoção conferida duas vezes, com o grafo de uso refeito depois de cada mudança. |
+| 6. Telas antigas fora do menu | Feito |
+| 7. Cadastro e ficha em `app/pessoas/` | Feito |
+| 8. Módulos sob demanda | Feito: JS inicial de 849 KB para 30 KB e CSS de 246 KB para 40 KB |
+| 9. Captcha no visitante | **Pendente, depende de chave**: um site key do Cloudflare Turnstile (gratuito) |
+| 9. Proteção contra senha vazada | **Pendente, depende do responsável pela conta**: ligar em Supabase › Authentication › Policies |
+
+Ainda fora de Pessoas, mas observado: o "Louvor" está marcado como "em desenvolvimento" na lista de liberação, embora as telas L2 e L3 estejam prontas. Será revisto na análise do módulo.
