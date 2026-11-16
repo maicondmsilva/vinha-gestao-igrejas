@@ -5,11 +5,13 @@ import {boundedBody, uuidPattern} from '../../../lib/private-files';
 // Kids › Equipe fixa e repetições: GET ?unit= (visão geral) ou ?unit=&q= (buscar pessoas); POST {action, data}.
 // O banco (kids_setup) confere quem configura e todas as regras.
 const json = (data: unknown, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'private, no-store'}});
-const actions = ['team_save', 'team_remove', 'series_save', 'series_options', 'series_delete', 'series_skip', 'bookable'];
+const actions = ['team_save', 'team_remove', 'series_save', 'series_options', 'series_delete', 'series_skip', 'bookable', 'room_delete', 'class_delete', 'session_delete'];
 const reasons: [RegExp, string, number][] = [
   [/kids_access_denied/, 'Somente a coordenação do Kids configura equipe e repetições.', 403],
   [/kids_staff_identity_required/, 'A pessoa precisa ser adulta e ter conta ativa no app da igreja.', 400],
   [/kids_version_conflict/, 'Alguém alterou isso agora. Atualize e tente de novo.', 409],
+  [/kids_has_records/, 'Já tem lançamentos (entradas ou reservas). Para guardar o histórico, desative em vez de excluir.', 409],
+  [/kids_not_found/, 'Não encontrado. Atualize a página.', 404],
   [/kids_invalid/, 'Revise os dados da repetição ou da equipe.', 400],
 ];
 

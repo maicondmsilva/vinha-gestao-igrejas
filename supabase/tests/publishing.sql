@@ -20,6 +20,24 @@ select lives_ok($$select pg_temp.pub('publish','notice',1)$$,'publica em duas ig
 select is(jsonb_array_length(public.member_public_feed(pg_temp.pi('org'),pg_temp.pi('a'))->'items'),1,'igreja A recebe');
 select is(jsonb_array_length(public.member_public_feed(pg_temp.pi('org'),pg_temp.pi('b'))->'items'),1,'igreja B recebe');
 select is(jsonb_array_length(public.member_public_feed(pg_temp.pi('org'),pg_temp.pi('c'))->'items'),0,'igreja fora do grupo não recebe');
+-- Aviso só para um Grupo.
+reset role;
+insert into public.people(id,organization_id,unit_id,full_name,status,auth_user_id) values(pg_temp.pi('owner-person'),pg_temp.pi('org'),pg_temp.pi('a'),'Dona fictícia','active',pg_temp.pi('owner'));
+insert into private.people_groups(id,organization_id,name) values(pg_temp.pi('grupo'),pg_temp.pi('org'),'Jovens fictício');
+insert into private.people_group_members(group_id,person_id,organization_id) values(pg_temp.pi('grupo'),pg_temp.pi('owner-person'),pg_temp.pi('org'));
+select pg_temp.actor('owner');set local role authenticated;
+select lives_ok($$select public.publishing_audience(pg_temp.pi('org'),pg_temp.pi('notice'),array[pg_temp.pi('grupo')])$$,'aviso só para o grupo');
+select throws_ok($$select public.publishing_audience(pg_temp.pi('org'),pg_temp.pi('notice'),array[pg_temp.pi('nada')])$$,'22023','invalid_publishing','grupo de outra organização não vale');
+select is(jsonb_array_length(public.member_public_feed(pg_temp.pi('org'),pg_temp.pi('a'))->'items'),1,'quem está no grupo vê');
+select pg_temp.actor('local');
+select is(jsonb_array_length(public.member_public_feed(pg_temp.pi('org'),pg_temp.pi('a'))->'items'),0,'quem não está no grupo não vê');
+reset role;select set_config('request.jwt.claims','{"role":"anon"}',true);set local role anon;
+select is(jsonb_array_length(public.member_public_feed(pg_temp.pi('org'),pg_temp.pi('a'))->'items'),0,'visitante sem login não vê aviso de grupo');
+reset role;select pg_temp.actor('owner');set local role authenticated;
+select lives_ok($$select public.publishing_audience(pg_temp.pi('org'),pg_temp.pi('notice'),'{}')$$,'volta para todos');
+select pg_temp.actor('local');
+select is(jsonb_array_length(public.member_public_feed(pg_temp.pi('org'),pg_temp.pi('a'))->'items'),1,'sem grupo, todos veem');
+reset role;select pg_temp.actor('owner');set local role authenticated;
 select throws_ok($$select public.member_church_admin(pg_temp.pi('org'),'unpublish',(public.member_public_feed(pg_temp.pi('org'),pg_temp.pi('a'))->'items'->0->>'id')::uuid)$$,'42501','publishing_managed_projection','cliente anterior não retira cópia de publicação compartilhada');
 reset role;select pg_temp.actor('local');set local role authenticated;
 select is(pg_temp.pub('list')->'items'->0->>'can_manage','false','gestor local consulta compartilhamento sem editar alcance');
