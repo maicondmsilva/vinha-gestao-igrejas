@@ -1,21 +1,22 @@
 // Pessoas · gestão: filtros avançados, duplicados, histórico, novos convertidos, ações em lote e exportação.
 import {uuidPattern} from './private-files.ts';
 
-export type PeopleFilters={cell?:string;network?:string;gender?:string;ageMin?:number;ageMax?:number;baptized?:boolean;tag?:string;converts?:boolean};
-export const advancedKeys=['cell','network','gender','ageMin','ageMax','baptized','tag','converts'] as const;
+export type PeopleFilters={cell?:string;network?:string;gender?:string;ageMin?:number;ageMax?:number;baptized?:boolean;tag?:string;converts?:boolean;position?:string;ministry?:string;leaders?:boolean};
+export const advancedKeys=['cell','network','gender','ageMin','ageMax','baptized','tag','converts','position','ministry','leaders'] as const;
 export const genders=['Masculino','Feminino'] as const;
 export const ageRanges=[['','Todas as idades'],['0-11','Crianças (até 11)'],['12-17','Adolescentes (12 a 17)'],['18-29','Jovens (18 a 29)'],['30-59','Adultos (30 a 59)'],['60-','60 anos ou mais']] as const;
 
 /** Lê os filtros avançados da URL. Lança erro com mensagem curta quando algo não confere. */
 export function peopleFilters(params:URLSearchParams):PeopleFilters{
  const f:PeopleFilters={};
- for(const key of ['cell','network'] as const){const v=params.get(key);if(v){if(!uuidPattern.test(v))throw Error('Célula ou rede inválida.');f[key]=v.toLowerCase()}}
+ for(const key of ['cell','network','position','ministry'] as const){const v=params.get(key);if(v){if(!uuidPattern.test(v))throw Error('Filtro de grupo ou cargo inválido.');f[key]=v.toLowerCase()}}
  const gender=params.get('gender');if(gender){if(!(genders as readonly string[]).includes(gender))throw Error('Gênero inválido.');f.gender=gender}
  for(const key of ['ageMin','ageMax'] as const){const v=params.get(key);if(v){if(!/^\d{1,3}$/.test(v)||Number(v)>120)throw Error('Faixa etária inválida.');f[key]=Number(v)}}
  if(f.ageMin!==undefined&&f.ageMax!==undefined&&f.ageMin>f.ageMax)throw Error('Faixa etária inválida.');
  const baptized=params.get('baptized');if(baptized){if(!['sim','nao'].includes(baptized))throw Error('Filtro de batismo inválido.');f.baptized=baptized==='sim'}
  const tag=(params.get('tag')||'').trim();if(tag){if(tag.length>80)throw Error('Marcador muito longo.');f.tag=tag}
  if(params.get('converts')==='1')f.converts=true;
+ if(params.get('leaders')==='1')f.leaders=true;
  return f;
 }
 export const hasAdvanced=(f:PeopleFilters)=>Object.keys(f).length>0;

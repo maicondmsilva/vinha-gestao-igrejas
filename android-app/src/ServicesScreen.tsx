@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {Image,Linking,Pressable,Share,Text,TextInput,View} from 'react-native';
 import QrCode from './QrCode';
+import {useMyRoles} from './LeadershipScreens';
 import GivingCards from './GivingCards';
 import {onBrand,brandColor} from './experience-model';
 import * as Crypto from 'expo-crypto';
@@ -10,6 +11,7 @@ import {useMemberServices} from '../../shared/use-member-services';
 import {memberAmount,memberMoney,paymentStates,trustedPaymentUrl} from '../../shared/member-services';
 type Palette={surface:string;text:string;muted:string;line:string;brand:string};
 export default function ServicesScreen({rpc,org,unit,authenticated,palette:p,kind}:{rpc:ChurchRpc;org:string;unit:string;authenticated:boolean;palette:Palette;kind:'payments'|'cards'}){
+ const roles=useMyRoles(rpc,org,unit,authenticated&&kind==='cards').data,roleLine=(roles?.positions||[]).map(x=>x.name).join(' · ');
  const m=useMemberServices(rpc,org,unit,authenticated),[purpose,setPurpose]=useState(''),[amount,setAmount]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[nonce,setNonce]=useState('');
  const button=(label:string,action:()=>void,disabled=false)=><Pressable accessibilityRole="button" accessibilityState={{disabled:disabled||busy||m.busy}} disabled={disabled||busy||m.busy} onPress={action} style={{padding:14,marginVertical:7,borderWidth:1,borderColor:p.brand,borderRadius:10}}><Text style={{color:p.text,fontWeight:'600'}}>{label}</Text></Pressable>;
  async function checkout(id:string,orderUnit:string){setBusy(true);setNotice('');try{const s=await supabase!.auth.getSession();if(!s.data.session)throw Error('Entre novamente.');const r=await fetch('https://app.vinhaigrejas.com.br/api/member-payments',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+s.data.session.access_token},body:JSON.stringify({org,unit:orderUnit,id})}),d=await r.json();if(!r.ok)throw Error(d.error);const url=trustedPaymentUrl(d.checkoutUrl);if(url)await Linking.openURL(url);else setNotice('Atualize o histórico para consultar o estado do pagamento.')}catch(e){setNotice(e instanceof Error?e.message:'Não confirmado. Consulte o histórico.')}finally{setBusy(false);m.refresh()}}
@@ -24,6 +26,7 @@ export default function ServicesScreen({rpc,org,unit,authenticated,palette:p,kin
     <View style={{flex:1}}>
      <Text style={{color:fg,opacity:.8,fontSize:11,fontWeight:'700',letterSpacing:1}}>NOME</Text>
      <Text style={{color:fg,fontSize:19,fontWeight:'800'}}>{c.name}</Text>
+     {!!roleLine&&<Text style={{color:fg,fontSize:13,fontWeight:'700',marginTop:2,opacity:.92}}>{roleLine}</Text>}
      <Text style={{color:fg,opacity:.8,fontSize:11,fontWeight:'700',letterSpacing:1,marginTop:10}}>IGREJA</Text>
      <Text style={{color:fg,fontSize:14}}>{c.unit}</Text>
      <Text style={{color:fg,opacity:.8,fontSize:11,fontWeight:'700',letterSpacing:1,marginTop:10}}>VALIDADE</Text>

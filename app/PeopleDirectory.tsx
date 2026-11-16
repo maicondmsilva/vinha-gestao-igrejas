@@ -1,4 +1,6 @@
 'use client';
+import {loadCatalog,rolesCall} from './pessoas/roles-api';
+import type {GroupHit,RolePosition} from '../shared/church-roles';
 import {useMinistryLanguage} from './MinistryLanguage';
 import {useCallback,useEffect,useState} from 'react';
 import './people-directory.css';
@@ -17,11 +19,11 @@ import PeopleConverts from './PeopleConverts';
 import {ageRange,ageRanges,bulkActions,exportColumns,exportFileName,exportRow,genders,journeys,type ExportPerson} from './lib/people-tools';
 type Pagination={page:number;limit:number;total:number;pages:number};
 type Options={cells:{id:string;name:string}[];networks:{id:string;name:string}[];tags:string[]};
-type Adv={cell:string;network:string;gender:string;age:string;baptized:string;tag:string;converts:boolean};
-const noAdv:Adv={cell:'',network:'',gender:'',age:'',baptized:'',tag:'',converts:false};
-const advCount=(a:Adv,group:string)=>[a.cell,a.network,a.gender,a.age,a.baptized,a.tag,a.converts?'1':'',group].filter(Boolean).length;
+type Adv={cell:string;network:string;gender:string;age:string;baptized:string;tag:string;converts:boolean;position:string;ministry:string;leaders:boolean};
+const noAdv:Adv={cell:'',network:'',gender:'',age:'',baptized:'',tag:'',converts:false,position:'',ministry:'',leaders:false};
+const advCount=(a:Adv,group:string)=>[a.cell,a.network,a.gender,a.age,a.baptized,a.tag,a.converts?'1':'',a.position,a.ministry,a.leaders?'1':'',group].filter(Boolean).length;
 function advParams(a:Adv){
- const p:Record<string,string>={};if(a.cell)p.cell=a.cell;if(a.network)p.network=a.network;if(a.gender)p.gender=a.gender;if(a.baptized)p.baptized=a.baptized;if(a.tag)p.tag=a.tag;if(a.converts)p.converts='1';
+ const p:Record<string,string>={};if(a.cell)p.cell=a.cell;if(a.network)p.network=a.network;if(a.gender)p.gender=a.gender;if(a.baptized)p.baptized=a.baptized;if(a.tag)p.tag=a.tag;if(a.converts)p.converts='1';if(a.position)p.position=a.position;if(a.ministry)p.ministry=a.ministry;if(a.leaders)p.leaders='1';
  return{...p,...ageRange(a.age)};
 }
 
@@ -48,6 +50,9 @@ export default function PeopleDirectory({unitId,unitName='',onAdd,onSelect,revis
  useEffect(()=>{if(!showFilters||options||!/^[0-9a-f-]{36}$/i.test(unitId))return;const c=new AbortController();
   fetch('/api/people/options?'+new URLSearchParams({unit:unitId,...(tenant?{tenant}:{})}),{cache:'no-store',signal:c.signal}).then(r=>r.ok?r.json():null).then((d:Options|null)=>{if(d)setOptions(d)}).catch(()=>undefined);
   return()=>c.abort()},[showFilters,options,unitId,tenant]);
+ // Cargos e ministérios para os filtros (só quando os filtros abrem).
+ const[roleOptions,setRoleOptions]=useState<{positions:RolePosition[];ministries:{id:string;name:string}[]}|null>(null);
+ useEffect(()=>{if(!showFilters||roleOptions)return;loadCatalog().then(c=>rolesCall<{items:GroupHit[]}>(null,undefined,'q=').then(d=>setRoleOptions({positions:c.positions,ministries:d.items.filter(x=>x.kind==='ministry')}))).catch(()=>setRoleOptions({positions:[],ministries:[]}))},[showFilters,roleOptions,tenant]);
  const onDupCount=useCallback((n:number)=>setDupCount(n),[]);
  const pages=Array.from({length:Math.min(5,pagination.pages)},(_,index)=>Math.max(1,Math.min(page-2,pagination.pages-4))+index);
  const statusTabs:[string,string,number|null][]=[['','Todos',counts.all],['Membro','Membros',counts.Membro],['Em integração','Em integração',counts['Em integração']],['Visitante','Visitantes',counts.Visitante],['Criança','Crianças',counts['Criança']]];
@@ -99,7 +104,9 @@ export default function PeopleDirectory({unitId,unitName='',onAdd,onSelect,revis
     <label>Faixa etária<select value={adv.age} onChange={e=>setAdv(a=>({...a,age:e.target.value}))}>{ageRanges.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
     <label>Batismo<select value={adv.baptized} onChange={e=>setAdv(a=>({...a,baptized:e.target.value}))}><option value="">Todos</option><option value="sim">Batizados</option><option value="nao">Não batizados</option></select></label>
     <label>Marcador<select value={adv.tag} onChange={e=>setAdv(a=>({...a,tag:e.target.value}))}><option value="">Todos</option>{options?.tags.map(g=><option key={g}>{g}</option>)}</select></label>
-    <label>Grupo ou ministério<input maxLength={160} value={group} onChange={event=>setGroup(event.target.value)}/></label>
+    <label>{t('pessoas.cargo')}<select value={adv.position} onChange={e=>setAdv(a=>({...a,position:e.target.value}))}><option value="">Todos</option>{roleOptions?.positions.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.name}{p.nameFemale?' / '+p.nameFemale:''}</option>)}</select></label>
+    <label>Ministério<select value={adv.ministry} onChange={e=>setAdv(a=>({...a,ministry:e.target.value}))}><option value="">Todos</option>{roleOptions?.ministries.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
+    <label className="pd-check-filter"><input type="checkbox" checked={adv.leaders} onChange={e=>setAdv(a=>({...a,leaders:e.target.checked}))}/>Só liderança</label>
     <label className="pd-check-filter"><input type="checkbox" checked={adv.converts} onChange={e=>setAdv(a=>({...a,converts:e.target.checked}))}/>Só novos convertidos</label>
     <button type="button" className="pd-link" onClick={()=>{setQ('');setStatus('');setGroup('');setAdv(noAdv)}}>Limpar filtros</button></div>}
    {(notice||exporting)&&<p className="pd-notice" role="status">{exporting||notice}</p>}
