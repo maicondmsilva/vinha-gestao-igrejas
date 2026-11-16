@@ -103,7 +103,16 @@ export default function PushCampaigns({unit}: {unit: string}) {
     [notice, setNotice] = useState(''),
     [editor, setEditor] = useState<Campaign | null | false>(false),
     [detail, setDetail] = useState<Campaign | null>(null),
-    [automations, setAutomations] = useState(false);
+    [automations, setAutomations] = useState(false),
+    [eventPreset, setEventPreset] = useState('');
+  // Vindo da tela do evento (Programação › evento › Avisar no app): abre a campanha já ligada ao evento.
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get('evento') || '';
+    if (/^[0-9a-f-]{36}$/i.test(id)) {
+      setEventPreset(id);
+      setEditor(null);
+    }
+  }, []);
   useEffect(() => {
     let alive = true;
     const q = new URLSearchParams({unit, page: String(page), size: '20', ...(status ? {status} : {})});
@@ -189,79 +198,90 @@ export default function PushCampaigns({unit}: {unit: string}) {
         </label>
       </div>
       <section className="program-card" aria-busy={loading}>
-      <div className="program-card-title">
-        <h2>Campanhas</h2>
-        {data && <span>{data.total} {data.total === 1 ? 'campanha' : 'campanhas'}</span>}
-      </div>
-      {loading && !data ? (
-        <div className="program-empty" role="status">
-          Carregando campanhas…
+        <div className="program-card-title">
+          <h2>Campanhas</h2>
+          {data && (
+            <span>
+              {data.total} {data.total === 1 ? 'campanha' : 'campanhas'}
+            </span>
+          )}
         </div>
-      ) : !data?.items.length ? (
-        <div className="program-empty">
-          <h3>{status ? 'Nenhuma campanha nesta situação' : 'Nenhuma campanha ainda'}</h3>
-          <p>Crie a primeira e veja quantas pessoas ela alcança antes de enviar.</p>
-        </div>
-      ) : (
-        <div className="program-table-wrap">
-          <table className="program-table">
-            <thead>
-              <tr>
-                <th>Campanha</th>
-                <th>Situação</th>
-                <th>Quando</th>
-                <th>Alcance</th>
-                <th>Aberturas</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <strong>{c.title}</strong>
-                    <small>
-                      {c.body.slice(0, 80)}
-                      {c.body.length > 80 ? '…' : ''}
-                    </small>
-                  </td>
-                  <td data-label="Situação">
-                    <span className={'program-badge push-' + c.status}>{statusLabel[c.status]}</span>
-                  </td>
-                  <td className="publishing-date" data-label="Quando">
-                    <span>
-                      {c.status === 'scheduled' ? when(c.nextRunAt) : when(c.sendAt)}
-                      {c.recurrence !== 'none' && <small>{recurrenceLabel[c.recurrence]}</small>}
-                    </span>
-                  </td>
-                  <td className="publishing-date" data-label="Alcance">{c.stats.recipients ? `${c.stats.delivered} de ${c.stats.recipients}` : '—'}</td>
-                  <td className="publishing-date" data-label="Aberturas">{c.stats.delivered ? `${c.stats.opened} (${Math.round((100 * c.stats.opened) / c.stats.delivered)}%)` : '—'}</td>
-                  <td>
-                    <div className="publishing-row-actions">
-                      <button type="button" onClick={() => setDetail(c)}>
-                        Detalhes
-                      </button>
-                      {['draft', 'scheduled'].includes(c.status) && c.runs === 0 && (
-                        <button type="button" onClick={() => setEditor(c)}>
-                          Editar
-                        </button>
-                      )}
-                    </div>
-                  </td>
+        {loading && !data ? (
+          <div className="program-empty" role="status">
+            Carregando campanhas…
+          </div>
+        ) : !data?.items.length ? (
+          <div className="program-empty">
+            <h3>{status ? 'Nenhuma campanha nesta situação' : 'Nenhuma campanha ainda'}</h3>
+            <p>Crie a primeira e veja quantas pessoas ela alcança antes de enviar.</p>
+          </div>
+        ) : (
+          <div className="program-table-wrap">
+            <table className="program-table">
+              <thead>
+                <tr>
+                  <th>Campanha</th>
+                  <th>Situação</th>
+                  <th>Quando</th>
+                  <th>Alcance</th>
+                  <th>Aberturas</th>
+                  <th>Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {data && data.total > data.size && <Pager page={data.page} total={data.total} size={data.size} change={(p) => (setLoading(true), setPage(p))} disabled={loading} />}
+              </thead>
+              <tbody>
+                {data.items.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <strong>{c.title}</strong>
+                      <small>
+                        {c.body.slice(0, 80)}
+                        {c.body.length > 80 ? '…' : ''}
+                      </small>
+                    </td>
+                    <td data-label="Situação">
+                      <span className={'program-badge push-' + c.status}>{statusLabel[c.status]}</span>
+                    </td>
+                    <td className="publishing-date" data-label="Quando">
+                      <span>
+                        {c.status === 'scheduled' ? when(c.nextRunAt) : when(c.sendAt)}
+                        {c.recurrence !== 'none' && <small>{recurrenceLabel[c.recurrence]}</small>}
+                      </span>
+                    </td>
+                    <td className="publishing-date" data-label="Alcance">
+                      {c.stats.recipients ? `${c.stats.delivered} de ${c.stats.recipients}` : '—'}
+                    </td>
+                    <td className="publishing-date" data-label="Aberturas">
+                      {c.stats.delivered ? `${c.stats.opened} (${Math.round((100 * c.stats.opened) / c.stats.delivered)}%)` : '—'}
+                    </td>
+                    <td>
+                      <div className="publishing-row-actions">
+                        <button type="button" onClick={() => setDetail(c)}>
+                          Detalhes
+                        </button>
+                        {['draft', 'scheduled'].includes(c.status) && c.runs === 0 && (
+                          <button type="button" onClick={() => setEditor(c)}>
+                            Editar
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {data && data.total > data.size && (
+          <Pager page={data.page} total={data.total} size={data.size} change={(p) => (setLoading(true), setPage(p))} disabled={loading} />
+        )}
       </section>
       {editor !== false && options && (
         <CampaignEditor
           unit={unit}
           options={options}
           campaign={editor}
-          close={() => setEditor(false)}
+          eventId={editor ? '' : eventPreset}
+          close={() => (setEditor(false), setEventPreset(''))}
           saved={(message) => (setEditor(false), setNotice(message), refresh())}
         />
       )}
@@ -310,7 +330,8 @@ export default function PushCampaigns({unit}: {unit: string}) {
             </dl>
             <p>
               <small>
-                Criada por {detail.author} em {when(detail.createdAt)}. Falhas incluem aparelhos que desinstalaram o app; eles deixam de receber automaticamente.
+                Criada por {detail.author} em {when(detail.createdAt)}. Falhas incluem aparelhos que desinstalaram o app; eles deixam de receber
+                automaticamente.
               </small>
             </p>
             {!['sent', 'cancelled'].includes(detail.status) && (
@@ -327,10 +348,25 @@ export default function PushCampaigns({unit}: {unit: string}) {
   );
 }
 
-function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; options: Options; campaign: Campaign | null; close: () => void; saved: (m: string) => void}) {
-  const [title, setTitle] = useState(campaign?.title || ''),
+function CampaignEditor({
+  unit,
+  options,
+  campaign,
+  eventId = '',
+  close,
+  saved,
+}: {
+  unit: string;
+  options: Options;
+  campaign: Campaign | null;
+  eventId?: string;
+  close: () => void;
+  saved: (m: string) => void;
+}) {
+  const presetEvent = eventId ? options.events?.find((e) => e.id === eventId) : undefined;
+  const [title, setTitle] = useState(campaign?.title || presetEvent?.title?.slice(0, 65) || ''),
     [body, setBody] = useState(campaign?.body || ''),
-    [link, setLink] = useState<Link>(campaign?.link || {screen: 'inbox'}),
+    [link, setLink] = useState<Link>(campaign?.link || (eventId ? {screen: 'event', id: eventId} : {screen: 'inbox'})),
     [targets, setTargets] = useState<string[]>(campaign?.targets || (options.units.some((u) => u.id === unit) ? [unit] : [])),
     [audience, setAudience] = useState<Audience>(campaign?.audience || {}),
     [mode, setMode] = useState<'now' | 'schedule' | 'draft'>(campaign?.status === 'draft' ? 'draft' : campaign ? 'schedule' : 'now'),
@@ -376,14 +412,22 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
   async function saveSegment() {
     const name = window.prompt('Nome do público (ex.: Pastores, Líderes de jovens):', '')?.trim();
     if (!name) return;
-    const r = await fetch(settingsUrl('/api/push/segments'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({unit, action: 'save', data: {name, audience}})}).catch(() => null);
+    const r = await fetch(settingsUrl('/api/push/segments'), {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({unit, action: 'save', data: {name, audience}}),
+    }).catch(() => null);
     const d = (r ? await r.json().catch(() => ({})) : {}) as {error?: string};
     setSegNote(r?.ok ? `Público "${name}" salvo.` : d.error || 'Não foi possível salvar o público.');
     if (r?.ok) void loadSegments();
   }
   async function dropSegment(sg: PushSegment) {
     if (!window.confirm(`Apagar o público "${sg.name}"? As campanhas já feitas não mudam.`)) return;
-    await fetch(settingsUrl('/api/push/segments'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({unit, action: 'delete', data: {id: sg.id}})}).catch(() => null);
+    await fetch(settingsUrl('/api/push/segments'), {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({unit, action: 'delete', data: {id: sg.id}}),
+    }).catch(() => null);
     void loadSegments();
   }
   // Reach preview follows the audience as it is edited.
@@ -424,7 +468,13 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
       }
       setFields({});
       await api(campaign ? {unit, action: 'edit', id: campaign.id, version: campaign.version, data} : {unit, action: 'create', data});
-      saved(mode === 'now' ? 'Campanha na fila de envio. Os primeiros avisos chegam em até um minuto.' : mode === 'schedule' ? 'Campanha agendada.' : 'Rascunho salvo.');
+      saved(
+        mode === 'now'
+          ? 'Campanha na fila de envio. Os primeiros avisos chegam em até um minuto.'
+          : mode === 'schedule'
+            ? 'Campanha agendada.'
+            : 'Rascunho salvo.',
+      );
     } catch (x) {
       setError((x as Error).message);
       setFields(x instanceof ApiError ? x.fields : {});
@@ -438,12 +488,29 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
         <div className="publishing-editor-grid">
           <label>
             Título ({title.length}/65)
-            <input required minLength={2} maxLength={65} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Culto de domingo" {...invalidProps(fields, 'title')} />
+            <input
+              required
+              minLength={2}
+              maxLength={65}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Culto de domingo"
+              {...invalidProps(fields, 'title')}
+            />
             <FieldError fields={fields} name="title" />
           </label>
           <label>
             Mensagem ({body.length}/240)
-            <textarea required minLength={2} maxLength={240} rows={3} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Hoje às 19h. Traga sua família!" {...invalidProps(fields, 'body')} />
+            <textarea
+              required
+              minLength={2}
+              maxLength={240}
+              rows={3}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Hoje às 19h. Traga sua família!"
+              {...invalidProps(fields, 'body')}
+            />
             <FieldError fields={fields} name="body" />
           </label>
           <div className="push-preview" aria-label="Prévia da notificação">
@@ -454,8 +521,14 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
           <div className="push-cover-field">
             <span>Imagem de capa (opcional)</span>
             <div>
-              <button type="button" onClick={() => setPicking(true)}>{image ? 'Trocar imagem' : 'Escolher no banco de imagens'}</button>
-              {image && <button type="button" onClick={() => setImage('')}>Sem capa</button>}
+              <button type="button" onClick={() => setPicking(true)}>
+                {image ? 'Trocar imagem' : 'Escolher no banco de imagens'}
+              </button>
+              {image && (
+                <button type="button" onClick={() => setImage('')}>
+                  Sem capa
+                </button>
+              )}
             </div>
             <FieldError fields={fields} name="link.image" />
           </div>
@@ -490,7 +563,11 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
           <div className="publishing-unit-choices">
             {options.units.map((u) => (
               <label className="program-check" key={u.id}>
-                <input type="checkbox" checked={targets.includes(u.id)} onChange={() => setTargets((t) => (t.includes(u.id) ? t.filter((x) => x !== u.id) : [...t, u.id]))} />
+                <input
+                  type="checkbox"
+                  checked={targets.includes(u.id)}
+                  onChange={() => setTargets((t) => (t.includes(u.id) ? t.filter((x) => x !== u.id) : [...t, u.id]))}
+                />
                 <span>{u.name}</span>
               </label>
             ))}
@@ -504,21 +581,40 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
             <span>Públicos salvos:</span>
             {segments.map((sg) => (
               <span key={sg.id} className="push-segment">
-                <button type="button" onClick={() => setAudience(sg.audience as Audience)}>{sg.name}</button>
-                <button type="button" aria-label={'Apagar público ' + sg.name} onClick={() => void dropSegment(sg)}>×</button>
+                <button type="button" onClick={() => setAudience(sg.audience as Audience)}>
+                  {sg.name}
+                </button>
+                <button type="button" aria-label={'Apagar público ' + sg.name} onClick={() => void dropSegment(sg)}>
+                  ×
+                </button>
               </span>
             ))}
-            <button type="button" disabled={!Object.keys(audience).length} onClick={() => void saveSegment()}>+ Salvar este público</button>
+            <button type="button" disabled={!Object.keys(audience).length} onClick={() => void saveSegment()}>
+              + Salvar este público
+            </button>
             {segNote && <small>{segNote}</small>}
           </div>
           <div className="program-form-grid">
             <label>
               Idade mínima
-              <input type="number" min={0} max={120} value={audience.ageMin ?? ''} onChange={(e) => setFilter('ageMin', e.target.value === '' ? undefined : Number(e.target.value))} />
+              <input
+                type="number"
+                min={0}
+                max={120}
+                value={audience.ageMin ?? ''}
+                onChange={(e) => setFilter('ageMin', e.target.value === '' ? undefined : Number(e.target.value))}
+              />
             </label>
             <label>
               Idade máxima
-              <input type="number" min={0} max={120} value={audience.ageMax ?? ''} onChange={(e) => setFilter('ageMax', e.target.value === '' ? undefined : Number(e.target.value))} {...invalidProps(fields, 'audience.ageMax')} />
+              <input
+                type="number"
+                min={0}
+                max={120}
+                value={audience.ageMax ?? ''}
+                onChange={(e) => setFilter('ageMax', e.target.value === '' ? undefined : Number(e.target.value))}
+                {...invalidProps(fields, 'audience.ageMax')}
+              />
               <FieldError fields={fields} name="audience.ageMax" />
             </label>
             {!!options.genders.length && (
@@ -536,7 +632,10 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
             )}
             <label>
               Batismo
-              <select value={audience.baptized === undefined ? '' : String(audience.baptized)} onChange={(e) => setFilter('baptized', e.target.value === '' ? undefined : e.target.value === 'true')}>
+              <select
+                value={audience.baptized === undefined ? '' : String(audience.baptized)}
+                onChange={(e) => setFilter('baptized', e.target.value === '' ? undefined : e.target.value === 'true')}
+              >
                 <option value="">Todos</option>
                 <option value="true">Batizados</option>
                 <option value="false">Não batizados</option>
@@ -556,12 +655,39 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
               </label>
             )}
           </div>
-          {peopleGroups.length > 0 && <Chips label="Grupos (Configurações › Grupos)" items={peopleGroups} selected={audience.peopleGroups} toggle={(v) => setFilter('peopleGroups', toggle(audience.peopleGroups, v))} />}
-          <Chips label="Função no ministério" items={roles.map(([id, name]) => ({id, name}))} selected={audience.roles} toggle={(v) => setFilter('roles', toggle(audience.roles, v))} />
+          {peopleGroups.length > 0 && (
+            <Chips
+              label="Grupos (Configurações › Grupos)"
+              items={peopleGroups}
+              selected={audience.peopleGroups}
+              toggle={(v) => setFilter('peopleGroups', toggle(audience.peopleGroups, v))}
+            />
+          )}
+          <Chips
+            label="Função no ministério"
+            items={roles.map(([id, name]) => ({id, name}))}
+            selected={audience.roles}
+            toggle={(v) => setFilter('roles', toggle(audience.roles, v))}
+          />
           <Chips label="Células" items={visibleCells} selected={audience.cells} toggle={(v) => setFilter('cells', toggle(audience.cells, v))} />
-          <Chips label="Ministérios e departamentos" items={visibleGroups} selected={audience.groups} toggle={(v) => setFilter('groups', toggle(audience.groups, v))} />
-          <Chips label="Etapa da jornada" items={options.journey.map((j) => ({id: j, name: j}))} selected={audience.journey} toggle={(v) => setFilter('journey', toggle(audience.journey, v))} />
-          <Chips label="Marcadores" items={options.tags.map((t) => ({id: t, name: t}))} selected={audience.tags} toggle={(v) => setFilter('tags', toggle(audience.tags, v))} />
+          <Chips
+            label="Ministérios e departamentos"
+            items={visibleGroups}
+            selected={audience.groups}
+            toggle={(v) => setFilter('groups', toggle(audience.groups, v))}
+          />
+          <Chips
+            label="Etapa da jornada"
+            items={options.journey.map((j) => ({id: j, name: j}))}
+            selected={audience.journey}
+            toggle={(v) => setFilter('journey', toggle(audience.journey, v))}
+          />
+          <Chips
+            label="Marcadores"
+            items={options.tags.map((t) => ({id: t, name: t}))}
+            selected={audience.tags}
+            toggle={(v) => setFilter('tags', toggle(audience.tags, v))}
+          />
           <p className="publishing-destination-summary" aria-live="polite">
             {!targets.length
               ? 'Escolha ao menos uma igreja.'
@@ -624,7 +750,16 @@ function CampaignEditor({unit, options, campaign, close, saved}: {unit: string; 
           </button>
         </footer>
       </form>
-      {picking && <ImageLibrary unit={unit} close={() => setPicking(false)} pick={(img) => {setImage(img.id);setPicking(false);}} />}
+      {picking && (
+        <ImageLibrary
+          unit={unit}
+          close={() => setPicking(false)}
+          pick={(img) => {
+            setImage(img.id);
+            setPicking(false);
+          }}
+        />
+      )}
     </Modal>
   );
 }
@@ -670,7 +805,11 @@ function Automations({unit, close, saved}: {unit: string; close: () => void; sav
       const r = await fetch(settingsUrl('/api/push/automations'), {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({unit, version: a.version, data: {birthdays: a.birthdays, livePush: a.livePush, birthdayTitle: a.birthdayTitle, birthdayBody: a.birthdayBody}}),
+        body: JSON.stringify({
+          unit,
+          version: a.version,
+          data: {birthdays: a.birthdays, livePush: a.livePush, birthdayTitle: a.birthdayTitle, birthdayBody: a.birthdayBody},
+        }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw Error((d as {error?: string}).error || 'Sem confirmação.');
@@ -704,7 +843,14 @@ function Automations({unit, close, saved}: {unit: string; close: () => void; sav
                 </label>
                 <label>
                   Mensagem ({a.birthdayBody.length}/240)
-                  <textarea required minLength={2} maxLength={240} rows={3} value={a.birthdayBody} onChange={(e) => setA({...a, birthdayBody: e.target.value})} />
+                  <textarea
+                    required
+                    minLength={2}
+                    maxLength={240}
+                    rows={3}
+                    value={a.birthdayBody}
+                    onChange={(e) => setA({...a, birthdayBody: e.target.value})}
+                  />
                 </label>
               </>
             )}
