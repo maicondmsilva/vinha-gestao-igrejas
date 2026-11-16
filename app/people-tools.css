@@ -100,3 +100,10 @@
  .pd-adv label{flex:1 1 calc(50% - 10px);min-width:0}
  .pd-adv .pd-check-filter{flex:1 1 100%}
 }
+.pcv-indicators{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.pcv-indicators span{display:grid;gap:2px;padding:12px 14px;border:1px solid #e3eae6;border-radius:14px;background:#fff;font-size:13px;color:#5f7268}
+.pcv-indicators b{font-size:22px;color:#183e31}
+.pcv-indicators .warn{border-color:#f0d6d9;background:#fffafa}.pcv-indicators .warn b{color:#8c2f39}
+.pcv-faith-filter{display:inline-flex;gap:8px;align-items:center;font-size:14px;font-weight:600;color:#3f5a4d}
+.pcv-faith-filter select{border:1px solid #cfdad4;border-radius:10px;padding:6px 10px;font:inherit}
+.pcv-faith{font-weight:700;color:#285c45}.pcv-faith.f-none{color:#7a5c1e}.pcv-faith.f-other_church{color:#1f4e79}.pcv-faith.f-unknown{color:#8a9a91;font-weight:600}

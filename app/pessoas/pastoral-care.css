@@ -1,0 +1,90 @@
+/* Relatório de atendimento, histórico, regras e calendário da agenda. */
+.pc-overlay{position:fixed;inset:0;background:#10261dad;display:grid;place-items:center;z-index:80;padding:16px}
+.pc-modal{background:#fff;border-radius:20px;width:min(760px,100%);max-height:calc(100dvh - 32px);overflow:auto;padding:24px;display:grid;gap:16px;box-shadow:0 24px 60px #10261d40}
+.pc-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.pc-modal-head p{margin:0 0 4px;font-size:11px;letter-spacing:.14em;font-weight:700;color:#7c8a80}
+.pc-modal-head h3{margin:0;font-size:22px;color:#183e31}
+.pc-close{width:38px;height:38px;border-radius:12px;border:1px solid #dfe7e2;background:#fff;font-size:20px;cursor:pointer}
+.pc-field{display:grid;gap:6px;margin:0}
+.pc-field>span{font-size:13px;font-weight:700;color:#3f5a4d}
+.pc-field small{color:#6a7b72;font-size:12px}
+.pc-field textarea,.pc-field input,.pc-field select,.pc-inline input{width:100%;box-sizing:border-box;border:1px solid #cfdad4;border-radius:12px;padding:10px 12px;font:inherit;font-size:15px;color:#183e31;background:#fff}
+.pc-field textarea{resize:vertical;line-height:1.5}
+.pc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.pc-inline{display:grid;gap:6px;font-size:13px;font-weight:700;color:#3f5a4d;margin-top:8px}
+.pc-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pc-chips button{border:1px solid #d5e0da;background:#fff;color:#2c4a3d;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.pc-chips button[aria-pressed=true]{background:#285c45;border-color:#285c45;color:#fff}
+.pc-privacy{border:0;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+.pc-privacy legend{font-size:13px;font-weight:700;color:#3f5a4d;margin-bottom:6px}
+.pc-privacy label{display:grid;gap:3px;padding:12px;border:1px solid #dfe7e2;border-radius:14px;cursor:pointer;background:#fbfdfc}
+.pc-privacy label.on{border-color:#285c45;background:#eef6f1;box-shadow:inset 0 0 0 1px #285c45}
+.pc-privacy input{position:absolute;opacity:0;pointer-events:none}
+.pc-privacy b{font-size:14px;color:#183e31}
+.pc-privacy small{font-size:12px;color:#5f7268;line-height:1.4}
+.pc-note{margin:0;font-size:13px;color:#6a7b72;background:#f4f7f5;border-radius:10px;padding:10px 12px}
+.pc-error{margin:0;color:#8c2f39;background:#fdecea;border-radius:10px;padding:10px 12px;font-size:14px}
+.pc-ok{margin:0;color:#1d4a37;background:#eaf2ed;border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600}
+.pc-muted{color:#6a7b72;font-size:14px;margin:0}
+.pc-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap}
+.pc-actions button,.pc-cal-head button{min-height:40px;padding:8px 16px;border-radius:10px;border:1px solid #cfdad4;background:#fff;color:#183e31;font:inherit;font-size:14px;font-weight:600;cursor:pointer;margin:0}
+.pc-actions .pc-primary{background:#285c45;border-color:#285c45;color:#fff}
+.pc-actions button:disabled{opacity:.5;cursor:default}
+button.pc-link{border:0!important;background:none!important;padding:2px!important;margin:0!important;min-height:0!important;color:#285c45!important;font:inherit;font-size:14px!important;font-weight:700!important;cursor:pointer}
+button.pc-link:disabled{opacity:.45}
+.pc-history{display:grid;gap:12px}
+.pc-history-head{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#5f7268;font-size:14px}
+.pc-timeline{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.pc-timeline li{display:grid;grid-template-columns:18px 1fr;gap:12px;position:relative;padding-bottom:14px}
+.pc-timeline li:not(:last-child)::before{content:'';position:absolute;left:8px;top:18px;bottom:0;width:2px;background:#e3eae6}
+.pc-dot{width:14px;height:14px;border-radius:50%;margin-top:4px;background:#285c45;box-shadow:0 0 0 3px #eaf2ed}
+.p-restricted .pc-dot{background:#b8741a;box-shadow:0 0 0 3px #fbf1e2}
+.p-secret .pc-dot{background:#8c2f39;box-shadow:0 0 0 3px #fbe9eb}
+.pc-entry{display:grid;gap:4px;border:1px solid #e3eae6;border-radius:14px;padding:12px 14px;background:#fff}
+.pc-entry header{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.pc-entry header b{font-size:15px;color:#183e31}
+.pc-entry>small{color:#6a7b72;font-size:12px}
+.pc-tag{font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px}
+.t-team{background:#eaf2ed;color:#285c45}.t-restricted{background:#fbf1e2;color:#8a5a12}.t-secret{background:#fbe9eb;color:#8c2f39}
+.pc-summary{margin:6px 0 0;white-space:pre-wrap;line-height:1.55;color:#1d3a2f;font-size:14px}
+.pc-meta{margin:2px 0 0;font-size:13px;color:#5f7268}
+.pc-addendum{margin:6px 0 0;font-size:13px;padding:8px 10px;border-radius:10px;background:#f4f7f5}
+.pc-locked{margin:6px 0 0;font-size:13px;color:#6a7b72;font-style:italic}
+.pc-entry-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.pc-inline-add{display:inline-flex;gap:8px;align-items:center}
+.pc-inline-add input{border:1px solid #cfdad4;border-radius:10px;padding:6px 10px;font:inherit;font-size:13px;min-width:220px}
+.pc-rules{display:grid;gap:12px;border-top:1px solid #e3eae6;padding-top:14px;margin-top:6px}
+.pc-rules h4{margin:0;font-size:15px;color:#183e31}
+.pc-cal{display:grid;gap:12px}
+.pc-cal-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pc-cal-head b{font-size:16px;color:#183e31;min-width:200px;text-align:center}
+.pc-cal-head button{min-height:36px;padding:4px 12px}
+.pc-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#5f7268}
+.pc-legend span{display:inline-flex;align-items:center;gap:6px}
+.pc-legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.pc-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.pc-col{display:flex;flex-direction:column;gap:6px;min-height:180px;padding:8px;border:1px solid #e3eae6;border-radius:14px;background:#fbfdfc;min-width:0}
+.pc-col.today{border-color:#285c45;box-shadow:inset 0 0 0 1px #285c45;background:#fff}
+.pc-col header{display:flex;justify-content:space-between;align-items:baseline;padding:2px 4px 6px;border-bottom:1px solid #eef2ef}
+.pc-col header small{text-transform:uppercase;font-size:11px;font-weight:700;color:#7c8a80;letter-spacing:.05em}
+.pc-col header b{font-size:18px;color:#183e31}
+.pc-free{color:#c3cdc7;text-align:center;margin-top:8px}
+.pc-ev{display:grid;gap:1px;text-align:left;border:0;border-left:4px solid;border-radius:10px;padding:7px 8px;font:inherit;cursor:pointer;min-width:0}
+.pc-ev b{font-size:13px}.pc-ev span{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pc-ev small{font-size:11px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-ok{background:#e6f2ea;border-color:#285c45!important;color:#1d4a37}
+.c-invite{background:#fbf4e3;border-color:#d8b769!important;color:#5d4514}
+.c-request{background:#fff3e0;border-color:#b8741a!important;color:#6b4209}
+.c-report{background:#fbe9eb;border-color:#8c2f39!important;color:#6d1f28}
+.c-done{background:#eef0ef;border-color:#9aa8a0!important;color:#4e5d55}
+.c-off{background:#f4f4f4;border-color:#ccc!important;color:#777}
+.pc-legend .c-ok{background:#285c45}.pc-legend .c-invite{background:#d8b769}.pc-legend .c-request{background:#b8741a}.pc-legend .c-report{background:#8c2f39}.pc-legend .c-done{background:#9aa8a0}
+@media(max-width:900px){.pc-week{grid-template-columns:1fr}.pc-col{min-height:0}.pc-col header{justify-content:flex-start;gap:10px}}
+@media(max-width:600px){.pc-modal{padding:18px;border-radius:16px}}
+.pc-grid{align-items:start}
+/* Dentro da ficha: não herdar estilos de cabeçalho e parágrafo da ficha. */
+.pc-history .pc-entry header{padding:0!important;margin:0!important;border:0!important;background:none!important;min-height:0!important;display:flex}
+.pc-history .pc-entry p{margin:2px 0 0!important}
+.pc-history .pc-entry .pc-summary{margin-top:8px!important}
+.pc-history .pc-entry-actions{margin-top:8px}
+@media(max-width:900px){.pc-col:has(.pc-free):not(.today){display:none}.pc-week::after{content:'Dias sem atendimento ficam ocultos no celular.';font-size:12px;color:#8a9a91;text-align:center}}
+.pc-col header,.pc-modal-head,.pc-entry header{height:auto!important;background:none!important}

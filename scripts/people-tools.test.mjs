@@ -45,7 +45,7 @@ test('rotas e telas ligadas',()=>{
  for(const f of ['people_duplicates','person_timeline','people_converts','people_bulk'])assert.match(r,new RegExp(f));
  assert.match(r,/p_org:a\.membership\.organization_id/);assert.match(r,/membership\.units\.some/);
  assert.match(read('app/api/people/route.ts'),/people_search/);
- const d=read('app/PeopleDirectory.tsx');for(const s of ['Novos convertidos','Duplicados','Exportar Excel','Ações em lote','Enviar agora','Faixa etária','Rede'])assert.ok(d.includes(s),s);
+ const d=read('app/PeopleDirectory.tsx');for(const s of ['Integração Visitante','Duplicados','Exportar Excel','Ações em lote','Enviar agora','Faixa etária','Rede'])assert.ok(d.includes(s),s);
  assert.match(read('app/pessoas/PersonForms.tsx'),/<PersonTimeline person=/);
  assert.match(read('app/PeopleDuplicates.tsx'),/não pode ser desfeita/);
  assert.match(read('shared/contract/push.ts'),/people: ids\(250/);

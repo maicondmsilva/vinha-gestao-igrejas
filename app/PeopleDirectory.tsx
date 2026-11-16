@@ -79,7 +79,7 @@ export default function PeopleDirectory({unitId,unitName='',onAdd,onSelect,revis
    setNotice(`Planilha gerada com ${rows.length} ${rows.length===1?'pessoa':'pessoas'}${pagination.total>rows.length?` (limite de ${rows.length}; refine os filtros para o restante)`:''}.`);
   }catch(e){setNotice(e instanceof Error?e.message:'Não foi possível gerar a planilha.')}finally{setExporting('')}
  }
- const views:[typeof view,string,number|null][]=[['list','Lista',null],['converts','Novos convertidos',null],['duplicates','Duplicados',dupCount],['pastoral','Agenda pastoral',null],['visitors','QR de visitantes',null],['terms','Termos',null]];
+ const views:[typeof view,string,number|null][]=[['list','Lista',null],['converts','Integração Visitante',null],['duplicates','Duplicados',dupCount],['pastoral','Agenda pastoral',null],['visitors','QR de visitantes',null],['terms','Termos',null]];
  return <div className="content pd">
   <header className="pd-head"><div><p>Comunidade</p><h1>{t('pessoas')}</h1><small>Membros, pessoas em integração, visitantes e crianças da igreja selecionada.</small></div>
    <div className="pd-actions"><a className="pd-secondary" href={`/onboarding/importar-membros${tenant?`?tenant=${encodeURIComponent(tenant)}`:''}`}>Importar planilha</a><button className="pd-primary" type="button" onClick={onAdd}>＋ Nova pessoa</button></div></header>

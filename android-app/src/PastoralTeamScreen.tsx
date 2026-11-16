@@ -7,10 +7,11 @@ import {monthShort,initials,whatsappLink} from '../../shared/cell-leader';
 import {onBrand} from './experience-model';
 import Icon from './Icon';
 import PastoralAvailability from './PastoralAvailability';
+import {AppReportForm,MyCareCalendar} from './CareScreens';
 type Palette={bg:string;surface:string;text:string;muted:string;line:string;brand:string;accent:string};
 type Hour={weekday:number;starts:string;ends:string};
 export type TeamAttendant={id:string;name:string;role:string;autoConfirm:boolean;durations:number[];kinds:string[];modes:string[];active:boolean;version:number;self:boolean;hours:Hour[]};
-type Item={id:string;attendantId:string;attendant:string;person:string;kind:string;mode:string;startsAt:string;endsAt:string;status:string;origin:string;memberAck:boolean;message:string;link:string;notes:string;version:number;address:string};
+type Item={id:string;attendantId:string;attendant:string;person:string;kind:string;mode:string;startsAt:string;endsAt:string;status:string;origin:string;memberAck:boolean;message:string;link:string;notes:string;version:number;address:string;reported?:boolean};
 type Overview={canEdit:boolean;attendants:TeamAttendant[];items:Item[]};
 type Found={id:string;name:string;phone?:string};
 const week=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -33,7 +34,7 @@ export function usePastoralTeam(rpc:ChurchRpc,org:string,unit:string,authenticat
 /** "Minha agenda de atendimento": pedidos para confirmar, próximos atendimentos, marcar visita e confirmação automática. */
 export default function PastoralTeamScreen({rpc,org,unit,team,palette:p}:{rpc:ChurchRpc;org:string;unit:string;team:{data:Overview|null;refresh:()=>void};palette:Palette}){
  const ac=p.accent,onB=onBrand(p.brand),data=team.data;
- const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[noteFor,setNoteFor]=useState(''),[note,setNote]=useState(''),[declineFor,setDeclineFor]=useState(''),[reason,setReason]=useState(''),[planning,setPlanning]=useState(false);
+ const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[declineFor,setDeclineFor]=useState(''),[reportFor,setReportFor]=useState<{id:string;name:string}|null>(null),[calRev,setCalRev]=useState(0),[reason,setReason]=useState(''),[planning,setPlanning]=useState(false);
  const run=useCallback(async(action:string,payload:object,done:string)=>{setBusy(true);setError('');setNotice('');try{const r=await rpc.rpc('pastoral_staff',{p_org:org,p_unit:unit,p_action:action,p_data:payload});if(r.error)throw Error(/slot_taken/.test(r.error.message)?'Esse horário já está ocupado.':/changed/.test(r.error.message)?'A agenda mudou. Atualize e tente de novo.':'Não foi possível concluir agora.');if(done){setNotice(done);team.refresh()}return r.data}catch(e){setError(e instanceof Error?e.message:'Não foi possível.');return null}finally{setBusy(false)}},[rpc,org,unit,team]);
  if(!data)return <ActivityIndicator color={ac} style={{marginTop:30}}/>;
  const mine=data.attendants.filter(a=>a.self),me=mine[0],now=Date.now();
@@ -47,16 +48,14 @@ export default function PastoralTeamScreen({rpc,org,unit,team,palette:p}:{rpc:Ch
     {i.status==='requested'&&<Text style={{color:p.muted,fontSize:12}}>{new Date(i.startsAt).toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})}</Text>}</View></View>
   {!!i.message&&<Text style={[s.quote,{color:p.text,borderLeftColor:ac}]}>“{i.message}”</Text>}
   {!!i.address&&<Pressable accessibilityRole="link" onPress={()=>void Linking.openURL('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(i.address))}><Text style={{color:ac,fontWeight:'700',marginTop:8}}>📍 {i.address}</Text></Pressable>}
-  {i.origin==='staff'&&!i.memberAck&&<Text style={{color:p.muted,fontSize:12,marginTop:6}}>O membro ainda não confirmou presença.</Text>}
-  {!!i.notes&&noteFor!==i.id&&<Text style={{color:p.muted,fontSize:12,marginTop:6}}>Tem anotação sigilosa.</Text>}
+  {i.origin==='staff'&&!i.memberAck&&<Text style={{color:p.muted,fontSize:12,marginTop:6}}>Convite aguardando aceite do membro (liberado 12 h antes sem resposta).</Text>}
   <View style={s.actions}>
    {i.status==='requested'&&(declineFor===i.id?<View style={{flex:1}}><TextInput value={reason} onChangeText={setReason} maxLength={200} placeholder="Motivo (opcional, o membro vê)" placeholderTextColor={p.muted} style={[s.input,{color:p.text,borderColor:p.line,backgroundColor:p.bg}]}/><View style={{flexDirection:'row',gap:8}}>{btn('Recusar pedido',()=>void run('decide',{id:i.id,version:i.version,decision:'decline',reason:reason.trim(),link:''},'Pedido recusado. O membro pode escolher outro dia.').then(()=>{setDeclineFor('');setReason('')}),true)}{btn('Voltar',()=>setDeclineFor(''))}</View></View>
     :<>{btn('Confirmar',()=>void run('decide',{id:i.id,version:i.version,decision:'confirm',reason:'',link:''},'Confirmado. O membro recebe o aviso no app.'),true)}{btn('Recusar',()=>{setDeclineFor(i.id);setReason('')})}</>)}
    {i.status==='confirmed'&&Date.parse(i.startsAt)<now&&<>{btn('Realizado',()=>void run('status',{id:i.id,version:i.version,status:'done',reason:''},'Marcado como realizado.'),true)}{btn('Não veio',()=>void run('status',{id:i.id,version:i.version,status:'missed',reason:''},'Marcado como não compareceu.'))}</>}
    {i.status==='confirmed'&&Date.parse(i.startsAt)>now&&btn('Desmarcar',()=>void run('status',{id:i.id,version:i.version,status:'cancelled',reason:''},'Atendimento desmarcado.'))}
-   {data.attendants.find(a=>a.id===i.attendantId)?.self&&btn(noteFor===i.id?'Fechar':'Anotação',()=>{setNoteFor(noteFor===i.id?'':i.id);setNote(i.notes)})}
+   {data.attendants.find(a=>a.id===i.attendantId)?.self&&Date.parse(i.startsAt)<now&&!i.reported&&btn('Relatório',()=>setReportFor({id:i.id,name:i.person}),true)}
   </View>
-  {noteFor===i.id&&<View><TextInput value={note} onChangeText={setNote} multiline maxLength={4000} placeholder="Só você e quem tem permissão veem." placeholderTextColor={p.muted} style={[s.input,{minHeight:90,color:p.text,borderColor:p.line,backgroundColor:p.bg,textAlignVertical:'top'}]}/>{btn('Salvar anotação sigilosa',()=>void run('note',{id:i.id,version:i.version,notes:note},'Anotação salva.').then(()=>setNoteFor('')),true)}</View>}
  </View>;
 
  return <View>
@@ -66,6 +65,8 @@ export default function PastoralTeamScreen({rpc,org,unit,team,palette:p}:{rpc:Ch
   {!!error&&<Text accessibilityRole="alert" style={[s.alert,{color:p.text,borderColor:ac}]}>{error}</Text>}
   {!!notice&&<Text accessibilityRole="alert" style={[s.alert,{color:p.text,borderColor:p.line,backgroundColor:p.surface}]}>{notice}</Text>}
   <Pressable accessibilityRole="button" onPress={()=>setPlanning(!planning)} style={[s.primary,{backgroundColor:planning?p.surface:p.brand,borderColor:p.line,borderWidth:planning?1:0}]}><Icon name="plus" color={planning?p.text:onB} size={20}/><Text style={{color:planning?p.text:onB,fontWeight:'900'}}>{planning?'Fechar':'Marcar visita ou atendimento'}</Text></Pressable>
+  {reportFor&&<AppReportForm rpc={rpc} org={org} unit={unit} appointment={reportFor.id} personName={reportFor.name} palette={p} onCancel={()=>setReportFor(null)} onDone={m=>{setNotice(m);setReportFor(null);setCalRev(n=>n+1);team.refresh()}}/>}
+  <MyCareCalendar rpc={rpc} org={org} unit={unit} palette={p} rev={calRev} onReport={(id,name)=>setReportFor({id,name})}/>
   {planning&&<ScheduleVisit rpc={rpc} org={org} unit={unit} attendants={data.attendants.filter(a=>a.active&&(a.self||data.canEdit))} palette={p} busy={busy} run={run} done={()=>setPlanning(false)}/>}
 
   {over('PARA CONFIRMAR')}

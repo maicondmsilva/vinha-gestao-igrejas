@@ -93,8 +93,8 @@ select ok((select bool_or(e->>'title'='Cadastro duplicado unificado') from jsonb
 select ok((select bool_or(e->>'title'='Entrou na célula' and e->>'detail'='Célula Brisa') from jsonb_array_elements(public.person_timeline(pg_temp.x('org'),pg_temp.x('ana'))) e),'histórico mostra a célula');
 select ok((select bool_or(e->>'title'='Cadastro criado') from jsonb_array_elements(public.person_timeline(pg_temp.x('org'),pg_temp.x('caio'))) e),'histórico começa no cadastro');
 
--- Novos convertidos
-select is((pg_temp.conv('save',jsonb_build_object('person',pg_temp.x('bruno'),'followup',pg_temp.x('caio'),'note','Ligar no sábado'))->>'ok')::boolean,true,'registra decisão (hoje)');
+-- Integração Visitante (antes Novos convertidos): decisão de fé registrada explicitamente
+select is((pg_temp.conv('save',jsonb_build_object('person',pg_temp.x('bruno'),'faith','here','followup',pg_temp.x('caio'),'note','Ligar no sábado'))->>'ok')::boolean,true,'registra decisão (hoje)');
 select is((pg_temp.person('bruno')).converted_at,pg_temp.today(),'data da decisão');
 select is(pg_temp.conv('list')#>>'{items,0,followupName}','Caio Reis','responsável pelo acompanhamento');
 select is(pg_temp.conv('list')#>>'{counts,pending}','1','aguardando contato');
