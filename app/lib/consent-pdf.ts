@@ -7,7 +7,7 @@ export type ConsentDoc = {
   version: number;
   title: string;
   body: string;
-  choices: Record<string, boolean>;
+  choices: Record<string, boolean | string>;
   signerName: string;
   subjectName: string;
   church: string;
@@ -97,9 +97,10 @@ export async function consentPdf(d: ConsentDoc, verifyBase = 'https://app.vinhai
   y -= 10;
   write(d.body, 11, regular, ink, 5);
   y -= 8;
-  if (Object.keys(d.choices || {}).length) {
+  const marks = Object.entries(d.choices || {}).filter(([, v]) => typeof v === 'boolean');
+  if (marks.length) {
     write('Autorizações marcadas', 12, bold, dark, 6);
-    for (const [k, v] of Object.entries(d.choices)) write(`${v ? '[X] Autorizo' : '[  ] Não autorizo'} · ${choiceLabels[k] || k}`, 11);
+    for (const [k, v] of marks) write(`${v ? '[X] Autorizo' : '[  ] Não autorizo'} · ${choiceLabels[k] || k}`, 11);
     y -= 8;
   }
   ensure(200);
@@ -107,7 +108,7 @@ export async function consentPdf(d: ConsentDoc, verifyBase = 'https://app.vinhai
   const box = y - 18;
   page.drawText('ASSINATURA ELETRÔNICA', {x: M + 14, y: box, size: 9, font: bold, color: rgb(0.498, 0.392, 0.125)});
   const info = [
-    ['Assinado por', d.signerName],
+    ['Assinado por', d.signerName + (typeof d.choices?.signerCpf === 'string' ? ' · CPF ' + d.choices.signerCpf : '')],
     ['Data e hora (Brasília)', when(d.acceptedAt)],
     ['Aparelho', d.device || 'Aplicativo da igreja'],
     ['Código de verificação', d.code],

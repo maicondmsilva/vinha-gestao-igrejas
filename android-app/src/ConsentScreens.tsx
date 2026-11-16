@@ -8,7 +8,7 @@ type Palette={bg:string;surface:string;text:string;muted:string;line:string;bran
 export type ConsentKind=string;
 type Template={version:number;title:string;body:string};
 export type ConsentItem={id:string;code:string;kind:ConsentKind;version:number;title:string;choices:Record<string,boolean>;signerName:string;subjectName:string;kidsProfile:string|null;acceptedAt:string;sha256:string};
-type Data={templates:Record<ConsentKind,Template>;items:ConsentItem[];custom?:{kind:string;title:string;audience:'adult'|'kids'}[]};
+type Data={templates:Record<ConsentKind,Template>;items:ConsentItem[];custom?:{kind:string;title:string;audience:'adult'|'kids'}[];signer?:{name:string;cpf:string}|null};
 const choiceLabels:[string,string][]=[['photos','Fotos'],['videos','Vídeos'],['social','Redes sociais da igreja'],['live','Transmissões ao vivo']];
 const fixedShort:Record<string,string>={adult_data:'Dados pessoais',adult_image:'Uso de imagem e voz',kids_guardian:'Responsável pela criança',kids_image:'Imagem da criança'};
 const device=()=>(Platform.OS==='android'?'Android ':Platform.OS==='ios'?'iOS ':'')+String(Platform.Version||'')+' · aplicativo da igreja';
@@ -29,16 +29,16 @@ async function openPdf(org:string,unit:string,id:string){
 }
 
 /** Leitura e assinatura eletrônica de um termo: texto completo, escolhas de imagem, nome digitado e "Li e concordo". */
-function SignForm({org,unit,kind,child,childName,template,palette:p,defaultName,onDone,onCancel}:{org:string;unit:string;kind:ConsentKind;child?:string;childName?:string;template:Template;palette:Palette;defaultName:string;onDone:(i:ConsentItem)=>void;onCancel:()=>void}){
+function SignForm({org,unit,kind,child,childName,template,palette:p,defaultName,signer,onDone,onCancel}:{org:string;unit:string;kind:ConsentKind;child?:string;childName?:string;template:Template;palette:Palette;defaultName:string;signer?:{name:string;cpf:string}|null;onDone:(i:ConsentItem)=>void;onCancel:()=>void}){
  const image=kind==='adult_image'||kind==='kids_image',ac=p.accent;
- const [choices,setChoices]=useState<Record<string,boolean>>({photos:true,videos:true,social:true,live:true}),[name,setName]=useState(defaultName),[agree,setAgree]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[id]=useState(randomUUID());
+ const [choices,setChoices]=useState<Record<string,boolean>>({photos:true,videos:true,social:true,live:true}),[name,setName]=useState(defaultName||signer?.name||''),[needName,setNeedName]=useState(false),[agree,setAgree]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[id]=useState(randomUUID());
  async function sign(){
-  if(name.trim().split(/\s+/).length<2){setError('Digite seu nome e sobrenome como assinatura.');return}
+  if(needName&&name.trim().split(/\s+/).length<2){setError('Digite seu nome e sobrenome como assinatura.');return}
   if(!agree){setError('Marque "Li e concordo" para assinar.');return}
   setBusy(true);setError('');
-  const r=await supabase!.rpc('member_consent',{p_org:org,p_unit:unit,p_action:'sign',p_data:{id,kind,signerName:name.trim(),device:device(),...(image?{choices}:{}),...(child?{child}:{})}});
+  const r=await supabase!.rpc('member_consent',{p_org:org,p_unit:unit,p_action:'sign',p_data:{id,kind,signerName:(name||defaultName).trim(),device:device(),...(image?{choices}:{}),...(child?{child}:{})}});
   setBusy(false);
-  if(r.error){setError(/denied/.test(r.error.message)?'Só o responsável aprovado pode assinar pela criança.':'Não foi possível assinar agora. Tente de novo.');return}
+  if(r.error){if(/invalid_consent/.test(r.error.message)&&!needName){setNeedName(true);setError('Ainda não encontramos seu cadastro na igreja. Digite seu nome completo para assinar.');return}setError(/denied/.test(r.error.message)?'Só o responsável aprovado pode assinar pela criança.':'Não foi possível assinar agora. Tente de novo.');return}
   onDone((r.data as {item:ConsentItem}).item);
  }
  return <View style={[s.card,{backgroundColor:p.surface,borderColor:ac}]}>
@@ -48,13 +48,18 @@ function SignForm({org,unit,kind,child,childName,template,palette:p,defaultName,
   {image&&<><Text style={{color:p.text,fontWeight:'800',marginTop:10}}>{kind==='kids_image'?'O que você autoriza para a criança':'O que você autoriza'}</Text>
    <View style={s.wrap}>{choiceLabels.map(([k,l])=>{const on=choices[k];return <Pressable key={k} accessibilityRole="checkbox" accessibilityState={{checked:on}} onPress={()=>setChoices({...choices,[k]:!on})} style={[s.chip,{borderColor:on?ac:p.line,backgroundColor:on?ac:p.surface}]}><Text style={{color:on?onBrand(ac):p.text,fontWeight:'700'}}>{on?'✓ ':''}{l}</Text></Pressable>})}</View>
    <Text style={{color:p.muted,fontSize:12,marginTop:4}}>Desmarque o que não autoriza. Pode mudar depois assinando de novo.</Text></>}
-  <Text style={{color:p.text,fontWeight:'800',marginTop:12}}>Assinatura (nome completo)</Text>
-  <TextInput accessibilityLabel="Nome completo como assinatura" value={name} onChangeText={setName} autoCapitalize="words" maxLength={160} style={[s.input,{color:p.text,borderColor:p.line,backgroundColor:p.bg}]}/>
+  <View style={[s.signer,{borderColor:p.line,backgroundColor:p.bg}]}>
+   <Text style={{color:p.muted,fontSize:12,fontWeight:'700'}}>ASSINANDO COMO</Text>
+   <Text style={{color:p.text,fontWeight:'900',fontSize:15}}>{signer?.name||defaultName||'Seu cadastro na igreja'}{signer?.cpf?' · CPF '+signer.cpf:''}</Text>
+   <Text style={{color:p.muted,fontSize:12,lineHeight:17}}>A assinatura usa os dados do seu cadastro (nome e CPF), sem precisar digitar.</Text>
+  </View>
+  {needName&&<><Text style={{color:p.text,fontWeight:'800',marginTop:12}}>Seu nome completo</Text>
+  <TextInput accessibilityLabel="Nome completo como assinatura" value={name} onChangeText={setName} autoCapitalize="words" maxLength={160} style={[s.input,{color:p.text,borderColor:p.line,backgroundColor:p.bg}]}/></>}
   <Pressable accessibilityRole="checkbox" accessibilityState={{checked:agree}} onPress={()=>setAgree(!agree)} style={s.row}><View style={[s.box,{borderColor:agree?ac:p.muted,backgroundColor:agree?ac:'transparent'}]}>{agree&&<Text style={{color:onBrand(ac),fontWeight:'900',fontSize:12}}>✓</Text>}</View><Text style={{color:p.text,flex:1,lineHeight:20}}>Li e concordo com este termo{child?' como responsável pela criança':''}.</Text></Pressable>
   {!!error&&<Text accessibilityRole="alert" style={{color:'#b8741a',fontWeight:'700',marginTop:6}}>{error}</Text>}
   <Pressable accessibilityRole="button" disabled={busy} onPress={()=>void sign()} style={[s.primary,{backgroundColor:p.brand,opacity:busy?.6:1}]}>{busy?<ActivityIndicator color={onBrand(p.brand)}/>:<Text style={{color:onBrand(p.brand),fontWeight:'900'}}>Assinar eletronicamente</Text>}</Pressable>
   <Pressable accessibilityRole="button" onPress={onCancel}><Text style={{color:p.muted,fontWeight:'700',textAlign:'center',marginTop:10}}>Agora não</Text></Pressable>
-  <Text style={{color:p.muted,fontSize:11,marginTop:8,lineHeight:16}}>Ao assinar, registramos seu nome, data e hora, aparelho e conta. O documento recebe um código e uma impressão digital para conferência.</Text>
+  <Text style={{color:p.muted,fontSize:11,marginTop:8,lineHeight:16}}>Ao assinar, registramos seu nome e CPF do cadastro, data e hora, aparelho e conta. O documento recebe um código e uma impressão digital para conferência.</Text>
  </View>;
 }
 
@@ -68,7 +73,7 @@ export function ConsentBlock({org,unit,kinds,child,childName,data,palette:p,defa
  const mine=(k:ConsentKind)=>data.items.find(i=>i.kind===k&&(child?i.kidsProfile===child:!i.kidsProfile));
  return <View>
   {!!notice&&<Text accessibilityRole="alert" style={{color:p.text,marginBottom:6}}>{notice}</Text>}
-  {all.map(k=>{const it=mine(k);if(signing===k)return <SignForm key={k} org={org} unit={unit} kind={k} child={child} childName={childName} template={data.templates[k]} palette={p} defaultName={defaultName} onCancel={()=>setSigning(null)} onDone={i=>{setSigning(null);setNotice('Termo assinado. Código '+i.code+'.');onChanged()}}/>;
+  {all.map(k=>{const it=mine(k);if(signing===k)return <SignForm key={k} org={org} unit={unit} kind={k} child={child} childName={childName} template={data.templates[k]} palette={p} defaultName={defaultName} signer={data.signer} onCancel={()=>setSigning(null)} onDone={i=>{setSigning(null);setNotice('Termo assinado. Código '+i.code+'.');onChanged()}}/>;
    return <View key={k} style={[s.line,{borderColor:p.line}]}>
     <View style={[s.dot,{backgroundColor:it?ac:'transparent',borderColor:it?ac:p.muted}]}>{it&&<Text style={{color:onBrand(ac),fontSize:11,fontWeight:'900'}}>✓</Text>}</View>
     <View style={{flex:1}}><Text style={{color:p.text,fontWeight:'800'}}>{short(k)}</Text>
@@ -79,6 +84,7 @@ export function ConsentBlock({org,unit,kinds,child,childName,data,palette:p,defa
  </View>;
 }
 const s=StyleSheet.create({
+ signer:{borderWidth:1,borderRadius:14,padding:12,gap:3,marginTop:12},
  card:{borderWidth:1.5,borderRadius:20,padding:14,marginVertical:8},over:{fontSize:11,fontWeight:'800',letterSpacing:1.6,marginBottom:4},
  body:{maxHeight:220,borderWidth:1,borderRadius:14,padding:12,marginTop:10},wrap:{flexDirection:'row',flexWrap:'wrap',gap:8,marginTop:8},chip:{borderWidth:1,borderRadius:18,paddingHorizontal:12,paddingVertical:8},
  input:{borderWidth:1,borderRadius:14,padding:12,fontSize:16,marginTop:6,minHeight:48},row:{flexDirection:'row',gap:10,alignItems:'center',marginTop:12},

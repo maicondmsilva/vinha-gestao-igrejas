@@ -99,5 +99,5 @@
 .pd-pill.kid{background:#fff1cf;color:#8a5a00}
 .pd-group{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pd-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
-@media(max-width:900px){.pd-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.pd-views{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.pd-views::-webkit-scrollbar{display:none}.pd-views button{flex:none}}
+@media(max-width:900px){.pd-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.pd .pd-views{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.pd .pd-views::-webkit-scrollbar{display:none}.pd .pd-views button{flex:none}}
 @media(max-width:480px){.pd-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pd-kpis button:first-child{grid-column:1/-1}}

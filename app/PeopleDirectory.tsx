@@ -76,7 +76,7 @@ export default function PeopleDirectory({unitId,unitName='',onAdd,onSelect,revis
  }
  const views:[typeof view,string,number|null][]=[['list','Lista',null],['converts','Novos convertidos',null],['duplicates','Duplicados',dupCount],['pastoral','Agenda pastoral',null],['visitors','QR de visitantes',null],['terms','Termos',null]];
  return <div className="content pd">
-  <header className="pd-head"><div><p>Comunidade</p><h1>{t('pessoas')}</h1><small>Membros, pessoas em integração e visitantes da igreja selecionada.</small></div>
+  <header className="pd-head"><div><p>Comunidade</p><h1>{t('pessoas')}</h1><small>Membros, pessoas em integração, visitantes e crianças da igreja selecionada.</small></div>
    <div className="pd-actions"><a className="pd-secondary" href={`/onboarding/importar-membros${tenant?`?tenant=${encodeURIComponent(tenant)}`:''}`}>Importar planilha</a><button className="pd-primary" type="button" onClick={onAdd}>＋ Nova pessoa</button></div></header>
   <nav className="pd-views" aria-label="Visões de Pessoas">{views.map(([v,l,n])=><button key={v} type="button" aria-pressed={view===v} onClick={()=>setView(v)}>{l}{n?<b>{n}</b>:null}</button>)}</nav>
   {view==='pastoral'&&<PastoralAgenda unitId={unitId}/>}

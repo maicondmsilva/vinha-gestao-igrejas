@@ -26,7 +26,9 @@ select matches(pg_temp.sign('c1','adult_data')->'item'->>'code','^VNH-[A-Z2-9]{4
 select is(pg_temp.sign('c1','adult_data')->'item'->>'id',pg_temp.ct('c1')::text,'reenvio devolve o mesmo termo');
 select is(pg_temp.sign('k1','kids_image','kid',jsonb_build_object('photos',true,'videos',false,'social',true,'live',false))->'item'->'choices'->>'social','true','escolhas de imagem da criança gravadas');
 select is(pg_temp.sign('k2','kids_guardian','kid')->'item'->>'subjectName','Davi Prado','termo do responsável aponta a criança');
-select throws_ok($$select public.member_consent(pg_temp.ct('org'),pg_temp.ct('a'),'sign',jsonb_build_object('id',pg_temp.ct('bad'),'kind','adult_data','signerName','Ana','device',''))$$,'22023',null,'assinatura exige nome e sobrenome');
+select lives_ok($$select public.member_consent(pg_temp.ct('org'),pg_temp.ct('a'),'sign',jsonb_build_object('id',pg_temp.ct('bad'),'kind','adult_data','signerName','','device',''))$$,'quem tem cadastro assina sem digitar o nome');
+reset role;select ok((select signer_name=p.full_name from private.consent_records c join public.people p on p.id=c.signer_person where c.id=pg_temp.ct('bad')),'assinatura usa o nome do cadastro');
+select pg_temp.actor('parent');set local role authenticated;
 reset role;
 select is((select encode(extensions.digest(private.consent_canonical(c),'sha256'),'hex')=c.sha256 from private.consent_records c where id=pg_temp.ct('c1')),true,'impressão digital confere com o texto assinado');
 select is((select subject_person from private.consent_records where id=pg_temp.ct('c1')),pg_temp.ct('p-parent'),'termo do adulto vinculado ao cadastro');

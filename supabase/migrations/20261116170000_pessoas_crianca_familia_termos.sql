@@ -4,6 +4,7 @@
 --    Se for parentesco, a criança entra automaticamente na família dele (vínculos nos dois sentidos, visíveis no cadastro de ambos).
 --    "Outro" (amigo da família, vizinho…) só autoriza buscar; não cria vínculo familiar.
 -- 3. Termos: a igreja cria quantos termos quiser (para adultos ou para crianças), além dos quatro padrão.
+--    A assinatura usa o cadastro de quem assina (nome e CPF mascarado no documento), sem digitar o nome.
 
 -- ===== 1. Criança =====
 create or replace function private.kids_child_journey() returns trigger
@@ -161,12 +162,14 @@ begin
   return jsonb_build_object(
    'templates',(select jsonb_object_agg(k,(select jsonb_build_object('version',x.version,'title',x.title,'body',x.body) from private.consent_template(p_org,k) x)) from unnest(private.consent_kinds(p_org)) k),
    'custom',private.consent_custom_list(p_org),
+   'signer',case when me.id is null then null else jsonb_build_object('name',me.full_name,'cpf',case when length(regexp_replace(coalesce(me.cpf,''),'\D','','g'))=11 then '***.'||substr(regexp_replace(me.cpf,'\D','','g'),4,3)||'.'||substr(regexp_replace(me.cpf,'\D','','g'),7,3)||'-**' else '' end) end,
    'items',coalesce((select jsonb_agg(private.consent_row(c) order by c.accepted_at desc) from private.consent_records c where c.organization_id=p_org and c.signer_user=uid and c.revoked_at is null),'[]'::jsonb));
  end if;
 
  if p_action='sign' then
   v_kind:=p_data->>'kind';
-  if not (v_kind=any(private.consent_kinds(p_org))) or length(btrim(coalesce(p_data->>'signerName','')))<5 or position(' ' in btrim(p_data->>'signerName'))=0
+  -- Quem tem cadastro assina com os dados do cadastro (nome e CPF); sem cadastro ainda, digita o nome.
+  if not (v_kind=any(private.consent_kinds(p_org))) or (me.id is null and (length(btrim(coalesce(p_data->>'signerName','')))<5 or position(' ' in btrim(p_data->>'signerName'))=0))
    or length(coalesce(p_data->>'device',''))>120 or coalesce(p_data->>'id','') !~ '^[0-9a-f-]{36}$' then raise exception 'invalid_consent' using errcode='22023';end if;
   select * into r from private.consent_records where id=(p_data->>'id')::uuid;
   if r.id is not null then if r.signer_user=uid then return jsonb_build_object('ok',true,'item',private.consent_row(r));end if;raise exception 'invalid_consent' using errcode='22023';end if;
@@ -190,7 +193,7 @@ begin
   if p_unit is not null then select coalesce(u.name,church) into church from public.organization_units u where u.id=p_unit and u.organization_id=p_org;end if;
   select * into t from private.consent_template(p_org,v_kind);
   if t.version is null then raise exception 'invalid_consent' using errcode='22023';end if;
-  r:=row((p_data->>'id')::uuid,private.consent_new_code(),p_org,p_unit,v_kind,t.version,t.title,t.body,ch,uid,me.id,btrim(p_data->>'signerName'),
+  r:=row((p_data->>'id')::uuid,private.consent_new_code(),p_org,p_unit,v_kind,t.version,t.title,t.body,ch||case when length(regexp_replace(coalesce(me.cpf,''),'\D','','g'))=11 then jsonb_build_object('signerCpf','***.'||substr(regexp_replace(me.cpf,'\D','','g'),4,3)||'.'||substr(regexp_replace(me.cpf,'\D','','g'),7,3)||'-**') else '{}'::jsonb end,uid,me.id,coalesce(nullif(btrim(me.full_name),''),btrim(p_data->>'signerName')),
    case when v_kids then child.id else me.id end,nm,kid,church,coalesce(p_data->>'device',''),date_trunc('milliseconds',clock_timestamp()),repeat('0',64),null,null)::private.consent_records;
   r.sha256:=encode(extensions.digest(private.consent_canonical(r),'sha256'),'hex');
   -- O novo aceite substitui o anterior do mesmo tipo e da mesma pessoa.
