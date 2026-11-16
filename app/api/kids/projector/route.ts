@@ -2,7 +2,7 @@ import {authorizeSupabaseChurch} from '../../../lib/supabase/church-access';
 import {db} from '../../../lib/supabase/operations';
 import {boundedBody, uuidPattern} from '../../../lib/private-files';
 
-// Telão Kids pelo Holyrics: GET ?unit= mostra se está configurado; POST {action:'save'|'test', data}.
+// Telão Kids pelo Holyrics: GET ?unit= mostra se está configurado; POST {action:'save'|'test'|'last', data}.
 // A chave e o token vão para o cofre do banco e nunca voltam nesta resposta.
 const json = (data: unknown, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'private, no-store'}});
 const reasons: Record<string, [string, number]> = {
@@ -36,6 +36,7 @@ async function run(request: Request, body: unknown) {
     if (body !== null) {
       const b = body as {action?: unknown; data?: Record<string, unknown>};
       if (b.action === 'test') action = 'test';
+      else if (b.action === 'last') action = 'last';
       else if (b.action === 'save' && b.data && typeof b.data === 'object' && typeof b.data.enabled === 'boolean') {
         action = 'save';
         data = {
