@@ -51,6 +51,13 @@ select is(public.kids_pass(pg_temp.fi('org'),pg_temp.fi('a'),repeat('0',64))->>'
 select lives_ok($$select public.kids_operations_save(pg_temp.fi('org'),pg_temp.fi('a'),extensions.gen_random_uuid(),'checkin',pg_temp.fi('att'),0,jsonb_build_object('sessionId',pg_temp.fi('session'),'groupId',pg_temp.fi('group'),'profileId',pg_temp.fi('child-profile'),'guardianId',pg_temp.fi('member-person'),'identityConfirmed',true,'receiptSecret',current_setting('test.pass')))$$,'entrada pelo QR da reserva');
 select is(public.kids_pass(pg_temp.fi('org'),pg_temp.fi('a'),current_setting('test.pass'))->'attendance'->>'status','present','QR mostra que já entrou');
 select ok(public.kids_child_photo(pg_temp.fi('org'),pg_temp.fi('a'),pg_temp.fi('child-profile')) is not null,'equipe consulta a foto da criança');
+reset role;update public.people set photo_path='member-photos/kids-test/child.jpg' where id=pg_temp.fi('child');select pg_temp.actor('owner');set local role authenticated;
+select is(public.kids_child_photos(pg_temp.fi('org'),pg_temp.fi('a'),array[pg_temp.fi('child-profile'),pg_temp.fi('otherchild-profile')])->>pg_temp.fi('child-profile')::text,'member-photos/kids-test/child.jpg','coordenação recebe as fotos em lote');
+select ok(not (public.kids_child_photos(pg_temp.fi('org'),pg_temp.fi('a'),array[pg_temp.fi('otherchild-profile')]) ? pg_temp.fi('otherchild-profile')::text),'lote só traz quem tem foto');
+select is(public.kids_child_photos(pg_temp.fi('org'),pg_temp.fi('b'),array[pg_temp.fi('child-profile')]),'{}'::jsonb,'outra igreja não recebe fotos');
+reset role;select pg_temp.actor('member');set local role authenticated;
+select is(public.kids_child_photos(pg_temp.fi('org'),pg_temp.fi('a'),array[pg_temp.fi('child-profile')]),'{}'::jsonb,'responsável sem equipe não usa o lote');
+reset role;select pg_temp.actor('owner');set local role authenticated;
 -- Responsável autoriza outro membro como temporário.
 reset role;select pg_temp.actor('member');set local role authenticated;
 select ok(pg_temp.pass() is not null,'QR continua valendo para a saída');

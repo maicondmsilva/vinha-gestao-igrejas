@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, TextInput, View} from 'react-native';
+import {ActivityIndicator, AppState, Pressable, RefreshControl, ScrollView, Text, TextInput, View} from 'react-native';
 import {randomUUID} from 'expo-crypto';
 import {supabase} from './supabase';
 import {kidsPage} from './kids';
@@ -53,9 +53,20 @@ export default function KidsBoard({org, unit, back, embedded = false}: {org: str
     }
   }, [org, unit.id]);
   useEffect(() => {
+    // Atualiza a cada 15 s só com o app na frente; ao voltar, atualiza na hora.
     void load();
-    const t = setInterval(() => void load(), 15000);
-    return () => clearInterval(t);
+    let t = setInterval(() => void load(), 15000);
+    const sub = AppState.addEventListener('change', (st) => {
+      clearInterval(t);
+      if (st === 'active') {
+        void load();
+        t = setInterval(() => void load(), 15000);
+      }
+    });
+    return () => {
+      clearInterval(t);
+      sub.remove();
+    };
   }, [load]);
   async function send() {
     if (!child || !supabase || busy) return;

@@ -1,6 +1,13 @@
 'use client';
 import {useEffect, useState} from 'react';
 import {settingsUrl} from './lib/settings-navigation';
+import {kidsPhotoBatcher} from '../shared/kids-photo-batch';
+
+const photo = kidsPhotoBatcher((unit, profiles) =>
+  fetch(settingsUrl('/api/kids/photo?' + new URLSearchParams({unit, profiles: profiles.join(',')})), {cache: 'no-store'})
+    .then((r) => (r.ok ? r.json() : {urls: {}}))
+    .then((d) => (d as {urls?: Record<string, string>}).urls || {}),
+);
 
 /** Foto da criança (Kids) para reconhecer na recepção e nas salas; sem foto, as iniciais. */
 export default function KidsChildPhoto({unit, profile, name, size = 44}: {unit: string; profile: string; name: string; size?: number}) {
@@ -8,10 +15,7 @@ export default function KidsChildPhoto({unit, profile, name, size = 44}: {unit: 
   useEffect(() => {
     let live = true;
     setUrl('');
-    void fetch(settingsUrl('/api/kids/photo?' + new URLSearchParams({unit, profile})), {cache: 'no-store'})
-      .then((r) => (r.ok ? r.json() : {url: ''}))
-      .then((d) => live && setUrl((d as {url?: string}).url || ''))
-      .catch(() => {});
+    void photo(unit, profile).then((u) => live && setUrl(u));
     return () => {
       live = false;
     };
