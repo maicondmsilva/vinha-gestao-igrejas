@@ -37,6 +37,10 @@ export default function KidsProjector({unit}: {unit: string}) {
           setNotice(readApiError(d).error);
           return;
         }
+        if (typeof (d as State).enabled !== 'boolean' || typeof (d as State).configured !== 'boolean') {
+          setNotice('Não foi possível ler a configuração do telão. Atualize a página.');
+          return;
+        }
         setState(d as State);
         setEnabled((d as State).enabled);
       })
@@ -99,14 +103,15 @@ export default function KidsProjector({unit}: {unit: string}) {
         <p className="ko-empty">Carregando…</p>
       ) : (
         <form
-          className="ko-form-grid"
+          className="ko-form-stack"
           onSubmit={(e) => {
             e.preventDefault();
             void send('save');
           }}
         >
           <label className="ko-check">
-            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> Mostrar os chamados do Kids no telão desta igreja
+            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />{' '}
+            <span>Mostrar os chamados do Kids no telão desta igreja</span>
           </label>
           <label>
             Chave da API do Holyrics {state.configured && <small>(já salva; preencha só para trocar)</small>}
@@ -137,5 +142,37 @@ export default function KidsProjector({unit}: {unit: string}) {
         <p>O computador do Holyrics precisa estar ligado e com internet durante o culto.</p>
       </details>
     </section>
+  );
+}
+
+/** Situação do telão na Visão geral (só para quem configura): ligado, desligado ou sem configuração, com atalho para Configurar. */
+export function KidsProjectorStatus({unit, onConfigure}: {unit: string; onConfigure: () => void}) {
+  const [state, setState] = useState<State | null>(null);
+  useEffect(() => {
+    let live = true;
+    void fetch(settingsUrl('/api/kids/projector?' + new URLSearchParams({unit})), {cache: 'no-store'})
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => live && d && typeof (d as State).enabled === 'boolean' && setState(d as State))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [unit]);
+  if (!state) return null;
+  const text = !state.configured
+    ? 'Telão (Holyrics) não configurado'
+    : state.enabled
+      ? 'Telão (Holyrics) ligado: os chamados aparecem no culto'
+      : 'Telão (Holyrics) desligado';
+  return (
+    <div className="ko-status-line" role="status">
+      <p>
+        <i className={state.configured && state.enabled ? 'on' : ''} aria-hidden />
+        {text}
+      </p>
+      <button type="button" onClick={onConfigure}>
+        {state.configured ? 'Telão e estações' : 'Configurar telão'}
+      </button>
+    </div>
   );
 }

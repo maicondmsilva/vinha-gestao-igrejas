@@ -108,7 +108,7 @@ export default function KidsStations({unit}: {unit: string}) {
           })}
         </div>
       )}
-      <p className="ko-eyebrow">
+      <p className="ko-footnote">
         {active.length} {active.length === 1 ? 'estação ativa' : 'estações ativas'} · limite de 50 por igreja. Retiradas sempre exigem internet e conferência do
         adulto autorizado.
       </p>

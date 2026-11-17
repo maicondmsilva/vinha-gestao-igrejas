@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, TextInput, View} from 'react-native';
+import {ActivityIndicator, AppState, Pressable, RefreshControl, ScrollView, Text, TextInput, View} from 'react-native';
 import {randomUUID} from 'expo-crypto';
 import {supabase} from './supabase';
 import {kidsPage} from './kids';
@@ -31,7 +31,16 @@ export default function KidsBoard({org, unit, back, embedded = false}: {org: str
     [busy, setBusy] = useState(false),
     [loading, setLoading] = useState(true),
     [notice, setNotice] = useState(''),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [birthdays, setBirthdays] = useState<Record<string, number>>({});
+  // Aniversariantes da semana: a equipe vê o selo no cartão da criança (consulta leve, uma vez por sala aberta).
+  useEffect(() => {
+    if (!supabase) return;
+    void supabase.rpc('kids_insights', {p_org: org, p_unit: unit.id, p_kind: 'birthdays'}).then((r) => {
+      const items = (r.data as {items?: {profileId: string; in: number}[]} | null)?.items;
+      if (!r.error && Array.isArray(items)) setBirthdays(Object.fromEntries(items.map((b) => [b.profileId, b.in])));
+    });
+  }, [org, unit.id]);
   const load = useCallback(async () => {
     try {
       const p = await kidsPage(org, unit.id);
@@ -53,9 +62,20 @@ export default function KidsBoard({org, unit, back, embedded = false}: {org: str
     }
   }, [org, unit.id]);
   useEffect(() => {
+    // Atualiza a cada 15 s só com o app na frente; ao voltar, atualiza na hora.
     void load();
-    const t = setInterval(() => void load(), 15000);
-    return () => clearInterval(t);
+    let t = setInterval(() => void load(), 15000);
+    const sub = AppState.addEventListener('change', (st) => {
+      clearInterval(t);
+      if (st === 'active') {
+        void load();
+        t = setInterval(() => void load(), 15000);
+      }
+    });
+    return () => {
+      clearInterval(t);
+      sub.remove();
+    };
   }, [load]);
   async function send() {
     if (!child || !supabase || busy) return;
@@ -197,6 +217,14 @@ export default function KidsBoard({org, unit, back, embedded = false}: {org: str
                     {k.name}
                   </Text>
                   {k.review && <Text style={{color: colors.warn, fontWeight: '800', fontSize: 12}}>Cadastro a conferir pela secretaria</Text>}
+                  {birthdays[k.profileId] !== undefined && (
+                    <Text style={{color: colors.brand, fontWeight: '800', fontSize: 12}}>
+                      🎂{' '}
+                      {birthdays[k.profileId] === 0
+                        ? 'Aniversário hoje'
+                        : 'Aniversário em ' + birthdays[k.profileId] + (birthdays[k.profileId] === 1 ? ' dia' : ' dias')}
+                    </Text>
+                  )}
                   <Text style={ui.copy}>
                     {g?.room || 'Sala'} · desde {new Date(k.inAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}
                   </Text>

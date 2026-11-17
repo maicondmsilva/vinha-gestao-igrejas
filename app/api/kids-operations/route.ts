@@ -19,6 +19,8 @@ async function handle(request:Request,write:boolean){
  }
  try{
   const client=access.client as unknown as OperationsClient;
+  // Leitura da página: o fuso da igreja é consultado em paralelo (antes era uma segunda ida ao banco em sequência).
+  const zoneRequest=!command&&query.q===null?Promise.resolve(client.rpc('unit_timezone',{p_unit:query.unitId})).catch(()=>({data:null})):null;
   const r=await client.rpc(command?'kids_operations_save':query.q!==null?'kids_admission_choices':'kids_operations_page',{p_organization:access.membership.organization_id,p_unit:query.unitId,...command?{p_request:command.requestId,p_action:command.action,p_id:command.id,p_version:command.version,p_data:command.data}:query.q!==null?{p_session:query.sessionId,p_search:query.q}:{p_session:query.sessionId,p_after:query.after,p_search:query.search,p_status:query.status}});
   if(r.error){const code=r.error.code,m=r.error.message||'',status=['42501','28000'].includes(code)?403:['40001','40P01','23505'].includes(code)?409:code==='P0002'?404:['22023','22P02','23514','23502','22007','22008'].includes(code)?400:503;
    const messages:Record<string,string>={kids_children_present:'Há crianças presentes. Conclua todas as retiradas antes de encerrar.',kids_capacity_full:'A sala está lotada. Atualize a ocupação.',kids_reserved_capacity:'Há vagas reservadas por outras famílias. Atualize a consulta e confira as reservas com a administração.',kids_staff_insufficient:'A equipe mínima da sala não está disponível. Confira a escala e os acessos.',kids_staff_identity_required:'A pessoa da equipe precisa ser adulta, estar ativa em Pessoas e vinculada a uma conta confirmada com acesso à igreja.',kids_staff_overlap:'Essa pessoa já está escalada nesta sessão ou em outra com horário sobreposto.',kids_room_overlap:'A sala está em uso em outra sessão com horário sobreposto.',kids_guardian_required:'O adulto precisa ter autorização de retirada vigente. Confira sua identidade e o cadastro.',kids_receipt_recovery_required:'Comprovante expirado ou tentativas esgotadas. Solicite recuperação assistida à supervisão.',kids_hold_or_transfer_pending:'Há proteção de retirada ou transferência pendente. Procure a supervisão.',kids_age_outside_class:'A idade da criança não corresponde à turma.',kids_child_not_ready:'O cadastro da criança precisa estar ativo e revisado.',kids_receiving_team_required:'A equipe da sala de destino deve confirmar o recebimento.',kids_session_not_ready:'Confira o horário e adicione salas à sessão.',kids_room_in_use:'A sala não pode ser alterada durante uma sessão aberta.',kids_class_in_use:'A turma não pode ser alterada durante uma sessão aberta.'};
@@ -26,7 +28,7 @@ async function handle(request:Request,write:boolean){
   }
   if(command||query.q!==null)return json(command?r.data:{unitId:query.unitId,items:kidsAdmissionPage(r.data,query.unitId)});
   // The page carries the church's time zone: the panel and the station show entry and exit times in it.
-  const page=kidsOperationsPage(r.data,query.unitId),zone=await client.rpc('unit_timezone',{p_unit:query.unitId});
+  const page=kidsOperationsPage(r.data,query.unitId),zone=await zoneRequest!;
   return json(typeof zone.data==='string'?{...page,timezone:zone.data}:page);
  }catch{return json({error:'Kids indisponível. A operação não foi confirmada; mantenha a criança sob os cuidados da equipe e confira o histórico.'},503)}
 }
