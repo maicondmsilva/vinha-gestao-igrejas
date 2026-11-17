@@ -13,6 +13,7 @@ import {
   type KidsSetup,
   type SessionForm,
   occupancy,
+  isKidsSetup,
 } from '../shared/kids-setup';
 
 const uuid = () => crypto.randomUUID();
@@ -36,7 +37,8 @@ export default function KidsSetupPanel({unit}: {unit: string}) {
     const r = await fetch(url(), {cache: 'no-store'});
     const d = (await r.json().catch(() => ({}))) as {error?: string};
     if (!r.ok) setError(d.error || 'Não foi possível carregar.');
-    else setData(d as KidsSetup);
+    else if (!isKidsSetup(d)) setError('Não foi possível ler a configuração. Atualize a página.');
+    else setData(d);
   }, [url]);
   useEffect(() => {
     void load();

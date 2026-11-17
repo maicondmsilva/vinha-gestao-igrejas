@@ -1,9 +1,7 @@
 import {supabase} from './supabase';
 
 // Where a tapped notification leads. Campaign pushes carry {screen, id?, campaign, message}.
-export type PushTarget =
-  | {kind: 'detail'; detail: 'inbox' | 'live'}
-  | {kind: 'tab'; tab: 'agenda' | 'contribute' | 'home'; event?: string};
+export type PushTarget = {kind: 'detail'; detail: 'inbox' | 'live' | 'kids'} | {kind: 'tab'; tab: 'agenda' | 'contribute' | 'home'; event?: string};
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -15,6 +13,9 @@ export function pushTarget(data: unknown): PushTarget | null {
     case 'inbox':
     case 'notice':
       return {kind: 'detail', detail: 'inbox'};
+    case 'kids':
+      // Aviso de entrada ou saída da criança: abre a Área Kids da família.
+      return {kind: 'detail', detail: 'kids'};
     case 'live':
     case 'media':
       return {kind: 'detail', detail: 'live'};

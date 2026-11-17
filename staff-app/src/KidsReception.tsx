@@ -10,6 +10,7 @@ import type {Unit} from './api';
 import type {KidsOperationsPage} from '../../shared/contract/kids.ts';
 import {receiptCode, receptionError} from '../../shared/kids-reception.ts';
 import KidsPassFlow from './KidsPassFlow';
+import KidsKiosk from './KidsKiosk';
 import KidsChildPhoto from './KidsChildPhoto';
 
 type Admission = {id: string; name: string; birthDate: string; guardians: {id: string; name: string}[]};
@@ -76,7 +77,8 @@ export default function KidsReception({org, unit, back, embedded = false}: {org:
   const [page, setPage] = useState<KidsOperationsPage | null>(null),
     [mode, setMode] = useState<'in' | 'out'>('in'),
     [error, setError] = useState(''),
-    [notice, setNotice] = useState('');
+    [notice, setNotice] = useState(''),
+    [kiosk, setKiosk] = useState(false);
   const load = useCallback(async () => {
     try {
       setPage(await kidsPage(org, unit.id));
@@ -88,6 +90,18 @@ export default function KidsReception({org, unit, back, embedded = false}: {org:
     void load();
   }, [load]);
   const session = page?.sessions.find((s) => s.id === page.sessionId);
+  if (kiosk)
+    return (
+      <KidsKiosk
+        org={org}
+        unit={unit.id}
+        unitName={unit.name}
+        exit={() => {
+          setKiosk(false);
+          void load();
+        }}
+      />
+    );
   return (
     <ScrollView contentContainerStyle={[ui.pad, {paddingTop: embedded ? 12 : 24}]} keyboardShouldPersistTaps="handled">
       {!embedded && <Text style={ui.over}>RECEPÇÃO KIDS · {unit.name.toUpperCase()}</Text>}
@@ -129,6 +143,11 @@ export default function KidsReception({org, unit, back, embedded = false}: {org:
             }}
             fail={setError}
           />
+          {page.canReceive && (
+            <Pressable accessibilityRole="button" style={ui.ghost} onPress={() => setKiosk(true)}>
+              <Text style={ui.ghostText}>Usar como totem de entrada (famílias leem o QR sozinhas)</Text>
+            </Pressable>
+          )}
           <Text style={[ui.over, {marginTop: 8}]}>SEM QR CODE DA RESERVA</Text>
           {mode === 'in' ? (
             <CheckIn

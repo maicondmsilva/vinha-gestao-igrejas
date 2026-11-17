@@ -53,6 +53,12 @@ export type KidsSetupSession = {
 };
 export type KidsSetup = {rooms: KidsSetupRoom[]; classes: KidsSetupClass[]; team: KidsTeamMember[]; series: KidsSeries[]; sessions: KidsSetupSession[]};
 
+/** Confere o formato da configuração antes de exibir (uma resposta inesperada vira aviso, não quebra a página). */
+export function isKidsSetup(v: unknown): v is KidsSetup {
+  const o = v as Record<string, unknown> | null;
+  return !!o && typeof o === 'object' && ['rooms', 'classes', 'team', 'series', 'sessions'].every((k) => Array.isArray(o[k]));
+}
+
 export const kidsTeamRoles: [KidsTeamRole, string][] = [
   ['teacher', 'Professor(a)'],
   ['assistant', 'Auxiliar'],
