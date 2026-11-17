@@ -52,6 +52,6 @@ test('API traduz conflito e guarda resultado de código incorreto como falha de 
  const failure=route({data:{ok:false,id,version:2,reason:'receipt_invalid',remainingAttempts:4}});const response=await failure.POST(request());assert.equal(response.status,200);assert.equal((await response.json()).ok,false);
 });
 test('interface usa criptografia do navegador e não persiste código em armazenamento',()=>{
- const ui=readFileSync(new URL('../app/KidsOperations.tsx',import.meta.url),'utf8');assert.match(ui,/crypto\.getRandomValues/);assert.doesNotMatch(ui,/localStorage|sessionStorage|console\.log|Math\.random/);assert.match(ui,/setUncertain\(true\)/);assert.match(ui,/kidsOperationCommand/);assert.match(ui,/endpoint="\/api\/kids-foundation"/);assert.match(ui,/receipt\.code/);
+ const ui=['../app/KidsOperations.tsx','../app/kids/KidsTabs.tsx','../app/kids/kids-ui.ts'].map(f=>readFileSync(new URL(f,import.meta.url),'utf8')).join('\n');assert.match(ui,/crypto\.getRandomValues/);assert.doesNotMatch(ui,/localStorage|sessionStorage|console\.log|Math\.random/);assert.match(ui,/setUncertain\(true\)/);assert.match(ui,/kidsOperationCommand/);assert.match(ui,/endpoint="\/api\/kids-foundation"/);assert.match(ui,/receipt\.code/);
  const css=readFileSync(new URL('../app/kids-operations.css',import.meta.url),'utf8');assert.match(css,/@media\(max-width:760px\)/);assert.match(css,/min-height:18px!important/);
 });

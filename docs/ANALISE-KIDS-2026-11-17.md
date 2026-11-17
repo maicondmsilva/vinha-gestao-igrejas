@@ -143,3 +143,8 @@ Cada fase segue o mesmo processo: testes de banco e de código, capturas antes e
 - Aviso no app aos responsáveis permanentes na entrada e na saída (gatilho na presença: vale para painel, estação, QR e totem). Sem dados de saúde. Tocar abre a Área Kids. Não aparece na lista de campanhas.
 - Aniversariantes da semana (Visão geral e selo no Vinha Equipe) e Relatórios › Ausências (`kids_insights`).
 - Modo totem no Vinha Equipe: só entrada pelo QR da reserva; sair exige pressionar 2 s.
+
+## 11. Complementos — 17/11/2026
+
+- **Código:** `KidsOperations.tsx` dividido. As abas de operação (Visão geral, Entrada e retirada, Salas e turmas, Datas e escala, Equipe da data, Histórico) ficam em `app/kids/KidsTabs.tsx`; textos e utilitários em `app/kids/kids-ui.ts`. A tela principal guarda o estado, as consultas e o formulário (34 KB → 24 KB). Capturas antes e depois iguais.
+- **Lembrete de aniversário à equipe** (`20261117190000_kids_aniversario_equipe.sql`): quando a criança aniversariante entra, a equipe escalada na sala e a coordenação da sessão recebem um aviso no app da igreja (“🎂 Aniversário na Sala Arca · Ana faz 5 anos hoje…”). A família não recebe esse lembrete. Os avisos usam uma função única (`private.kids_push`).
