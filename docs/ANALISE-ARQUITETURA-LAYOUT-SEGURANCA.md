@@ -55,3 +55,9 @@ Data: 17/11/2026 · Escopo: banco (Supabase), API do painel, painel (Next/vinext
 2. Limite de frequência nas funções públicas que gravam dados.
 3. Entrega de estilo: escopo de `header` e `button`, mais o conjunto comum de componentes.
 4. Consolidar as funções mais alteradas do banco.
+
+## 6. Atualização — 17/11/2026
+- **Banco de teste** reativado e atualizado (Cargos e funções, Agenda de atendimento, consolidação).
+- **Estilos globais**: a regra `header{…}` virou `.app-topbar` (só a barra do topo); `app/vinha-ui.css` padroniza títulos, linha de apoio, números de destaque e botões principais/secundários no conteúdo do painel. Fotos antes/depois de todos os módulos conferidas.
+- **Consolidação do banco** (`20261117140000_consolidacao_funcoes.sql`): a caixa de notificações do app passou de 12 camadas para 1 função; versões canônicas completas de `pastoral_staff`, `pastoral_member`, `people_search`, `pastoral_row` e `ministry_language_save`. Funções em camadas: 32 → 21.
+- **Pendente**: as 17 camadas do Financeiro e 4 de permissões/escalas — consolidar em etapa própria, com os testes de concorrência do Financeiro.
