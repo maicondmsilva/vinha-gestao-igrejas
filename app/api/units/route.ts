@@ -20,7 +20,10 @@ async function supabaseGET(request:Request){
   ...unit,type:uiType(unit.unit_type),church_id:unit.organization_id,city:typeof unit.address==='object'&& unit.address!==null&&!Array.isArray(unit.address)?String((unit.address as Record<string,unknown>).city||''):'',state:typeof unit.address==='object'&&unit.address!==null&&!Array.isArray(unit.address)?String((unit.address as Record<string,unknown>).state||''):'',
   financial_autonomy:unit.financial_autonomy?1:0,communication_autonomy:unit.communication_autonomy?1:0,branding_autonomy:unit.branding_autonomy?1:0,access_role:['owner','pastor','admin'].includes(access.membership.role)?'manager':'viewer',include_children:1,
  }));
- return NextResponse.json({units,currentUser:{id:access.membership.membership_id,churchId:organizationId,churchSlug:access.membership.organization_slug,email:access.email,role:access.membership.role},canManage:access.can('units.manage')||(await (access.client as unknown as {rpc:(n:string,a:Record<string,unknown>)=>PromiseLike<{data:unknown}>}).rpc('permission_any',{p_org:organizationId,p_checks:['church.units:create','church.units:edit']})).data===true});
+ // Igreja de casa: a do cadastro de membro do usuário; sem cadastro, a igreja padrão do acesso. Só se ele tiver acesso a ela.
+ const person=await access.client.from('people').select('unit_id').eq('organization_id',organizationId).eq('auth_user_id',access.userId).eq('status','active').order('created_at').limit(1).maybeSingle();
+ const homeUnitId=[person.data?.unit_id,access.membership.default_unit_id].find(id=>id&&units.some(u=>u.id===id))||null;
+ return NextResponse.json({units,homeUnitId,currentUser:{id:access.membership.membership_id,churchId:organizationId,churchSlug:access.membership.organization_slug,email:access.email,role:access.membership.role},canManage:access.can('units.manage')||(await (access.client as unknown as {rpc:(n:string,a:Record<string,unknown>)=>PromiseLike<{data:unknown}>}).rpc('permission_any',{p_org:organizationId,p_checks:['church.units:create','church.units:edit']})).data===true});
 }
 
 async function supabasePOST(request:Request){

@@ -52,7 +52,7 @@ export default function KidsKiosk({org, unit, unitName, exit}: {org: string; uni
     const guardian = pass.reservedBy && pass.guardians.some((g) => g.id === pass.reservedBy) ? pass.reservedBy : '';
     if (!guardian) return stop('Procure a recepção', 'A pessoa que fez a reserva não está autorizada para esta criança.');
     const save = await supabase.rpc('kids_operations_save', {
-      p_org: org,
+      p_organization: org,
       p_unit: unit,
       p_request: randomUUID(),
       p_action: 'checkin',

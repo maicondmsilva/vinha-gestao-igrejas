@@ -1,4 +1,5 @@
 'use client';
+import MemberFamilyAdmin from './MemberFamilyAdmin';
 import {useEffect,useRef,useState,type FormEvent,type ReactNode} from 'react';
 import MemberPicker from './MemberPicker';
 import {CellStudyFiles,CellMultiUnitReport,CellDeliveryPreferences} from './CellExtensions';
@@ -27,7 +28,7 @@ export default function CellIntegrated({unitId,section}:{unitId:string;section:C
  return <section className="content cell-workspace"><div className="page-head"><div><p className="section-over">{t('celulas')}</p><h1>{t(('celulas.'+section) as LanguageKey)}</h1><p>Dados limitados à unidade, rede e permissões atuais. Escolher uma rede inclui seus descendentes nos indicadores e grupos.</p></div><button type="button" disabled={busy||loading} onClick={refresh}>Atualizar</button></div>
  <div className="cell-filters"><label>Rede e descendentes<select value={network} disabled={busy} onChange={e=>{setNetwork(e.target.value);setCell('');setAfter('')}}><option value="">Todo o meu escopo autorizado</option>{networks.map(n=><option key={n.id} value={n.id}>{n.name}{n.status==='archived'?' · Arquivada':''}</option>)}</select></label>{(kind==='reports'||kind==='roster')&&<><label>De<input type="date" value={from} disabled={busy} onChange={e=>{setFrom(e.target.value);setAfter('')}}/></label><label>Até<input type="date" value={to} disabled={busy} onChange={e=>{setTo(e.target.value);setAfter('')}}/></label></>}</div>
  {section==='consolidado'&&<CellMultiUnitReport unitId={unitId} from={from} to={to}/>}
- {section==='pendencias'&&<CellDeliveryPreferences unitId={unitId}/>}
+ {section==='pendencias'&&<><CellDeliveryPreferences unitId={unitId}/><MemberFamilyAdmin unitId={unitId} cellsOnly/></>}
  {notice&&<p role="status" className="cell-success">{notice}</p>}{error&&<p role="alert">{error}</p>}{loading&&<p role="status">Consultando operações integradas…</p>}
  {section==='supervisao'&&<div className="cell-section-actions"><button type="button" disabled={busy} onClick={()=>{setKind('roster');setAfter('')}}>Relatórios dos grupos</button>{page?.manager&&<button type="button" disabled={busy} onClick={()=>{setKind('supervisors');setAfter('')}}>Permissões de supervisão</button>}</div>}
  {kind==='roster'&&<label>Grupo para consultar a chamada<select disabled={busy} value={cell} onChange={e=>{setCell(e.target.value);setAfter('')}}><option value="">Selecione um grupo autorizado</option>{cells.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
