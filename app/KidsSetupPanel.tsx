@@ -107,9 +107,16 @@ export default function KidsSetupPanel({unit, goSpaces}: {unit: string; goSpaces
               <h2>Sessões</h2>
               <p>Cada sessão tem dia, horário, salas e quem cuida de cada sala. Se repetir, as próximas datas são criadas sozinhas.</p>
             </div>
-            <button type="button" className="ko-primary" onClick={() => setForm(blankSessionForm(uuid()))}>
-              + Nova sessão
-            </button>
+            <div className="ko-actions">
+              {goSpaces && (
+                <button type="button" onClick={goSpaces}>
+                  Salas e turmas ({data.rooms.length} · {data.classes.length})
+                </button>
+              )}
+              <button type="button" className="ko-primary" onClick={() => setForm(blankSessionForm(uuid()))}>
+                + Nova sessão
+              </button>
+            </div>
           </div>
           {(!data.rooms.length || !data.classes.length) && (
             <div className="ko-status-line">
