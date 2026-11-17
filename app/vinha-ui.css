@@ -1,0 +1,98 @@
+/* Vinha UI — padrão visual do conteúdo do painel (.main).
+   Uma camada única para títulos de página, linha de apoio, números de destaque e botões,
+   aplicada sobre os estilos de cada módulo. A marca (logo, login, capas) continua com a fonte serifada. */
+:root {
+  --v-green: #285c45;
+  --v-green-dark: #1f4a37;
+  --v-ink: #183e31;
+  --v-muted: #5f7268;
+  --v-line: #cfdad4;
+  --v-gold: #d8b769;
+  --v-danger: #8c2f39;
+  --v-radius: 10px;
+}
+
+/* Títulos: sem serifa, mesmo peso e cor em todos os módulos. */
+.main :is(h1, h2, h3, h4) {
+  font-family: inherit !important;
+  letter-spacing: -0.01em;
+}
+.main h1 {
+  font-weight: 700 !important;
+  color: var(--v-ink);
+}
+.main :is(h2, h3) {
+  font-weight: 650 !important;
+}
+.main :is(.page-head, .program-head, .pd-head, .kids-heading, .ko-heading, .cell-overview-head, .cell-overview, .scale-page-head, .f1-heading, .wsh-head, .staff-head, .ma-head, .ve-header, .pa-head, .rl-settings-head, .inbox-top, .ledger-pilot) h1 {
+  font-size: 26px !important;
+  line-height: 1.2 !important;
+  margin: 4px 0 6px !important;
+}
+@media (max-width: 700px) {
+  .main :is(.page-head, .program-head, .pd-head, .kids-heading, .ko-heading, .cell-overview-head, .cell-overview, .scale-page-head, .f1-heading, .wsh-head, .staff-head, .ma-head, .ve-header, .pa-head, .rl-settings-head, .inbox-top, .ledger-pilot) h1 {
+    font-size: 23px !important;
+  }
+}
+
+/* Linha de apoio (sobretítulo): legível e igual em todo o painel. */
+.main .section-over,
+.main .pd-head > div > p:first-child {
+  font-size: 11px !important;
+  letter-spacing: 0.14em !important;
+  font-weight: 700 !important;
+  color: #6f8077 !important;
+  text-transform: uppercase;
+  margin: 0 0 6px !important;
+}
+
+/* Números de destaque (indicadores): mesma família do texto. */
+.main :is(.ko-metrics strong, .f1-kpi strong, .digital-metric strong, .cell-overview-metrics b, .event-summary b, .chat-kpis b, .finance-overview b, .event-admin-stats b, .event-card-numbers b, .event-date-block b, .date b) {
+  font-family: inherit !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+}
+
+/* Botão principal: verde Vinha. Tamanho e espaçamento continuam de cada tela (listas compactas, tabelas). */
+.main :is(button, a):is(.create, .program-primary, .pd-primary, .ko-primary, .rl-primary, .pa-go, .wsh-primary, .ve-primary, .pc-primary, .kids-primary, .us-primary, .primary, .pcv-primary) {
+  background: var(--tenant, var(--v-green)) !important;
+  border: 1px solid var(--tenant, var(--v-green)) !important;
+  color: #fff !important;
+  border-radius: var(--v-radius) !important;
+  font-family: inherit;
+  font-weight: 650 !important;
+  box-shadow: none;
+  transition: filter 0.15s, box-shadow 0.15s;
+}
+.main :is(button, a):is(.create, .program-primary, .pd-primary, .ko-primary, .rl-primary, .pa-go, .wsh-primary, .ve-primary, .pc-primary, .kids-primary, .us-primary, .primary, .pcv-primary):hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+/* Botão secundário: fundo branco e borda suave. */
+.main :is(button, a):is(.secondary, .f1-secondary, .pd-secondary, .wsh-secondary, .us-secondary, .user-perms-secondary) {
+  background: #fff !important;
+  border: 1px solid var(--v-line) !important;
+  color: var(--v-ink) !important;
+  border-radius: var(--v-radius) !important;
+  font-family: inherit;
+  font-weight: 600 !important;
+}
+.main :is(button, a):is(.secondary, .f1-secondary, .pd-secondary, .wsh-secondary, .us-secondary, .user-perms-secondary):hover:not(:disabled) {
+  border-color: var(--v-green) !important;
+  color: var(--v-green) !important;
+}
+.main :is(button, a):is(.secondary, .f1-secondary, .pd-secondary).on {
+  background: #eef5f0 !important;
+  border-color: var(--v-green) !important;
+}
+
+/* Estado desabilitado e foco iguais em todos os botões. */
+.main :is(button, a):is(.create, .program-primary, .pd-primary, .ko-primary, .rl-primary, .pa-go, .wsh-primary, .ve-primary, .pc-primary, .kids-primary, .us-primary, .primary, .pcv-primary, .secondary, .f1-secondary, .pd-secondary, .wsh-secondary, .us-secondary, .user-perms-secondary):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+.main :is(button, a):focus-visible {
+  outline: 2px solid var(--v-gold);
+  outline-offset: 2px;
+}
