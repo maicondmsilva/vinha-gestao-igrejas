@@ -231,7 +231,7 @@ function Rooms({data, busy, op, setup}: {data: KidsSetup; busy: boolean; op: Op;
   );
   return (
     <>
-      <Text style={ui.copy}>Salas físicas do Kids. Não precisam de sessão aberta.</Text>
+      <Text style={ui.copy}>Salas físicas do Kids desta igreja ({data.rooms.length}). Não precisam de sessão aberta.</Text>
       {data.rooms.map((r) =>
         form?.id === r.id ? (
           <View key={r.id}>{editor}</View>
