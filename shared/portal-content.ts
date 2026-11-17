@@ -222,6 +222,7 @@ export const portalModules: PortalModule[] = [
         title: 'Aniversariantes e ausências',
         text: [
           'A Visão geral mostra os aniversariantes dos próximos 7 dias; no Vinha Equipe, o cartão da criança na sala ganha o selo 🎂.',
+          'Quando a criança aniversariante entra, a equipe escalada na sala e a coordenação da sessão recebem um lembrete no app da igreja para celebrar com a turma.',
           'Relatórios › Ausências lista as crianças que vieram ao menos duas vezes nos últimos 6 meses e não vêm há mais de 4 semanas, com os responsáveis, para a coordenação fazer contato.',
         ],
       },

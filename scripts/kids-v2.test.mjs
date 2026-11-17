@@ -26,7 +26,7 @@ test('painel Kids: abas sob demanda, telão em Configurar e ausências em Relat�
   assert.equal(kidsSectionOf('stations'), 'plan');
   assert.equal(kidsSectionOf('absent'), 'reports');
   assert.ok(!kidsSections.find(([id]) => id === 'today')[2].includes('stations'));
-  const ui = read('app/KidsOperations.tsx');
+  const ui = read('app/KidsOperations.tsx') + read('app/kids/KidsTabs.tsx');
   for (const c of ['KidsSetupPanel', 'KidsProjector', 'KidsStations', 'KidsDesk', 'MemberFamilyAdmin']) assert.match(ui, new RegExp('const ' + c + '=lazy\\('));
   assert.doesNotMatch(ui, /^import KidsSetupPanel/m);
   assert.match(ui, /<KidsProjectorStatus/);
