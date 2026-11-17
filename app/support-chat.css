@@ -2,3 +2,12 @@
 /* Não cobrir o conteúdo: some quando há janela aberta; no celular vira um círculo pequeno no canto. */
 body:has(.overlay) .vinha-chat-widget,body:has(dialog[open]) .vinha-chat-widget,body:has(.ko-dialog[open]) .vinha-chat-widget{display:none}
 @media(max-width:760px){.vinha-chat-widget{right:12px;bottom:12px}.vinha-chat-toggle{width:48px;height:48px;padding:0;border-radius:50%;font-size:20px;display:grid;place-items:center}.vinha-chat-toggle span{display:none}.main,.content{padding-bottom:76px}}
+/* Chat em círculo com a identidade da Vinha: menor e no canto, sem cobrir botões. */
+.vinha-chat-widget{right:16px;bottom:16px}
+.vinha-chat-toggle{width:52px;height:52px;padding:0;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 25%,#3a7a5c,#1f4a37 70%);box-shadow:0 6px 20px #0f2a2040,0 0 0 3px #ffffffcc;transition:transform .15s,box-shadow .15s}
+.vinha-chat-toggle:hover{transform:scale(1.06);box-shadow:0 8px 26px #0f2a2055,0 0 0 3px #d8b769}
+.vinha-chat-toggle:focus-visible{outline:2px solid #d8b769;outline-offset:3px}
+.vinha-chat-toggle span:not(.vinha-chat-x){display:none}
+.vinha-chat-x{font-size:24px;line-height:1;color:#fff}
+.vinha-chat-panel{margin-bottom:10px}
+@media(max-width:760px){.vinha-chat-widget{right:10px;bottom:10px}.vinha-chat-toggle{width:46px;height:46px}.main,.content{padding-bottom:64px}}

@@ -118,6 +118,7 @@ export const portalModules: PortalModule[] = [
           'Aniversariantes: do dia, da semana e do mês, com atalho de mensagem.',
           'Duplicados: encontra cadastros repetidos e une os dois sem perder histórico.',
           'QR de visitantes: cartaz com QR Code para o visitante se cadastrar sozinho.',
+          'Carteirinhas: emitir, validar e revogar a carteirinha de membro (antes em Configurações).',
         ],
       },
       {

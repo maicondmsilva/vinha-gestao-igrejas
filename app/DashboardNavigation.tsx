@@ -20,7 +20,7 @@ export default function DashboardNavigation({active,navigate}:{active:string;nav
   {label:'Comunicação',icon:'◌',key:'comunicacao',children:communicationPages.map(([section,label])=>({label,page:'comunicacao',section}))},
   {label:'Financeiro',icon:'R$',key:'financeiro',children:financeSections.map(([section])=>({label:financeLabel(section),page:'financeiro',section}))},
   {label:'Relatórios',icon:'▤',key:'relatorios'},
-  {label:'Configurações',icon:'⚙',key:'configuracoes',children:[['identidade','Identidade e cadastro'],['igrejas','Igrejas e unidades'],['usuarios','Usuários e permissões'],['servicos','Serviços e segurança']].map(([section,label])=>({label,page:'configuracoes',section}))}
+  {label:'Configurações',icon:'⚙',key:'configuracoes',children:[['identidade','Identidade e cadastro'],['igrejas','Igrejas e unidades'],['usuarios','Usuários e permissões']].map(([section,label])=>({label,page:'configuracoes',section}))}
  ];
  const labels:Record<string,string>={inicio:'Visão geral',pessoas:'Pessoas',familias:'Famílias e termos',aplicativo:'Aplicativo do membro',kids:'Área Kids',eventos:'Cultos e eventos',transmissoes:'Transmissões',celulas:'Células',escalas:'Escalas',louvor:'Louvor',comunicacao:'Comunicação',financeiro:'Financeiro',relatorios:'Relatórios',configuracoes:'Configurações'};
  const chosen=(e:Entry)=>page===e.page&&(current===e.section||!current&&e.section===({escalas:'geral',eventos:'proximos',kids:'overview',financeiro:'geral',celulas:'geral',comunicacao:'avisos',transmissoes:'transmissoes',configuracoes:'identidade'} as Record<string,string>)[e.page]);
