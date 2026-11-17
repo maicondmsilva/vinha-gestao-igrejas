@@ -38,7 +38,7 @@ export default function KidsPassFlow({org, unit, done, fail}: {org: string; unit
     fail('');
     const entering = !pass.attendance;
     const r = await supabase.rpc('kids_operations_save', {
-      p_org: org,
+      p_organization: org,
       p_unit: unit,
       p_request: randomUUID(),
       p_action: entering ? 'checkin' : 'checkout',

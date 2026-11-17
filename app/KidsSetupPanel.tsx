@@ -25,7 +25,7 @@ const dateMask = (v: string) =>
     .replace(/^(\d{2}\/\d{2})(\d)/, '$1/$2');
 
 /** Kids › Configurar › Sessões: uma sessão = nome, repetir (não repete ou dias da semana), horário e salas com turma e responsáveis. */
-export default function KidsSetupPanel({unit}: {unit: string}) {
+export default function KidsSetupPanel({unit, goSpaces}: {unit: string; goSpaces?: () => void}) {
   const [data, setData] = useState<KidsSetup | null>(null),
     [form, setForm] = useState<SessionForm | null>(null),
     [busy, setBusy] = useState(false),
@@ -111,7 +111,25 @@ export default function KidsSetupPanel({unit}: {unit: string}) {
               + Nova sessão
             </button>
           </div>
-          {!data.series.length && <p className="ko-empty">Nenhuma sessão ainda. Crie antes as salas e turmas e depois a primeira sessão.</p>}
+          {(!data.rooms.length || !data.classes.length) && (
+            <div className="ko-status-line">
+              <p>
+                {!data.rooms.length && !data.classes.length
+                  ? 'Para criar a primeira sessão, cadastre antes as salas e as turmas.'
+                  : !data.rooms.length
+                    ? 'Cadastre ao menos uma sala para criar sessões.'
+                    : 'Cadastre ao menos uma turma (faixa de idade) para criar sessões.'}
+              </p>
+              {goSpaces && (
+                <button type="button" className="ko-primary" onClick={goSpaces}>
+                  Cadastrar salas e turmas
+                </button>
+              )}
+            </div>
+          )}
+          {!data.series.length && !!data.rooms.length && !!data.classes.length && (
+            <p className="ko-empty">Nenhuma sessão ainda. Toque em “+ Nova sessão” para criar a primeira.</p>
+          )}
           <div className="ks-grid">
             {data.series.map((s) => {
               const f = sessionFormFrom(s);

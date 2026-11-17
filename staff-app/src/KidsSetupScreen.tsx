@@ -88,7 +88,7 @@ export default function KidsSetupScreen({org, unit, back, embedded = false}: {or
     setError('');
     setNotice('');
     const r = await supabase.rpc('kids_operations_save', {
-      p_org: org,
+      p_organization: org,
       p_unit: unit.id,
       p_request: randomUUID(),
       p_action: action,

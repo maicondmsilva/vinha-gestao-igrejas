@@ -192,7 +192,7 @@ function CheckIn({org, unit, page, done, fail}: {org: string; unit: string; page
     let live = true;
     if (q.trim().length < 2 || !supabase) return setFound([]);
     const t = setTimeout(() => {
-      void supabase!.rpc('kids_admission_choices', {p_org: org, p_unit: unit, p_session: page.sessionId, p_search: q.trim()}).then((r) => {
+      void supabase!.rpc('kids_admission_choices', {p_organization: org, p_unit: unit, p_session: page.sessionId, p_search: q.trim()}).then((r) => {
         if (live && !r.error) setFound(((r.data as {items?: Admission[]})?.items || []) as Admission[]);
       });
     }, 300);
@@ -207,7 +207,7 @@ function CheckIn({org, unit, page, done, fail}: {org: string; unit: string; page
     fail('');
     const code = receiptCode(getRandomBytes(32));
     const r = await supabase.rpc('kids_operations_save', {
-      p_org: org,
+      p_organization: org,
       p_unit: unit,
       p_request: randomUUID(),
       p_action: 'checkin',
@@ -343,7 +343,7 @@ function CheckOut({org, unit, page, done, fail}: {org: string; unit: string; pag
     setBusy(true);
     fail('');
     const r = await supabase.rpc('kids_operations_save', {
-      p_org: org,
+      p_organization: org,
       p_unit: unit,
       p_request: randomUUID(),
       p_action: 'checkout',

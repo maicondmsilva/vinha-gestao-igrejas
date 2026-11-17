@@ -1,0 +1,179 @@
+/* Barra lateral do painel: usuário no topo (foto + nome) e modo recolhido com abertura ao passar o mouse. */
+.side .brand {
+  position: relative;
+}
+.side-pin {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #38604f;
+  background: #204b3a;
+  color: #dbe7e0;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.side-pin:hover {
+  background: #2a5a46;
+  color: #fff;
+}
+.side-user {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 4px 0 18px;
+  padding: 10px;
+  border: 1px solid #2f5847;
+  border-radius: 14px;
+  background: #1b4636;
+}
+.side-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: none;
+  box-shadow: 0 0 0 2px #dbbb70;
+}
+.side-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.side-avatar i {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: #dbbb70;
+  color: #183d30;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 13px;
+}
+.side-user > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.side-user b {
+  font-size: 13px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.side-user small {
+  font-size: 11px;
+  color: #a8c0b4;
+}
+.side-user a {
+  font-size: 11px;
+  color: #dbbb70;
+  text-decoration: none;
+  margin-top: 2px;
+}
+.side-user a:hover {
+  text-decoration: underline;
+}
+.side .help {
+  display: none;
+}
+
+@media (min-width: 721px) {
+  .shell > .side,
+  .shell > .main {
+    transition:
+      width 0.18s ease,
+      margin-left 0.18s ease,
+      padding 0.18s ease;
+  }
+  .shell.nav-collapsed > .main {
+    margin-left: 76px;
+    width: calc(100% - 76px);
+  }
+  .shell.nav-collapsed > .side {
+    width: 76px;
+    padding-left: 10px;
+    padding-right: 10px;
+    overflow: hidden;
+    z-index: 60;
+  }
+  /* Recolhida (sem o mouse): só ícones e a foto. */
+  .shell.nav-collapsed:not(.nav-peek) > .side :is(.brand > div, .side-user > div, .eyebrow, .program-subnav, .nav-expander, .sidebar-signout button span) {
+    display: none !important;
+  }
+  .shell.nav-collapsed:not(.nav-peek) > .side .brand {
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 0 16px;
+  }
+  .shell.nav-collapsed:not(.nav-peek) > .side .side-pin {
+    margin: 0;
+  }
+  .shell.nav-collapsed:not(.nav-peek) > .side .side-user {
+    justify-content: center;
+    padding: 6px;
+    border-color: transparent;
+    background: none;
+  }
+  .shell.nav-collapsed:not(.nav-peek) > .side nav button {
+    font-size: 0 !important;
+    justify-content: center;
+    padding: 11px 0;
+  }
+  .shell.nav-collapsed:not(.nav-peek) > .side nav button > span:first-child {
+    font-size: 16px;
+    width: auto;
+  }
+  .shell.nav-collapsed:not(.nav-peek) > .side .sidebar-signout button {
+    font-size: 0;
+  }
+  .shell.nav-collapsed:not(.nav-peek) > .side .sidebar-signout button::first-letter {
+    font-size: 16px;
+  }
+  /* Mouse sobre a barra recolhida: abre por cima do conteúdo. */
+  .shell.nav-collapsed.nav-peek > .side {
+    width: 252px;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-shadow: 12px 0 40px #0e2a2040;
+  }
+}
+/* Botão Portal da Vinha (topo): moderno, abre o guia do módulo em nova aba. */
+.portal-link {
+  gap: 8px !important;
+  padding: 8px 14px 8px 12px !important;
+  border: 0 !important;
+  background: linear-gradient(135deg, #285c45, #1f4a37) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px #1f4a3733;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.portal-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px #1f4a3755;
+}
+.portal-link svg {
+  color: #d8b769;
+}
+.portal-link i {
+  font-style: normal;
+  font-size: 12px;
+  opacity: 0.75;
+}
+@media (max-width: 760px) {
+  .portal-link span {
+    display: none;
+  }
+  .portal-link {
+    padding: 8px 10px !important;
+  }
+}
