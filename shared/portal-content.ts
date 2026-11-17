@@ -160,12 +160,85 @@ export const portalModules: PortalModule[] = [
       },
     ],
   },
-  {id: 'kids', title: 'Área Kids', icon: '★', status: 'em breve', summary: 'Salas, turmas, sessões, entrada e retirada com QR, telão e responsáveis.', sections: []},
+  {
+    id: 'kids',
+    title: 'Área Kids',
+    icon: '★',
+    status: 'pronto',
+    summary: 'Salas, turmas e sessões; entrada e retirada com QR e comprovante; aviso à família no app; telão (Holyrics); totem de entrada.',
+    video: '',
+    sections: [
+      {
+        id: 'organizacao',
+        title: 'Como a Área Kids está organizada',
+        text: [
+          'Hoje: Visão geral (ocupação de cada sala, equipe, aniversariantes da semana e situação do telão), Entrada e retirada, e Ocorrências.',
+          'Crianças: fichas das crianças e dos responsáveis autorizados, com as conferências pendentes da secretaria.',
+          'Configurar: Sessões (com repetição semanal), Salas e turmas, Datas e escala, Equipe da data, Materiais e Telão e estações.',
+          'Relatórios: Presenças por período, Ausências (crianças que deixaram de vir) e Histórico da sessão.',
+        ],
+      },
+      {
+        id: 'entrada',
+        title: 'Entrada e retirada',
+        text: [
+          'Na entrada, a equipe confere o adulto e gera o comprovante. Com reserva pelo app, basta ler o QR Code da família no Vinha Equipe.',
+          'Na retirada, a equipe confere o adulto autorizado e o comprovante; sem conferência, a criança não sai. A foto da criança aparece no cartão para facilitar o reconhecimento.',
+          'Os responsáveis recebem um aviso no app quando a criança entra (com a sala e o horário) e quando sai (com o horário e quem retirou). O aviso nunca traz informações de saúde.',
+        ],
+        steps: [
+          'Em Hoje › Entrada e retirada, use “+ Registrar entrada” ou leia o QR no Vinha Equipe.',
+          'Para retirar, toque em “Confirmar retirada” no cartão da criança. Transferir sala, recuperar comprovante e proteger retirada ficam em “Mais ações”.',
+        ],
+      },
+      {
+        id: 'totem',
+        title: 'Totem de entrada (autoatendimento)',
+        text: [
+          'Um tablet com o Vinha Equipe pode ficar na porta como totem: a família mostra o QR Code da reserva do app e a entrada é feita na hora, em nome de quem reservou.',
+          'O totem só faz entrada. A retirada continua sempre com a equipe, conferindo o adulto e o comprovante.',
+        ],
+        steps: [
+          'No Vinha Equipe, entre com uma conta da recepção ou da coordenação e abra Kids › Recepção.',
+          'Toque em “Usar como totem de entrada”. Para sair do totem, a equipe mantém o botão do rodapé pressionado por 2 segundos.',
+        ],
+      },
+      {
+        id: 'telao',
+        title: 'Telão (Holyrics) e estações',
+        text: [
+          'Quando a sala chama um responsável, o telão mostra só o número da etiqueta e a sala, nunca o nome da criança.',
+          'A chave e o token do Holyrics ficam guardados em cofre e não voltam para a tela; depois de salvos, preencha só para trocar.',
+          'Estações são os tablets e celulares da recepção. Se um aparelho for perdido, desative a estação: o login dele é encerrado na hora.',
+        ],
+        steps: [
+          'Em Área Kids › Configurar › Telão e estações, cole a chave da API e o token do Holyrics, marque “Mostrar os chamados” e toque em “Testar telão”.',
+          'Na Visão geral, a linha do telão mostra se ele está ligado, desligado ou sem configuração.',
+        ],
+        tip: 'No Holyrics, crie um token só para a Vinha e libere apenas a ação SetAlert.',
+      },
+      {
+        id: 'cuidado',
+        title: 'Aniversariantes e ausências',
+        text: [
+          'A Visão geral mostra os aniversariantes dos próximos 7 dias; no Vinha Equipe, o cartão da criança na sala ganha o selo 🎂.',
+          'Relatórios › Ausências lista as crianças que vieram ao menos duas vezes nos últimos 6 meses e não vêm há mais de 4 semanas, com os responsáveis, para a coordenação fazer contato.',
+        ],
+      },
+    ],
+  },
   {id: 'celulas', title: 'Células', icon: '◎', status: 'em breve', summary: 'Células, redes, encontros, visitantes e relatórios.', sections: []},
   {id: 'escalas', title: 'Escalas', icon: '✓', status: 'em breve', summary: 'Equipes, cultos, quadro de montagem e confirmações.', sections: []},
   {id: 'programacao', title: 'Programação', icon: '▦', status: 'em breve', summary: 'Agenda, eventos, inscrições e tickets.', sections: []},
   {id: 'comunicacao', title: 'Comunicação', icon: '◌', status: 'em breve', summary: 'Avisos, push, vídeos e páginas da igreja.', sections: []},
-  {id: 'financeiro', title: 'Financeiro', icon: 'R$', status: 'em breve', summary: 'Lançamentos, contas, conciliação, recebimentos e Contribua no app.', sections: []},
+  {
+    id: 'financeiro',
+    title: 'Financeiro',
+    icon: 'R$',
+    status: 'em breve',
+    summary: 'Lançamentos, contas, conciliação, recebimentos e Contribua no app.',
+    sections: [],
+  },
 ];
 
 /** Endereço de incorporação do vídeo (YouTube ou Vimeo) ou vazio. */

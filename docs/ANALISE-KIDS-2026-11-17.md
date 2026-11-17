@@ -107,7 +107,7 @@ O que os sistemas de referência oferecem (sem copiar telas nem textos de nenhum
 **Fase 2 — Layout e organização**
 
 1. **Configurar › Telão e estações** (Holyrics + estações), com status resumido em Hoje.
-2. Formulário do Holyrics em uma coluna, com a data do último teste do telão.
+2. Formulário do Holyrics em uma coluna e situação do telão (ligado, desligado ou sem configuração) na Visão geral.
 3. Seletor de sessão só nas abas de operação; Relatórios com período e atalhos.
 4. Cartões de sala e de criança padronizados (barra de ocupação, ações principais).
 5. Validação das respostas em Configurar e Telão.
@@ -120,3 +120,26 @@ O que os sistemas de referência oferecem (sem copiar telas nem textos de nenhum
 4. Modo totem: a estação do Vinha Equipe aceita o QR da reserva sem operador; a retirada continua com conferência da equipe.
 
 Cada fase segue o mesmo processo: testes de banco e de código, capturas antes e depois, banco de teste, produção e atualização do Portal da Vinha.
+
+## 10. Entregue — 17/11/2026
+
+**Fase 1 — Desempenho**
+
+- Fotos em lote: `/api/kids/photo?profiles=` + `kids_child_photos` (uma consulta e uma assinatura por tela; cache de 9 min no painel e no Vinha Equipe). A rota antiga continua para os apps já instalados.
+- Abas do painel carregadas sob demanda; fuso da igreja consultado em paralelo.
+- 14 índices nas chaves estrangeiras do Kids (`20261117160000_kids_desempenho.sql`).
+- Quadro das salas no Vinha Equipe pausa com o app em segundo plano (o app da igreja já pausava).
+
+**Fase 2 — Layout**
+
+- Telão e estações em Configurar; linha de situação do telão na Visão geral.
+- Holyrics em uma coluna; seletor de sessão só nas abas de operação.
+- Relatórios: atalhos (Hoje, 7, 30, 90 dias), “Até” inclusivo, um só Atualizar.
+- Cartões de sala com barra de ocupação (amarela perto da lotação, vermelha lotada) e selo “falta equipe”; cartões de criança com “Confirmar retirada” e “Mais ações”.
+- Configurar e Telão conferem a resposta do servidor; seções roláveis no celular.
+
+**Fase 3 — Novos recursos** (`20261117170000_kids_avisos_familia.sql`)
+
+- Aviso no app aos responsáveis permanentes na entrada e na saída (gatilho na presença: vale para painel, estação, QR e totem). Sem dados de saúde. Tocar abre a Área Kids. Não aparece na lista de campanhas.
+- Aniversariantes da semana (Visão geral e selo no Vinha Equipe) e Relatórios › Ausências (`kids_insights`).
+- Modo totem no Vinha Equipe: só entrada pelo QR da reserva; sair exige pressionar 2 s.

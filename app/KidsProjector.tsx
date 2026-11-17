@@ -110,7 +110,8 @@ export default function KidsProjector({unit}: {unit: string}) {
           }}
         >
           <label className="ko-check">
-            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> <span>Mostrar os chamados do Kids no telão desta igreja</span>
+            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />{' '}
+            <span>Mostrar os chamados do Kids no telão desta igreja</span>
           </label>
           <label>
             Chave da API do Holyrics {state.configured && <small>(já salva; preencha só para trocar)</small>}
@@ -158,7 +159,11 @@ export function KidsProjectorStatus({unit, onConfigure}: {unit: string; onConfig
     };
   }, [unit]);
   if (!state) return null;
-  const text = !state.configured ? 'Telão (Holyrics) não configurado' : state.enabled ? 'Telão (Holyrics) ligado: os chamados aparecem no culto' : 'Telão (Holyrics) desligado';
+  const text = !state.configured
+    ? 'Telão (Holyrics) não configurado'
+    : state.enabled
+      ? 'Telão (Holyrics) ligado: os chamados aparecem no culto'
+      : 'Telão (Holyrics) desligado';
   return (
     <div className="ko-status-line" role="status">
       <p>
