@@ -47,6 +47,6 @@ test('evento avisa no app, avisos por grupo e salas/turmas excluíveis no painel
   const sql = rd('supabase/migrations/20261116120000_publicacoes_por_grupos.sql');
   assert.match(sql, /viewer_in_groups/);
   assert.match(sql, /grant execute on function public\.publishing_audience/);
-  assert.match(rd('app/KidsOperations.tsx'), /removeSpace\('room'/);
+  assert.match(rd('app/kids/KidsTabs.tsx'), /removeSpace\('room'/);
   assert.match(rd('app/api/kids/setup/route.ts'), /'room_delete', 'class_delete'/);
 });

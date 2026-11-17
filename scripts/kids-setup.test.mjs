@@ -88,7 +88,7 @@ test('QR da reserva, foto da criança e responsável temporário', async () => {
   assert.match(flow, /'kids_pass'/);
   assert.match(flow, /receiptSecret: code/, 'o mesmo QR vale como comprovante');
   assert.match(read('staff-app/src/KidsReception.tsx'), /<KidsPassFlow/);
-  assert.match(read('app/KidsOperations.tsx'), /<KidsChildPhoto /);
+  assert.match(read('app/kids/KidsTabs.tsx'), /<KidsChildPhoto /);
   assert.match(read('app/api/kids/photo/route.ts'), /createSignedUrl\(.*600\)/s);
 });
 
