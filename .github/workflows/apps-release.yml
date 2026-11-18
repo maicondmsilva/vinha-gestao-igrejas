@@ -72,6 +72,7 @@ jobs:
         run: |
           while IFS='|' read -r perfil android ios status; do
             [ -z "$perfil" ] && continue
+            git checkout -- eas.json && node scripts/eas-build-env.mjs "$perfil"
             VINHA_APP_PROFILE="$perfil" npx --yes eas-cli@latest build --profile preview --platform android --non-interactive --no-wait
           done < profiles.txt
       - name: Gerar versão de loja
@@ -79,6 +80,7 @@ jobs:
         run: |
           while IFS='|' read -r perfil android ios status; do
             [ -z "$perfil" ] && continue
+            git checkout -- eas.json && node scripts/eas-build-env.mjs "$perfil" "$android" "$ios"
             if [ -n "$android" ]; then
               ANDROID_APPLICATION_ID="$android" VINHA_APP_PROFILE="$perfil" npx --yes eas-cli@latest build --profile production --platform android --non-interactive --no-wait
             fi
