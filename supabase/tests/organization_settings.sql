@@ -13,7 +13,7 @@ insert into public.organization_units(id,organization_id,parent_unit_id,name,slu
 values(pg_temp.si('sibling'),pg_temp.si('org'),pg_temp.si('unit'),'Igreja irmã fictícia','irma','campus','Razão social independente','11222333000181','Responsável da igreja irmã','irma@example.invalid','11999990000','{"city":"Outra cidade","street":"Outra rua"}');
 insert into public.organization_memberships(id,organization_id,user_id,role,status,default_unit_id)
 select pg_temp.si(t||'-membership'),pg_temp.si('org'),pg_temp.si(t),case when t='viewer' then 'viewer'::public.membership_role else 'owner'::public.membership_role end,'active',pg_temp.si('unit') from unnest(array['owner','viewer','unconfirmed']) t;
-create function pg_temp.payload() returns jsonb language sql as $$select jsonb_build_object('updatedAt',o.updated_at,'name','Ministério atualizado','appName','Aplicativo local','seniorPastorName','Responsável fictício','legalName','Razão fictícia','taxId','','primaryColor','#285c45','accentColor','#d8b769') from public.organizations o where id=pg_temp.si('org')$$;
+create function pg_temp.payload() returns jsonb language sql as $$select jsonb_build_object('updatedAt',o.updated_at,'name','Ministério atualizado','seniorPastorName','Responsável fictício','legalName','Razão fictícia','taxId','') from public.organizations o where id=pg_temp.si('org')$$;
 create function pg_temp.theme() returns text language sql security definer as $$select app_theme from public.organizations where id=pg_temp.si('org')$$;
 create function pg_temp.slug() returns text language sql security definer as $$select slug from public.organizations where id=pg_temp.si('org')$$;
 create function pg_temp.unit_payload() returns jsonb language sql as $$select jsonb_build_object('updatedAt',u.updated_at,'name','Sede atualizada','pastorName','Pastor fictício','legalName','','taxId','','email','sede@example.invalid','phone','','address',jsonb_build_object('city','Cidade nova','street','Rua fictícia','number','123')) from public.organization_units u where id=pg_temp.si('unit')$$;
@@ -24,18 +24,19 @@ select ok(not has_function_privilege('anon','public.church_branding_read(uuid)',
 select ok(not (select prosecdef from pg_proc where oid='public.organization_settings_save(uuid,uuid,jsonb)'::regprocedure),'fachada invocadora');
 set local role authenticated;
 select pg_temp.actor('owner');
-select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||jsonb_build_object('logo',pg_temp.logo()))$$,'salva identidade e logo');
+select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload())$$,'salva cadastro do ministério');
 select is((select name from public.organizations where id=pg_temp.si('org')),'Ministério atualizado','nome atualizado na base canônica');
-select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('org')::text,pg_temp.logo(),'logo consultada na fonte única');
+-- Identidade do app (nome, cores, logo do ministério e tema) é feita só pela Central da Vinha.
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||jsonb_build_object('logo',pg_temp.logo()))$$,'22023','invalid_settings','logo do ministério só pela Central');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"appName":"Outro","primaryColor":"#000000","accentColor":"#ffffff"}')$$,'22023','invalid_settings','nome do app e cores só pela Central');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"updatedAt":"2000-01-01T00:00:00Z"}')$$,'40001','settings_changed','versão antiga não sobrescreve');
 select is(pg_temp.theme(),'dark','tema do app começa escuro');
-select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"appTheme":"light"}')$$,'igreja escolhe o tema claro do app');
-select is(pg_temp.theme(),'light','tema claro gravado');
-select is(public.member_app_config((select pg_temp.slug()))->>'theme','light','app recebe o tema definido no painel');
-select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"appTheme":"rosa"}')$$,'22023',null,'tema inválido recusado');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"appTheme":"light"}')$$,'22023','invalid_settings','tema do app só pela Central');
+select is(pg_temp.theme(),'dark','tema não muda pelo painel');
+select is(public.member_app_config((select pg_temp.slug()))->>'theme','dark','app mantém o tema da Central');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"status":"active"}')$$,'22023','invalid_settings','não altera contrato/status');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"registration_code":"999"}')$$,'22023','invalid_settings','código protegido');
-select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"logo":"https://example.invalid/logo.svg"}')$$,'22023','invalid_logo','não busca URL remota nem aceita SVG');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"logo":"https://example.invalid/logo.svg"}')$$,'22023','invalid_settings','não busca URL remota nem aceita SVG');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),pg_temp.si('foreignunit'),pg_temp.unit_payload())$$,'42501','settings_access_denied','unidade estrangeira recusada');
 select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),pg_temp.si('unit'),pg_temp.unit_payload()||jsonb_build_object('logo',pg_temp.logo()))$$,'edita cadastro da sede');
 select is((select address->>'street' from public.organization_units where id=pg_temp.si('unit')),'Rua fictícia','endereço completo salvo');
@@ -49,8 +50,8 @@ select is((select address->>'street' from public.organization_units where id=pg_
 select is((select name from public.organizations where id=pg_temp.si('org')),'Ministério atualizado','editar igreja não sobrescreve cadastro do ministério');
 select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('sibling')::text,null,'logo local não é copiada para outra igreja');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),pg_temp.si('unit'),pg_temp.unit_payload()||'{"parent_unit_id":"fake"}')$$,'22023','invalid_settings','edição cadastral não muda hierarquia');
-select lives_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"logo":""}')$$,'remove logo com fallback');
-select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('org')::text,null,'remoção persiste');
+select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,pg_temp.payload()||'{"logo":""}')$$,'22023','invalid_settings','painel não remove a logo do ministério');
+select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('org')::text,null,'sem logo do ministério pelo painel');
 select pg_temp.actor('viewer');
 select lives_ok($$select public.church_branding_read(pg_temp.si('org'))$$,'leitor consulta identidade');
 select throws_ok($$select public.organization_settings_save(pg_temp.si('org'),null,'{}')$$,'42501','settings_access_denied','leitor não altera');
@@ -64,8 +65,8 @@ select ok(exists(select 1 from public.audit_logs where organization_id=pg_temp.s
 select ok(not exists(select 1 from public.audit_logs where organization_id=pg_temp.si('org') and metadata::text like '%base64%'),'auditoria não replica imagem');
 set local role authenticated;
 select pg_temp.actor('owner');
-select lives_ok($$select public.save_organization_onboarding(pg_temp.si('org'),pg_temp.payload()||jsonb_build_object('step','identity','logo',pg_temp.logo()))$$,'cadastro inicial salva a mesma marca');
-select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('org')::text,pg_temp.logo(),'onboarding e configurações compartilham fonte');
+select lives_ok($$select public.save_organization_onboarding(pg_temp.si('org'),pg_temp.payload()||jsonb_build_object('step','identity','logo',pg_temp.logo()))$$,'cadastro inicial salva o ministério');
+select is(public.church_branding_read(pg_temp.si('org'))->>pg_temp.si('org')::text,null,'cadastro inicial não grava a logo: identidade do app é da Central');
 reset role;
 update public.organization_memberships set status='suspended' where id=pg_temp.si('owner-membership');
 set local role authenticated;

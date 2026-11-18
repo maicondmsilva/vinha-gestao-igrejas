@@ -1,5 +1,6 @@
 'use client';
 import {useCallback, useEffect, useMemo, useState} from 'react';
+import AppIdentity from './AppIdentity';
 import './apps.css';
 
 type Status = 'contracted' | 'configuring' | 'testing' | 'store_review' | 'published' | 'paused';
@@ -142,7 +143,7 @@ export default function CentralApps() {
       ? [
           {ok: selected.contracted, label: 'Aplicativo contratado no plano do ministério'},
           {ok: draft.displayName.trim().length >= 2, label: 'Nome no celular definido (até 30 letras)'},
-          {ok: Boolean(selected.primaryColor), label: 'Cores e logo enviados pelo ministério no painel'},
+          {ok: Boolean(selected.primaryColor), label: 'Logo e cores definidos pela Vinha (Identidade, abaixo)'},
           {ok: true, label: `Tema ${draft.theme === 'light' ? 'claro' : 'escuro'} combinado com o ministério`},
           {ok: selected.pushReady, label: 'Notificações (push) configuradas'},
           {ok: Boolean(draft.androidApplicationId || draft.iosBundleId), label: 'Identificador de loja (Android ou iOS)'},
@@ -381,6 +382,8 @@ export default function CentralApps() {
                 </button>
               </footer>
             )}
+
+            <AppIdentity organizationId={selected.organizationId} onChanged={() => void load(selected.organizationId)} />
           </section>
         ) : (
           !loading && <section className="apps-editor apps-empty">Selecione um ministério para ver o aplicativo.</section>
@@ -394,8 +397,8 @@ export default function CentralApps() {
             <b>Contratação.</b> Marque “Aplicativo personalizado” na ficha do cliente (Ministérios). Ele aparece aqui como “A liberar”.
           </li>
           <li>
-            <b>Personalização.</b> O ministério envia logo e cores pelo painel. Aqui a equipe define o nome no celular e o tema claro ou escuro, e clica em
-            “Liberar aplicativo”.
+            <b>Personalização.</b> Somente a equipe da Vinha personaliza o app: nome no celular, tema, nome dentro do app, cores, logo, abertura (foto ou vídeo)
+            e ícone, na seção Identidade. Depois clique em “Liberar aplicativo”.
           </li>
           <li>
             <b>APK de teste.</b> No GitHub, em Actions › “Aplicativos dos ministérios”, rode <i>gerar-teste</i> informando o perfil. Envie o link ao ministério

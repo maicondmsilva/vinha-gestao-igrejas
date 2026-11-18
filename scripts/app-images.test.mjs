@@ -32,7 +32,7 @@ test('tema do app vem da Central (não do celular nem do painel do ministério)'
  assert.match(exp,/dark=config\.theme!=='light'/);assert.match(app,/dark=config\?\.theme!=='light'/);
  assert.ok(!exp.includes('useColorScheme()')&&!app.includes('useColorScheme()'));
  assert.doesNotMatch(read('app/OrganizationSettings.tsx'),/name="appTheme"/);
- assert.match(read('app/api/organization-settings/route.ts'),/delete \(body\.data as Record<string,unknown>\)\.appTheme/);
+ assert.match(read('app/api/organization-settings/route.ts'),/\['appTheme','appName','primaryColor','accentColor'/);
  assert.match(read('supabase/migrations/20261118090000_central_aplicativos.sql'),/update public\.organizations set app_theme=th/);
 });
 test('rodapé respeita a barra do sistema e ícones são vetoriais do mesmo tamanho',()=>{

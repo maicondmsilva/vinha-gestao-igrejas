@@ -90,3 +90,27 @@ test('app único: perfis vêm de brands/ e cada ministério tem seu canal de atu
   assert.match(manifest, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
   assert.doesNotMatch(manifest, /SECRET|SERVICE_ROLE/);
 });
+
+test('identidade do app só pela Central: painel e cadastro inicial apenas mostram', () => {
+  const route = read('app/api/platform/apps/identity/route.ts');
+  assert.match(route, /export const (GET|POST|PATCH) = centralRoute/);
+  assert.match(route, /createSignedUploadUrl/);
+  assert.match(route, /iconOk\(/);
+  assert.match(read('app/lib/app-icon.ts'), /getUint32\(16\) === 1024/);
+  const ui = read('app/admin-vinha/aplicativos/AppIdentity.tsx');
+  for (const a of ["'identity'", "'logo'", "'opening'", "'icon'"]) assert.ok(ui.includes(a), a);
+  assert.match(read('app/admin-vinha/aplicativos/page.tsx'), /<AppIdentity /);
+  const settings = read('app/OrganizationSettings.tsx');
+  assert.doesNotMatch(settings, /name="primaryColor"|name="accentColor"/);
+  assert.match(settings, /institutional\.filter/);
+  assert.match(settings, /AppIdentityView/);
+  assert.match(read('app/api/organization-settings/route.ts'), /'appName','primaryColor','accentColor'/);
+  const onboarding = read('app/onboarding/page.tsx');
+  assert.doesNotMatch(onboarding, /name="appName"|name="primaryColor"|LogoField/);
+  assert.doesNotMatch(read('app/MinistryMediaAdmin.tsx'), /Personalizar abertura/);
+  assert.doesNotMatch(read('app/ConfigurationCenter.tsx'), /function Brand\(/);
+  const m = read('supabase/migrations/20261118120000_central_identidade_app.sql');
+  for (const k of ['identity_managed_by_vinha', 'opening_managed_by_vinha', 'platform_app_identity', 'vinha-app-assets']) assert.ok(m.includes(k), k);
+  assert.match(read('android-app/scripts/sync-ministry-apps.mjs'), /a\.iconUrl/);
+  assert.match(read('android-app/app.config.ts'), /profile\.icon\s*\?/);
+});

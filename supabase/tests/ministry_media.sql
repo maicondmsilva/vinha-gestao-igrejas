@@ -25,9 +25,11 @@ select is(jsonb_array_length(pg_temp.catalog()->'items'),1,'published video visi
 select is(jsonb_array_length(pg_temp.catalog('b')->'items'),0,'other church does not receive video');
 select throws_ok($$select pg_temp.admin('archive',1)$$,'40001','media_changed','stale version blocked');
 select throws_ok($$select public.ministry_media_admin(pg_temp.fi('org'),pg_temp.fi('b'),'archive',pg_temp.fi('video'),2)$$,'42501','media_denied','cannot move content across units');
-select lives_ok($$select pg_temp.admin('opening',0,'{"kind":"image","url":"https://example.com/opening.jpg","title":"Bem-vindo","seconds":3}',null)$$,'opening saved');
-select throws_ok($$select pg_temp.admin('opening',0,'{"kind":"none","title":"","seconds":3}',null)$$,'40001','media_changed','opening optimistic revision');
-select throws_ok($$select pg_temp.admin('opening',1,'{"kind":"video","url":"https://example.com/opening.html","seconds":3}',null)$$,'22023','invalid_media','opening requires MP4 video');
+-- A abertura do app é definida só pela Central da Vinha (platform_app_identity).
+select throws_ok($$select pg_temp.admin('opening',0,'{"kind":"image","url":"https://example.com/opening.jpg","title":"Bem-vindo","seconds":3}',null)$$,'42501','opening_managed_by_vinha','painel não altera a abertura');
+reset role;
+insert into private.ministry_app_openings(organization_id,kind,url,title,seconds,updated_by) values(pg_temp.fi('org'),'image','https://example.com/opening.jpg','Bem-vindo',3,pg_temp.fi('owner'));
+set local role authenticated;
 select pg_temp.actor('member');
 select lives_ok($$select pg_temp.self('progress','{"position":30,"favorite":true,"version":2}')$$,'own progress saved');
 select is((pg_temp.self('history')->'items'->0->>'position_seconds')::integer,30,'resume position');
