@@ -72,6 +72,9 @@ test('app único: perfis vêm de brands/ e cada ministério tem seu canal de atu
   assert.match(cfg, /userInterfaceStyle/);
   const brand = JSON.parse(read('android-app/brands/mpr.json'));
   assert.equal(brand.theme, 'dark');
+  // O canal vem do app.config (production-<perfil>); um canal fixo no eas.json misturaria os ministérios.
+  const eas = JSON.parse(read('android-app/eas.json'));
+  for (const k of ['preview', 'production']) assert.equal(eas.build[k].channel, undefined, k);
   const wf = read('.github/workflows/apps-release.yml');
   assert.match(wf, /workflow_dispatch/);
   assert.match(wf, /production-\$perfil/);
