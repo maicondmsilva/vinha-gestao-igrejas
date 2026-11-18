@@ -27,11 +27,13 @@ test('telas do app usam imagens, vídeo no app, QR e configurações',()=>{
  assert.match(read('app/privacidade/page.tsx'),/Lei 13\.709\/2018/);assert.match(read('app/termos/page.tsx'),/Termos de uso/);
  assert.match(read('android-app/package.json'),/qrcode-generator/);
 });
-test('tema do app vem do painel e não do celular',()=>{
+test('tema do app vem da Central (não do celular nem do painel do ministério)',()=>{
  const exp=read('android-app/src/MemberExperience.tsx'),app=read('android-app/src/MprApp.tsx');
  assert.match(exp,/dark=config\.theme!=='light'/);assert.match(app,/dark=config\?\.theme!=='light'/);
  assert.ok(!exp.includes('useColorScheme()')&&!app.includes('useColorScheme()'));
- assert.match(read('app/OrganizationSettings.tsx'),/name="appTheme"/);
+ assert.doesNotMatch(read('app/OrganizationSettings.tsx'),/name="appTheme"/);
+ assert.match(read('app/api/organization-settings/route.ts'),/delete \(body\.data as Record<string,unknown>\)\.appTheme/);
+ assert.match(read('supabase/migrations/20261118090000_central_aplicativos.sql'),/update public\.organizations set app_theme=th/);
 });
 test('rodapé respeita a barra do sistema e ícones são vetoriais do mesmo tamanho',()=>{
  const exp=read('android-app/src/MemberExperience.tsx');assert.match(exp,/paddingBottom:Math\.max\(insets\.bottom,8\)/);assert.match(exp,/<Icon name=\{t\.icon\}/);

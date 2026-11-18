@@ -56,7 +56,7 @@ test('Portal da Vinha: módulos e vídeos', () => {
   assert.match(page, /vinha_portal_videos/);
   const admin = read('app/admin-vinha/portal/page.tsx');
   assert.match(admin, /\/api\/platform\/portal-videos/);
-  assert.match(read('app/admin-vinha/layout.tsx'), /\/admin-vinha\/portal/);
+  assert.match(read('app/admin-vinha/CentralShell.tsx'), /\/admin-vinha\/portal/);
   const route = read('app/api/platform/portal-videos/route.ts');
   assert.match(route, /centralRoute/);
   assert.match(route, /origin/);

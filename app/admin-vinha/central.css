@@ -1,0 +1,373 @@
+/* Central da Vinha — estrutura única (menu agrupado, topo com operador) e camada visual comum das páginas. */
+:root {
+  --cv-green: #1f4a37;
+  --cv-green-2: #285c45;
+  --cv-ink: #16302a;
+  --cv-muted: #5f7268;
+  --cv-line: #dde6e0;
+  --cv-bg: #f3f6f4;
+  --cv-gold: #d8b769;
+  --cv-radius: 14px;
+}
+.central-shell {
+  min-height: 100vh;
+  background: var(--cv-bg);
+  color: var(--cv-ink);
+  font-family: var(--font-body, Inter), system-ui, sans-serif;
+}
+.central-side {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 260px;
+  background: linear-gradient(180deg, #143c2e, #10311f);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px 14px;
+  z-index: 50;
+}
+.central-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 4px 8px 18px;
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid #ffffff14;
+}
+.central-brand i {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  border: 1px solid #ffffff30;
+  display: grid;
+  place-items: center;
+  font:
+    700 20px Georgia,
+    serif;
+  font-style: normal;
+  background: #ffffff10;
+}
+.central-brand b {
+  display: block;
+  font-size: 15px;
+}
+.central-brand small {
+  display: block;
+  font-size: 11px;
+  color: #a8c0b4;
+}
+.central-side nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #547665 transparent;
+}
+.central-side nav section {
+  margin-bottom: 10px;
+}
+.central-side nav p {
+  margin: 10px 10px 4px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #86a596;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.central-side nav p span {
+  width: 18px;
+  text-align: center;
+  color: var(--cv-gold);
+  letter-spacing: 0;
+}
+.central-side nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px 8px 36px;
+  border-radius: 10px;
+  color: #cfdcd5;
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.central-side nav a:hover {
+  background: #ffffff12;
+  color: #fff;
+}
+.central-side nav a[aria-current='page'] {
+  background: #f3f1e7;
+  color: #173e30;
+  font-weight: 700;
+}
+.central-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--cv-gold);
+  color: #183d30;
+  font-size: 11px;
+  display: grid;
+  place-items: center;
+}
+.central-out {
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  color: #dbe7e0;
+  font-size: 13px;
+  text-decoration: none;
+  border: 1px solid #ffffff1f;
+  text-align: center;
+}
+.central-out:hover {
+  background: #ffffff12;
+}
+.central-main {
+  margin-left: 260px;
+  min-width: 0;
+}
+.central-top {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 28px;
+  background: #ffffffe6;
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--cv-line);
+}
+.central-menu {
+  display: none;
+  border: 1px solid var(--cv-line);
+  background: #fff;
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  cursor: pointer;
+}
+.central-crumb {
+  display: grid;
+  min-width: 0;
+}
+.central-crumb small {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cv-muted);
+  font-weight: 700;
+}
+.central-crumb b {
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.central-alerts {
+  margin-left: auto;
+  border: 1px solid var(--cv-line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cv-ink);
+  cursor: pointer;
+}
+.central-alerts.on {
+  border-color: var(--cv-gold);
+  background: #fbf6e6;
+}
+.central-operator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 16px;
+  border-left: 1px solid var(--cv-line);
+}
+.central-operator > span:nth-child(2) {
+  display: grid;
+}
+.central-operator b {
+  font-size: 13px;
+}
+.central-operator small {
+  font-size: 11px;
+  color: var(--cv-muted);
+}
+.central-operator button {
+  border: 1px solid var(--cv-line);
+  background: #fff;
+  border-radius: 10px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cv-ink);
+  cursor: pointer;
+}
+.central-operator button:hover {
+  border-color: var(--cv-green-2);
+  color: var(--cv-green-2);
+}
+.central-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--cv-gold);
+  color: #183d30;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 13px;
+}
+.central-content {
+  padding: 28px 32px 48px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+.central-backdrop {
+  display: none;
+}
+
+/* Páginas antigas: viram só conteúdo dentro da estrutura (sem fundo, menu e margens próprios). */
+.central-content > main {
+  display: block !important;
+  min-height: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+  grid-template-columns: none !important;
+  font-family: inherit !important;
+}
+.central-content > main > :is(section, div):first-of-type,
+.central-content :is(.platform-main, .billing-page > section) {
+  margin-left: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+.central-content
+  :is(.platform-main, .billing-page > section, .support-page > section, .knowledge-page > section, .automation-page > section, .notify-page > section) {
+  padding: 0 !important;
+}
+/* Tipografia: títulos sem serifa e textos legíveis em todas as páginas. */
+.central-content :is(h1, h2, h3) {
+  font-family: inherit !important;
+  letter-spacing: -0.01em;
+  color: var(--cv-ink);
+}
+.central-content h1 {
+  font-size: 28px !important;
+  font-weight: 750 !important;
+  margin: 2px 0 6px !important;
+}
+.central-content h2 {
+  font-size: 19px !important;
+  font-weight: 700 !important;
+}
+.central-content small {
+  font-size: 12px !important;
+}
+.central-content :is(p, td, li, label, input, select, textarea) {
+  font-size: max(13px, 1em);
+}
+.central-content th {
+  font-size: 11px !important;
+  letter-spacing: 0.06em;
+}
+.central-content :is(.section-over, .eyebrow) {
+  font-size: 11px !important;
+  letter-spacing: 0.14em !important;
+}
+/* Botões principais em verde Vinha, mesmo raio em toda a Central. */
+.central-content :is(button, a):is(.primary, .create, .pf-primary) {
+  background: var(--cv-green-2) !important;
+  border-color: var(--cv-green-2) !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  font-weight: 650 !important;
+}
+.central-content :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--cv-gold);
+  outline-offset: 2px;
+}
+
+@media (max-width: 960px) {
+  .central-side {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: 12px 0 40px #0e2a2040;
+  }
+  .central-shell.nav-open .central-side {
+    transform: none;
+  }
+  .central-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    border: 0;
+    background: #0e2a2066;
+    z-index: 45;
+  }
+  .central-main {
+    margin-left: 0;
+  }
+  .central-menu {
+    display: grid;
+    place-items: center;
+  }
+  .central-top {
+    padding: 0 14px;
+    gap: 10px;
+  }
+  .central-alerts {
+    padding: 7px 10px;
+    font-size: 0;
+  }
+  .central-alerts::first-letter {
+    font-size: 16px;
+  }
+  .central-operator > span:nth-child(2) {
+    display: none;
+  }
+  .central-operator {
+    padding-left: 10px;
+  }
+  .central-content {
+    padding: 18px 14px 40px;
+  }
+  .central-content h1 {
+    font-size: 23px !important;
+  }
+}
+
+/* Carteira de clientes: filtros quebram linha no celular em vez de espremer a busca. */
+@media (max-width: 720px) {
+  .central-content .org-tools {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .central-content .org-filters {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+  .central-content .org-filters label {
+    grid-column: 1 / -1;
+  }
+  .central-content .platform-kpis {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}

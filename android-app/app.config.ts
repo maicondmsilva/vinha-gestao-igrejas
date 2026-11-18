@@ -1,8 +1,11 @@
 import type {ExpoConfig} from 'expo/config';
-// One code base, one store listing per ministry. `node scripts/new-ministry-app.mjs` adds lines between the markers.
-// <ministry-imports>
-import mpr from './brands/mpr.json';
-// </ministry-imports>
+// O arquivo roda no Node durante a geração do app (o projeto do app não carrega os tipos do Node).
+declare const require: (id: string) => any;
+declare const __dirname: string;
+const {readdirSync, readFileSync} = require('node:fs') as {readdirSync: (p: string) => string[]; readFileSync: (p: string, e: string) => string};
+const {join} = require('node:path') as {join: (...p: string[]) => string};
+// Um código para todos os ministérios. Cada ministério é um arquivo brands/<perfil>.json, criado e atualizado
+// pela Central da Vinha (node scripts/sync-ministry-apps.mjs). Não é preciso editar este arquivo para um novo ministério.
 
 type Brand = {
   name: string;
@@ -11,15 +14,19 @@ type Brand = {
   ministrySlug: string;
   previewApplicationId: string;
   previewBundleIdentifier?: string;
-  /** Optional per-ministry art; defaults to the Vinha base assets. */
+  /** Tema das barras do sistema; o conteúdo do app segue o tema escolhido na Central (vem da Vinha ao abrir). */
+  theme?: 'light' | 'dark';
+  /** Arte própria do ministério (opcional); sem ela, a arte base da Vinha. */
   icon?: string;
 };
-const profiles: Record<string, Brand> = {
-  // <ministry-profiles>
-  mpr,
-  // </ministry-profiles>
-};
-const profile = profiles[process.env.VINHA_APP_PROFILE||'mpr'];
+const brandsDir = join(__dirname, 'brands');
+const profiles: Record<string, Brand> = Object.fromEntries(
+  readdirSync(brandsDir)
+    .filter((f) => /^[a-z][a-z0-9]{1,23}\.json$/.test(f))
+    .map((f) => [f.replace(/\.json$/, ''), JSON.parse(readFileSync(join(brandsDir, f), 'utf8')) as Brand]),
+);
+const profileKey = process.env.VINHA_APP_PROFILE || 'mpr';
+const profile = profiles[profileKey];
 if (!profile) throw Error('Perfil de ministério desconhecido.');
 
 // Store identifiers belong to the ministry's own developer accounts and are never guessed.
@@ -32,11 +39,13 @@ if (process.env.EAS_BUILD_PROFILE==='production' && process.env.EAS_BUILD_PLATFO
 
 const config: ExpoConfig = {
   name: profile.name,
-  slug: profile.slug,
+  // Projeto único de atualizações para todos os ministérios ("vinha-app"); o que muda por ministério é nome,
+  // ícone, identificadores de loja, link (scheme) e o canal de atualização.
+  slug: 'vinha-app',
   scheme: profile.slug,
   version: '0.1.0',
   orientation: 'portrait',
-  userInterfaceStyle: 'automatic', // o tema do conteúdo vem do painel; aqui só barras do sistema
+  userInterfaceStyle: profile.theme || 'automatic', // tema escolhido na Central; o conteúdo do app também segue a Vinha
   icon: profile.icon || './assets/icon.png',
   ios: {
     bundleIdentifier: bundleIdentifier || profile.previewBundleIdentifier || profile.previewApplicationId,
@@ -64,11 +73,22 @@ const config: ExpoConfig = {
   // EAS Update: screen and text fixes reach every ministry app without a new store review.
   // Native changes bump runtimeVersion (appVersion policy) and require a new store build.
   runtimeVersion: {policy: 'appVersion'},
-  ...(process.env.EXPO_PROJECT_ID ? {updates: {url: 'https://u.expo.dev/' + process.env.EXPO_PROJECT_ID, checkAutomatically: 'ON_LOAD', fallbackToCacheTimeout: 0}} : {}),
+  // Cada ministério recebe as atualizações no seu próprio canal (production-<perfil>), com a sua personalização.
+  ...(process.env.EXPO_PROJECT_ID
+    ? {
+        updates: {
+          url: 'https://u.expo.dev/' + process.env.EXPO_PROJECT_ID,
+          checkAutomatically: 'ON_LOAD',
+          fallbackToCacheTimeout: 0,
+          requestHeaders: {'expo-channel-name': (process.env.EAS_BUILD_PROFILE === 'production' ? 'production-' : 'preview-') + profileKey},
+        },
+      }
+    : {}),
   extra: {
     ...(process.env.EXPO_PROJECT_ID ? {eas: {projectId: process.env.EXPO_PROJECT_ID}} : {}),
     ministrySlug: profile.ministrySlug,
     ministryId: profile.ministryId,
+    profile: profileKey,
     appDisplayName: profile.name,
     releaseStatus: process.env.EAS_BUILD_PROFILE === 'production' ? 'production' : 'development',
   },

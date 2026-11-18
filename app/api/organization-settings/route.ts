@@ -19,6 +19,8 @@ export async function PATCH(request:Request){
  let body:{unitId?:string;data?:Record<string,unknown>};
  try{body=JSON.parse(new TextDecoder().decode(await boundedBody(request,350000)));if(!body||Array.isArray(body)||Object.keys(body).some(k=>!['unitId','data'].includes(k))||!body.data||Array.isArray(body.data)||typeof body.data!=='object'||body.unitId&&!uuidPattern.test(body.unitId))throw Error('Revise os dados.');if('logo'in body.data){const bytes=reportLogo(body.data.logo);if(bytes){const pdf=await PDFDocument.create();await pdf.embedPng(bytes)}}}catch{return json({error:'Revise os dados. A logo deve ser PNG de até 250 KB e 2 milhões de pixels.'},400)}
  const a=auth.access!;if(body.unitId&&!a.membership.units.some(u=>u.id===body.unitId))return json({error:'Unidade sem acesso.'},403);
+ // O tema do app é definido pela Central da Vinha (Aplicativos), não pelo painel do ministério.
+ delete (body.data as Record<string,unknown>).appTheme;
  const result=await db(request).rpc('organization_settings_save',{p_org:a.membership.organization_id,p_unit:body.unitId||null,p_data:body.data});
  if(result.error){const code=result.error.code;return json({error:code==='40001'?'O cadastro foi alterado por outra pessoa. Recarregue antes de salvar.':code==='42501'?'Você não possui autorização para alterar este cadastro.':code==='22023'?'Revise os campos obrigatórios e a logo.':'Não foi possível confirmar o salvamento. Recarregue antes de tentar novamente.'},code==='40001'?409:code==='42501'?403:code==='22023'?400:503)}
  if(result.data?.ok!==true||typeof result.data.updatedAt!=='string')return json({error:'Salvamento não confirmado. Recarregue antes de repetir.'},503);

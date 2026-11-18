@@ -141,17 +141,7 @@ export default function FinancialProfile() {
 
   return (
     <main className="billing-page">
-      <aside>
-        <Link href="/admin-vinha" className="billing-brand">
-          <i>V</i>
-          <span><b>Vinha</b><small>Administração SaaS</small></span>
-        </Link>
-        <nav>
-          <Link href="/admin-vinha">▦ Organizações</Link>
-          <Link className="on" href="/admin-vinha/faturamento">◫ Cobranças</Link>
-        </nav>
-        <Link className="billing-back" href="https://app.vinhaigrejas.com.br/painel">← Painel da igreja</Link>
-      </aside>
+      
 
       <section className="financial-editor">
         <header>

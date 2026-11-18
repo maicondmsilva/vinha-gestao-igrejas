@@ -1,4 +1,6 @@
 begin;
+-- Datas no fuso das igrejas (São Paulo): evita falha entre 00h e 03h UTC, quando o dia ainda é o anterior no Brasil.
+set local timezone to 'America/Sao_Paulo';
 create extension if not exists pgtap with schema extensions;
 select no_plan();
 create function pg_temp.fi(t text) returns uuid language sql immutable as $$select md5('kids-qr-test-'||t)::uuid$$;
