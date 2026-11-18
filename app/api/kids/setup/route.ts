@@ -5,13 +5,15 @@ import {boundedBody, uuidPattern} from '../../../lib/private-files';
 // Kids › Equipe fixa e repetições: GET ?unit= (visão geral) ou ?unit=&q= (buscar pessoas); POST {action, data}.
 // O banco (kids_setup) confere quem configura e todas as regras.
 const json = (data: unknown, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'private, no-store'}});
-const actions = ['team_save', 'team_remove', 'series_save', 'series_options', 'series_delete', 'series_skip', 'bookable', 'room_delete', 'class_delete', 'session_delete'];
+const actions = ['team_save', 'team_remove', 'series_save', 'series_options', 'series_delete', 'series_skip', 'bookable', 'room_delete', 'class_delete', 'session_delete', 'room_deactivate', 'class_deactivate', 'session_archive'];
 const reasons: [RegExp, string, number][] = [
   [/kids_access_denied/, 'Somente a coordenação do Kids configura equipe e repetições.', 403],
   [/kids_staff_identity_required/, 'A pessoa precisa ser adulta e ter conta ativa no app da igreja.', 400],
   [/kids_version_conflict/, 'Alguém alterou isso agora. Atualize e tente de novo.', 409],
   [/kids_has_records/, 'Já tem lançamentos (entradas ou reservas). Para guardar o histórico, desative em vez de excluir.', 409],
   [/kids_not_found/, 'Não encontrado. Atualize a página.', 404],
+  [/kids_in_open_session/, 'Está em uso numa sessão aberta agora. Encerre a sessão antes de desativar.', 409],
+  [/kids_session_open/, 'A sessão está aberta. Encerre (com todas as crianças retiradas) antes de excluir ou desativar.', 409],
   [/kids_invalid/, 'Revise os dados da repetição ou da equipe.', 400],
 ];
 
@@ -44,7 +46,8 @@ async function run(request: Request, body: unknown) {
     const r = await db(request).rpc('kids_setup', {p_org: a.access!.membership.organization_id, p_unit: unit, p_action: action, p_data: data});
     if (r.error) {
       const hit = reasons.find(([re]) => re.test(r.error!.message));
-      return json({error: hit?.[1] || 'Não foi possível concluir agora.'}, hit?.[2] || 503);
+      // has_records: a tela oferece desativar em vez de excluir.
+      return json({error: hit?.[1] || 'Não foi possível concluir agora.', code: /kids_has_records/.test(r.error.message) ? 'has_records' : undefined}, hit?.[2] || 503);
     }
     return json(r.data);
   } catch {
