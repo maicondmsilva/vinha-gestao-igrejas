@@ -72,10 +72,45 @@ test('app único: perfis vêm de brands/ e cada ministério tem seu canal de atu
   assert.match(cfg, /userInterfaceStyle/);
   const brand = JSON.parse(read('android-app/brands/mpr.json'));
   assert.equal(brand.theme, 'dark');
+  // O canal vem do app.config (production-<perfil>); um canal fixo no eas.json misturaria os ministérios.
+  const eas = JSON.parse(read('android-app/eas.json'));
+  for (const k of ['preview', 'production']) assert.equal(eas.build[k].channel, undefined, k);
   const wf = read('.github/workflows/apps-release.yml');
   assert.match(wf, /workflow_dispatch/);
   assert.match(wf, /production-\$perfil/);
   assert.match(wf, /VINHA_APP_ONLY: \$\{\{ inputs\.perfil \}\}/);
   assert.doesNotMatch(wf, /run:[^\n]*\$\{\{ inputs\./);
   assert.match(read('android-app/scripts/sync-ministry-apps.mjs'), /VINHA_APPS_MANIFEST_TOKEN/);
+  // Servidores do Expo recebem perfil, projeto e banco público pelo eas.json do robô; nunca chave secreta.
+  const envScript = read('android-app/scripts/eas-build-env.mjs');
+  assert.match(envScript, /VINHA_APP_PROFILE: perfil/);
+  assert.match(envScript, /sb_publishable_/);
+  assert.match(wf, /node scripts\/eas-build-env\.mjs "\$perfil"/);
+  const manifest = read('app/api/platform/apps/manifest/route.ts');
+  assert.match(manifest, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
+  assert.doesNotMatch(manifest, /SECRET|SERVICE_ROLE/);
+});
+
+test('identidade do app só pela Central: painel e cadastro inicial apenas mostram', () => {
+  const route = read('app/api/platform/apps/identity/route.ts');
+  assert.match(route, /export const (GET|POST|PATCH) = centralRoute/);
+  assert.match(route, /createSignedUploadUrl/);
+  assert.match(route, /iconOk\(/);
+  assert.match(read('app/lib/app-icon.ts'), /getUint32\(16\) === 1024/);
+  const ui = read('app/admin-vinha/aplicativos/AppIdentity.tsx');
+  for (const a of ["'identity'", "'logo'", "'opening'", "'icon'"]) assert.ok(ui.includes(a), a);
+  assert.match(read('app/admin-vinha/aplicativos/page.tsx'), /<AppIdentity /);
+  const settings = read('app/OrganizationSettings.tsx');
+  assert.doesNotMatch(settings, /name="primaryColor"|name="accentColor"/);
+  assert.match(settings, /institutional\.filter/);
+  assert.match(settings, /AppIdentityView/);
+  assert.match(read('app/api/organization-settings/route.ts'), /'appName','primaryColor','accentColor'/);
+  const onboarding = read('app/onboarding/page.tsx');
+  assert.doesNotMatch(onboarding, /name="appName"|name="primaryColor"|LogoField/);
+  assert.doesNotMatch(read('app/MinistryMediaAdmin.tsx'), /Personalizar abertura/);
+  assert.doesNotMatch(read('app/ConfigurationCenter.tsx'), /function Brand\(/);
+  const m = read('supabase/migrations/20261118120000_central_identidade_app.sql');
+  for (const k of ['identity_managed_by_vinha', 'opening_managed_by_vinha', 'platform_app_identity', 'vinha-app-assets']) assert.ok(m.includes(k), k);
+  assert.match(read('android-app/scripts/sync-ministry-apps.mjs'), /a\.iconUrl/);
+  assert.match(read('android-app/app.config.ts'), /profile\.icon\s*\?/);
 });

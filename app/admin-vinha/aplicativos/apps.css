@@ -620,3 +620,155 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Identidade do aplicativo (somente equipe da Vinha) */
+.apps-identity {
+  border-top: 1px solid var(--cv-line);
+  padding-top: 20px;
+  display: grid;
+  gap: 14px;
+}
+.apps-identity header h3 {
+  margin: 0 0 4px !important;
+  font-size: 17px !important;
+}
+.apps-identity header p {
+  margin: 0;
+  color: var(--cv-muted);
+  max-width: 760px;
+  line-height: 1.5;
+}
+.apps-identity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.apps-card {
+  border: 1px solid var(--cv-line);
+  border-radius: 14px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+  background: #fbfcfb;
+}
+.apps-card h4 {
+  margin: 0;
+  font-size: 15px;
+}
+.apps-card label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.apps-card :is(input:not([type='color']):not([type='file']), select) {
+  border: 1px solid var(--cv-line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 400;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+.apps-card small {
+  color: var(--cv-muted);
+}
+.apps-card button {
+  justify-self: start;
+  border: 1px solid var(--cv-line);
+  background: #fff;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.apps-card button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.apps-color {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--cv-line);
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: #fff;
+}
+.apps-color input {
+  width: 34px;
+  height: 30px;
+  border: 0;
+  padding: 0;
+  background: none;
+}
+.apps-media-box {
+  height: 150px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  text-align: center;
+  padding: 10px;
+  box-sizing: border-box;
+}
+.apps-media-box :is(img, video) {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.apps-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.apps-file {
+  display: inline-flex !important;
+  align-items: center;
+  justify-self: start;
+  border: 1px solid var(--cv-green-2);
+  color: var(--cv-green-2);
+  background: #fff;
+  border-radius: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+.apps-file input {
+  display: none;
+}
+.apps-icon-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.apps-icon-preview :is(img, i) {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  object-fit: cover;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 28px;
+  box-shadow: 0 6px 16px #0e2a2022;
+}
+.apps-hint {
+  margin: 0;
+  color: #7a5a12;
+  background: #fbf3dd;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .apps-identity-grid {
+    grid-template-columns: 1fr;
+  }
+}

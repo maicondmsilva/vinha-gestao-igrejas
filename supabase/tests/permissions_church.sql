@@ -13,7 +13,7 @@ insert into public.organization_memberships(id,organization_id,user_id,role,stat
  ('d7700000-0000-4000-8000-000000000002','b7700000-0000-4000-8000-000000000001','a7700000-0000-4000-8000-000000000002','member','active','c7700000-0000-4000-8000-000000000001');
 create function pg_temp.as_user(i integer) returns void language sql as $$select set_config('request.jwt.claims',jsonb_build_object('sub','a7700000-0000-4000-8000-'||lpad(i::text,12,'0'),'role','authenticated')::text,true)$$;
 create function pg_temp.grant(p text,acts jsonb,u text default 'c7700000-0000-4000-8000-000000000001') returns jsonb language sql as $$select public.permission_admin('b7700000-0000-4000-8000-000000000001','set',jsonb_build_object('membership','d7700000-0000-4000-8000-000000000002','permission',p,'unit',u,'actions',acts,'includeChildren',true))$$;
-create function pg_temp.payload() returns jsonb language sql as $$select jsonb_build_object('updatedAt',o.updated_at,'name','Ministério novo','appName','App','seniorPastorName','Pastor fictício','legalName','','taxId','','primaryColor','#285c45','accentColor','#d8b769') from public.organizations o where id='b7700000-0000-4000-8000-000000000001'$$;
+create function pg_temp.payload() returns jsonb language sql as $$select jsonb_build_object('updatedAt',o.updated_at,'name','Ministério novo','seniorPastorName','Pastor fictício','legalName','','taxId','') from public.organizations o where id='b7700000-0000-4000-8000-000000000001'$$;
 
 set local role authenticated;
 select pg_temp.as_user(1);
@@ -30,7 +30,7 @@ select throws_ok($$select public.organization_settings_save('b7700000-0000-4000-
 select pg_temp.as_user(1);
 select lives_ok($$select pg_temp.grant('church.settings','["view","edit"]','')$$,'concede Configurações para todo o ministério');
 select pg_temp.as_user(2);
-select lives_ok($$select public.organization_settings_save('b7700000-0000-4000-8000-000000000001',null,pg_temp.payload())$$,'com permissão do ministério, salva a identidade');
+select lives_ok($$select public.organization_settings_save('b7700000-0000-4000-8000-000000000001',null,pg_temp.payload())$$,'com permissão do ministério, salva o cadastro');
 reset role;
 select * from finish();
 rollback;

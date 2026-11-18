@@ -16,8 +16,9 @@ type Brand = {
   previewBundleIdentifier?: string;
   /** Tema das barras do sistema; o conteúdo do app segue o tema escolhido na Central (vem da Vinha ao abrir). */
   theme?: 'light' | 'dark';
-  /** Arte própria do ministério (opcional); sem ela, a arte base da Vinha. */
+  /** Ícone do ministério enviado pela Vinha na Central (baixado pelo robô); sem ele, a arte base da Vinha. */
   icon?: string;
+  iconBackground?: string;
 };
 const brandsDir = join(__dirname, 'brands');
 const profiles: Record<string, Brand> = Object.fromEntries(
@@ -32,9 +33,9 @@ if (!profile) throw Error('Perfil de ministério desconhecido.');
 // Store identifiers belong to the ministry's own developer accounts and are never guessed.
 const applicationId = process.env.ANDROID_APPLICATION_ID;
 const bundleIdentifier = process.env.IOS_BUNDLE_IDENTIFIER;
-if (process.env.EAS_BUILD_PROFILE==='production' && process.env.EAS_BUILD_PLATFORM !== 'ios' && !applicationId)
+if (process.env.EAS_BUILD_PROFILE === 'production' && process.env.EAS_BUILD_PLATFORM !== 'ios' && !applicationId)
   throw Error('Defina ANDROID_APPLICATION_ID aprovado pelo titular antes de gerar a versão de produção.');
-if (process.env.EAS_BUILD_PROFILE==='production' && process.env.EAS_BUILD_PLATFORM !== 'android' && !bundleIdentifier)
+if (process.env.EAS_BUILD_PROFILE === 'production' && process.env.EAS_BUILD_PLATFORM !== 'android' && !bundleIdentifier)
   throw Error('Defina IOS_BUNDLE_IDENTIFIER da conta Apple do ministério antes de gerar a versão de produção.');
 
 const config: ExpoConfig = {
@@ -58,17 +59,27 @@ const config: ExpoConfig = {
     permissions: ['POST_NOTIFICATIONS'],
     ...(process.env.GOOGLE_SERVICES_FILE ? {googleServicesFile: process.env.GOOGLE_SERVICES_FILE} : {}),
     allowBackup: false,
-    adaptiveIcon: {
-      foregroundImage: './assets/android-icon-foreground.png',
-      backgroundImage: './assets/android-icon-background.png',
-      monochromeImage: './assets/android-icon-monochrome.png',
-    },
+    // Ícone do ministério (enviado pela Vinha na Central) ou a arte base da Vinha.
+    adaptiveIcon: profile.icon
+      ? {foregroundImage: profile.icon, backgroundColor: profile.iconBackground || '#ffffff'}
+      : {
+          foregroundImage: './assets/android-icon-foreground.png',
+          backgroundImage: './assets/android-icon-background.png',
+          monochromeImage: './assets/android-icon-monochrome.png',
+        },
   },
   plugins: [
     'expo-secure-store',
     'expo-notifications',
     'expo-video',
-    ['expo-image-picker', {photosPermission: 'O app usa suas fotos para a foto de perfil e a foto das crianças no Kids.', cameraPermission: 'O app usa a câmera para tirar a foto de perfil e a foto das crianças no Kids.', microphonePermission: false}],
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'O app usa suas fotos para a foto de perfil e a foto das crianças no Kids.',
+        cameraPermission: 'O app usa a câmera para tirar a foto de perfil e a foto das crianças no Kids.',
+        microphonePermission: false,
+      },
+    ],
   ],
   // EAS Update: screen and text fixes reach every ministry app without a new store review.
   // Native changes bump runtimeVersion (appVersion policy) and require a new store build.
