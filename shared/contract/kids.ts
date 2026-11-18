@@ -16,7 +16,15 @@ export type KidsOperation =
 export type KidsOperationCommand = {requestId: string; action: KidsOperation; id: string; version: number; data: Record<string, unknown>};
 export type KidsRoom = {id: string; name: string; location: string; capacity: number; active: boolean; version: number};
 export type KidsClass = {id: string; name: string; minMonths: number; maxMonths: number; active: boolean; version: number};
-export type KidsSession = {id: string; name: string; startsAt: string; endsAt: string; status: 'draft' | 'open' | 'closed' | 'cancelled'; version: number};
+export type KidsSession = {
+  id: string;
+  name: string;
+  startsAt: string;
+  endsAt: string;
+  status: 'draft' | 'open' | 'closed' | 'cancelled';
+  version: number;
+  autoOpen?: boolean;
+};
 export type KidsGroup = {
   id: string;
   roomId: string;
