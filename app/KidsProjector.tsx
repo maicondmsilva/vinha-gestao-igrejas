@@ -146,7 +146,8 @@ export default function KidsProjector({unit}: {unit: string}) {
 }
 
 /** Situação do telão na Visão geral (só para quem configura): ligado, desligado ou sem configuração, com atalho para Configurar. */
-export function KidsProjectorStatus({unit, onConfigure}: {unit: string; onConfigure: () => void}) {
+/** Situação do telão na página Hoje: só informa; a configuração fica em Configurar › Telão e estações. */
+export function KidsProjectorStatus({unit}: {unit: string}) {
   const [state, setState] = useState<State | null>(null);
   useEffect(() => {
     let live = true;
@@ -170,9 +171,7 @@ export function KidsProjectorStatus({unit, onConfigure}: {unit: string; onConfig
         <i className={state.configured && state.enabled ? 'on' : ''} aria-hidden />
         {text}
       </p>
-      <button type="button" onClick={onConfigure}>
-        {state.configured ? 'Telão e estações' : 'Configurar telão'}
-      </button>
+      {!state.configured && <small>Configure em Configurar › Telão e estações.</small>}
     </div>
   );
 }
