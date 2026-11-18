@@ -62,3 +62,16 @@ test('Kids › Hoje: sem criar sessão, mostra a sessão preparada e permite abr
   assert.match(m, /exists\(select 1 from private\.kids_session_rooms g where g\.session_id=s\.id\)\) desc/);
   assert.match(m, /'autoOpen'/);
 });
+
+test('Kids: excluir ou desativar sala, turma e sessão com registros', () => {
+  const ops = read('app/KidsOperations.tsx');
+  assert.match(ops, /removeSpace\(kind:'room'\|'class'\|'session'/);
+  assert.match(ops, /del\.d\.code!=='has_records'/);
+  assert.match(ops, /'session_archive':kind\+'_deactivate'/);
+  assert.match(read('app/kids/KidsTabs.tsx'), /removeSpace\('session',current\.id,current\.name\)/);
+  const route = read('app/api/kids/setup/route.ts');
+  for (const a of ["'room_deactivate'", "'class_deactivate'", "'session_archive'", "code: /kids_has_records/"]) assert.ok(route.includes(a), a);
+  const m = read('supabase/migrations/20261118220000_kids_excluir_desativar.sql');
+  assert.match(m, /archived_at/);
+  assert.match(m, /kids_in_open_session/);
+});
