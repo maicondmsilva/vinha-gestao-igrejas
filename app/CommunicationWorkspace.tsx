@@ -18,7 +18,7 @@ export default function CommunicationWorkspace({unitId}:{unitId:string}){
  if(section==='metricas')return <CommunicationMetrics key={unitId} unit={unitId}/>;
  if(section==='chat')return <CommunityChat key={unitId} unit={unitId}/>;
  const app=(node:ReactNode,title:string,text:string)=><section className="content"><header className="page-head"><div style={{display:"block"}}><p className="section-over">COMUNICAÇÃO</p><h1>{title}</h1><p>{text}</p></div></header><Suspense fallback={<p role="status">Carregando…</p>}>{node}</Suspense></section>;
- if(section==='abertura')return app(<MinistryMediaAdmin key={unitId} unitId={unitId} mode="all"/>,'Abertura e mídia do app','Tela de abertura do aplicativo e vídeos ou transmissões da biblioteca de mídia.');
+ if(section==='abertura')return app(<MinistryMediaAdmin key={unitId} unitId={unitId} mode="all"/>,'Mídia do app','Vídeos e transmissões da biblioteca de mídia. A abertura do app é definida pela Vinha.');
  if(section==='comunidade')return app(<MemberCommunityAdmin key={unitId}/>,'Comunidade do app','Ministérios e departamentos que aparecem no app e os pedidos dos membros.');
  if(section==='jornadas')return app(<MemberLearningAdmin key={unitId}/>,'Jornadas e leitura','Planos de leitura e jornadas de estudo publicados no app.');
   return <PublishingWorkspace key={unitId+section} unit={unitId} kind={kinds[section]||'notice'}/>;

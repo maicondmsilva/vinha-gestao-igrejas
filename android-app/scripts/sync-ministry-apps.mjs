@@ -44,6 +44,23 @@ for (const a of apps) {
     previewApplicationId: previous.previewApplicationId || `com.vinha.${a.profile}.preview`,
     previewBundleIdentifier: previous.previewBundleIdentifier || `com.vinha.${a.profile}.preview`,
   };
+  // Ícone da tela do celular definido pela Vinha na Central (PNG 1024×1024, conferido de novo aqui).
+  delete brand.icon;
+  delete brand.iconBackground;
+  if (a.iconUrl) {
+    const res = await fetch(a.iconUrl);
+    const png = new Uint8Array(await res.arrayBuffer());
+    const dv = new DataView(png.buffer);
+    const ok =
+      res.ok && png.length > 33 && png.length <= 1048576 && png[0] === 0x89 && png[1] === 0x50 && dv.getUint32(16) === 1024 && dv.getUint32(20) === 1024;
+    if (!ok) {
+      console.error(`Ícone inválido para ${a.profile}; mantido o ícone padrão da Vinha.`);
+    } else {
+      writeFileSync(new URL(`../brands/${a.profile}-icon.png`, import.meta.url), png);
+      brand.icon = `./brands/${a.profile}-icon.png`;
+      brand.iconBackground = /^#[0-9a-fA-F]{6}$/.test(a.primaryColor || '') ? a.primaryColor : '#ffffff';
+    }
+  }
   writeFileSync(file, JSON.stringify(brand, null, 1) + '\n');
   done.push(a.profile + (a.androidApplicationId ? '|' + a.androidApplicationId : '|') + (a.iosBundleId ? '|' + a.iosBundleId : '|') + '|' + a.status);
 }
