@@ -48,3 +48,17 @@ test('avisos à família, totem e pausa em segundo plano', () => {
   assert.match(kiosk, /delayLongPress=\{2000\}/);
   assert.match(read('staff-app/src/KidsBoard.tsx'), /AppState\.addEventListener/);
 });
+
+test('Kids › Hoje: sem criar sessão, mostra a sessão preparada e permite abrir à mão', async () => {
+  const {readFileSync} = await import('node:fs');
+  const ops = readFileSync('app/KidsOperations.tsx', 'utf8');
+  assert.doesNotMatch(ops, /open\('session','Nova sessão'/, 'sessão nasce só em Configurar');
+  const tabs = readFileSync('app/kids/KidsTabs.tsx', 'utf8');
+  assert.match(tabs, /Abrir sessão agora/);
+  assert.match(tabs, /open\('sessionState','Abrir sessão',\{status:'open'\}/);
+  assert.match(tabs, /current\.autoOpen/);
+  assert.doesNotMatch(tabs, /onConfigure=/, 'telão na página Hoje só informa');
+  const m = readFileSync('supabase/migrations/20261118210000_kids_hoje_sessao_padrao.sql', 'utf8');
+  assert.match(m, /exists\(select 1 from private\.kids_session_rooms g where g\.session_id=s\.id\)\) desc/);
+  assert.match(m, /'autoOpen'/);
+});
