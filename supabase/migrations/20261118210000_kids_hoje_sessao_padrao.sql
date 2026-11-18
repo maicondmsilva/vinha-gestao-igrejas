@@ -6,7 +6,7 @@
 begin;
 set local lock_timeout='5s';
 
-create function pg_temp.swap(p regprocedure, a text, b text) returns void language plpgsql as $f$
+create or replace function pg_temp.swap(p regprocedure, a text, b text) returns void language plpgsql as $f$
 declare d text:=pg_get_functiondef(p);
 begin
  if position(a in d)=0 then raise exception 'trecho não encontrado em %: %', p, left(a,90); end if;
