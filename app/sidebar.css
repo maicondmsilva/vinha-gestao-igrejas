@@ -177,3 +177,4 @@
     padding: 8px 10px !important;
   }
 }
+.organization-theme{display:grid;gap:4px;align-content:start}.organization-theme span{font-weight:600;font-size:14px}.organization-theme b{font-size:15px;color:#183e31}.organization-theme small{color:#5f7268;font-size:12px}

@@ -22,7 +22,7 @@ export default function BillingClients(){
  useEffect(()=>{const timer=window.setTimeout(()=>void load(),0);return()=>window.clearTimeout(timer)},[load]);
  const filtered=items.filter(o=>`${o.registration_code} ${o.name} ${o.owner_email||''}`.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')));
  return <main className="billing-page">
-  <aside><Link href="/admin-vinha" className="billing-brand"><i>V</i><span><b>Vinha</b><small>Administração SaaS</small></span></Link><nav><Link href="/admin-vinha">▦ Organizações</Link><Link href="/admin-vinha/faturamento">◫ Cobranças</Link><Link className="on" href="/admin-vinha/faturamento/clientes">▣ Cadastros de cobrança</Link></nav><Link className="billing-back" href="https://app.vinhaigrejas.com.br/painel">← Painel da igreja</Link></aside>
+  
   <section><header><div><small>CARTEIRA DE CLIENTES</small><h1>Cadastros de cobrança</h1><p>Todos os ministérios, inclusive em avaliação ou com cadastro financeiro pendente. Esta lista não depende de faturas geradas.</p></div><Link className="billing-button secondary" href="/admin-vinha/faturamento">← Voltar às cobranças</Link></header>
    <label>Buscar ministério por código, nome ou e-mail<input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Ex.: 1000"/></label>
    {error&&<div className="billing-notice" role="alert">{error} <button type="button" disabled={loading} onClick={()=>void load()}>Tentar novamente</button></div>}
