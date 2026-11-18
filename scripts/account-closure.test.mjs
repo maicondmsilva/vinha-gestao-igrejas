@@ -42,7 +42,7 @@ test('produção exige identificadores de loja do próprio ministério', () => {
   assert.match(c, /ANDROID_APPLICATION_ID/);
   assert.match(c, /usesNonExemptEncryption: false/);
   assert.match(c, /runtimeVersion: \{policy: 'appVersion'\}/);
-  assert.match(c, /\/\/ <ministry-imports>/);
+  assert.match(c, /readdirSync\(brandsDir\)/);
 });
 
 test('Vinha Equipe usa a sessão própria e o ministério escolhido, sem chave de servidor', () => {

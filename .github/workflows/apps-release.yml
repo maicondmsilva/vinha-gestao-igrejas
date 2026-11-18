@@ -1,0 +1,88 @@
+name: Aplicativos dos ministérios
+
+# Um código para todos os ministérios. Este robô:
+#  - "atualizar": envia a mesma atualização (telas e textos) para TODOS os apps, cada um no seu canal, mantendo
+#    nome, cores, logo e tema de cada ministério (vêm da Central/Vinha). Não passa pela loja.
+#  - "gerar-teste": gera o APK de teste dos ministérios (ou de um só).
+#  - "gerar-loja": gera as versões de loja de quem já tem identificador de loja na Central.
+# Segredos necessários (Settings › Secrets › Actions): EXPO_TOKEN, EXPO_PROJECT_ID, VINHA_APPS_MANIFEST_TOKEN.
+on:
+  workflow_dispatch:
+    inputs:
+      acao:
+        description: 'O que fazer'
+        type: choice
+        options: [atualizar, gerar-teste, gerar-loja]
+        default: atualizar
+      perfil:
+        description: 'Perfil de um ministério (vazio = todos)'
+        required: false
+        default: ''
+      mensagem:
+        description: 'Resumo da atualização'
+        required: false
+        default: 'Melhorias da Vinha'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apps-release
+  cancel-in-progress: false
+
+jobs:
+  apps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: android-app
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+      VINHA_APPS_MANIFEST_TOKEN: ${{ secrets.VINHA_APPS_MANIFEST_TOKEN }}
+      VINHA_APP_ONLY: ${{ inputs.perfil }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Conferir segredos
+        run: |
+          for s in EXPO_TOKEN EXPO_PROJECT_ID VINHA_APPS_MANIFEST_TOKEN; do
+            if [ -z "${!s}" ]; then echo "::error::Segredo $s não configurado no GitHub."; exit 1; fi
+          done
+      - run: npm ci
+      - name: Buscar apps liberados na Central
+        run: node scripts/sync-ministry-apps.mjs
+      - name: Enviar atualização para todos os apps
+        if: inputs.acao == 'atualizar'
+        env:
+          MENSAGEM: ${{ inputs.mensagem }}
+        run: |
+          while IFS='|' read -r perfil android ios status; do
+            [ -z "$perfil" ] && continue
+            echo "::group::$perfil"
+            VINHA_APP_PROFILE="$perfil" EAS_BUILD_PROFILE=production npx --yes eas-cli@latest update --channel "production-$perfil" --message "$MENSAGEM" --non-interactive
+            VINHA_APP_PROFILE="$perfil" npx --yes eas-cli@latest update --channel "preview-$perfil" --message "$MENSAGEM" --non-interactive
+            echo "::endgroup::"
+          done < profiles.txt
+      - name: Gerar APK de teste
+        if: inputs.acao == 'gerar-teste'
+        run: |
+          while IFS='|' read -r perfil android ios status; do
+            [ -z "$perfil" ] && continue
+            VINHA_APP_PROFILE="$perfil" npx --yes eas-cli@latest build --profile preview --platform android --non-interactive --no-wait
+          done < profiles.txt
+      - name: Gerar versão de loja
+        if: inputs.acao == 'gerar-loja'
+        run: |
+          while IFS='|' read -r perfil android ios status; do
+            [ -z "$perfil" ] && continue
+            if [ -n "$android" ]; then
+              ANDROID_APPLICATION_ID="$android" VINHA_APP_PROFILE="$perfil" npx --yes eas-cli@latest build --profile production --platform android --non-interactive --no-wait
+            fi
+            if [ -n "$ios" ]; then
+              IOS_BUNDLE_IDENTIFIER="$ios" VINHA_APP_PROFILE="$perfil" npx --yes eas-cli@latest build --profile production --platform ios --non-interactive --no-wait
+            fi
+          done < profiles.txt
