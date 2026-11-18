@@ -81,4 +81,12 @@ test('app único: perfis vêm de brands/ e cada ministério tem seu canal de atu
   assert.match(wf, /VINHA_APP_ONLY: \$\{\{ inputs\.perfil \}\}/);
   assert.doesNotMatch(wf, /run:[^\n]*\$\{\{ inputs\./);
   assert.match(read('android-app/scripts/sync-ministry-apps.mjs'), /VINHA_APPS_MANIFEST_TOKEN/);
+  // Servidores do Expo recebem perfil, projeto e banco público pelo eas.json do robô; nunca chave secreta.
+  const envScript = read('android-app/scripts/eas-build-env.mjs');
+  assert.match(envScript, /VINHA_APP_PROFILE: perfil/);
+  assert.match(envScript, /sb_publishable_/);
+  assert.match(wf, /node scripts\/eas-build-env\.mjs "\$perfil"/);
+  const manifest = read('app/api/platform/apps/manifest/route.ts');
+  assert.match(manifest, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
+  assert.doesNotMatch(manifest, /SECRET|SERVICE_ROLE/);
 });
